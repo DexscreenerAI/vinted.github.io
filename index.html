@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 Vinted Sniper - Tracker d'Offres</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --accent-cyan: #00f5ff;
+            --accent-pink: #ff2d95;
+            --accent-green: #00ff88;
+            --accent-orange: #ff6b35;
+            --text-primary: #ffffff;
+            --text-secondary: #8892b0;
+            --border-glow: rgba(0, 245, 255, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background grid */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(90deg, rgba(0, 245, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(rgba(0, 245, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Glow orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            pointer-events: none;
+            z-index: -1;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: var(--accent-cyan);
+            opacity: 0.15;
+            top: -100px;
+            right: -100px;
+        }
+
+        .orb-2 {
+            width: 300px;
+            height: 300px;
+            background: var(--accent-pink);
+            opacity: 0.1;
+            bottom: -50px;
+            left: -50px;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, 30px) scale(1.1); }
+        }
+
+        /* Header */
+        header {
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border-glow);
+            background: linear-gradient(180deg, rgba(0, 245, 255, 0.05) 0%, transparent 100%);
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 60px rgba(0, 245, 255, 0.5);
+            letter-spacing: 4px;
+            margin-bottom: 0.5rem;
+        }
+
+        .tagline {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        /* Main container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Search Section */
+        .search-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .search-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-pink), var(--accent-cyan));
+            background-size: 200% 100%;
+            animation: shimmer 3s infinite linear;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            color: var(--accent-cyan);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title::before {
+            content: '▸';
+            color: var(--accent-pink);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input, select, textarea {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 245, 255, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 20px rgba(0, 245, 255, 0.2);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-cyan), #0099ff);
+            color: var(--bg-dark);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(0, 245, 255, 0.4);
+        }
+
+        .btn-alert {
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-orange));
+            color: white;
+        }
+
+        .btn-alert:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(255, 45, 149, 0.4);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        /* Keywords Tags */
+        .keywords-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .keyword-tag {
+            background: rgba(0, 245, 255, 0.1);
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: tagPop 0.3s ease;
+        }
+
+        @keyframes tagPop {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .keyword-tag .remove {
+            cursor: pointer;
+            color: var(--accent-pink);
+            font-weight: bold;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--accent-cyan);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+        }
+
+        /* Results Grid */
+        .results-section {
+            margin-top: 2rem;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .sort-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .sort-btn {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 245, 255, 0.2);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-size: 0.85rem;
+        }
+
+        .sort-btn.active, .sort-btn:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            background: rgba(0, 245, 255, 0.1);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Product Card */
+        .product-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 20px 60px rgba(0, 245, 255, 0.15);
+        }
+
+        .product-card.hot::before {
+            content: '🔥 HOT DEAL';
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-pink));
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            z-index: 10;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .product-image {
+            position: relative;
+            height: 280px;
+            overflow: hidden;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .product-card:hover .product-image img {
+            transform: scale(1.1);
+        }
+
+        .product-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
+            padding: 2rem 1rem 1rem;
+        }
+
+        .product-price {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--accent-green);
+        }
+
+        .product-original-price {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            text-decoration: line-through;
+            margin-left: 0.5rem;
+        }
+
+        .product-info {
+            padding: 1rem;
+        }
+
+        .product-title {
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        .product-size {
+            background: rgba(0, 245, 255, 0.1);
+            color: var(--accent-cyan);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0 1rem 1rem;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid rgba(0, 245, 255, 0.3);
+            background: transparent;
+            color: var(--accent-cyan);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-size: 0.85rem;
+        }
+
+        .action-btn:hover {
+            background: var(--accent-cyan);
+            color: var(--bg-dark);
+        }
+
+        .action-btn.fav {
+            border-color: rgba(255, 45, 149, 0.3);
+            color: var(--accent-pink);
+        }
+
+        .action-btn.fav:hover {
+            background: var(--accent-pink);
+            color: white;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 4rem;
+        }
+
+        .loading.active {
+            display: flex;
+        }
+
+        .scanner {
+            width: 100px;
+            height: 100px;
+            border: 3px solid var(--accent-cyan);
+            border-radius: 50%;
+            position: relative;
+            animation: scan 2s infinite linear;
+        }
+
+        .scanner::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50%;
+            height: 2px;
+            background: var(--accent-cyan);
+            transform-origin: left center;
+            animation: radar 2s infinite linear;
+        }
+
+        @keyframes scan {
+            0% { box-shadow: 0 0 0 0 rgba(0, 245, 255, 0.4); }
+            100% { box-shadow: 0 0 0 30px rgba(0, 245, 255, 0); }
+        }
+
+        @keyframes radar {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Alerts Panel */
+        .alerts-panel {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 45, 149, 0.3);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .alert-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .alert-item:last-child {
+            border-bottom: none;
+        }
+
+        .alert-keywords {
+            color: var(--accent-cyan);
+        }
+
+        .alert-price {
+            color: var(--accent-green);
+        }
+
+        .alert-delete {
+            color: var(--accent-pink);
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--accent-green);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0, 255, 136, 0.2);
+        }
+
+        .toast.alert {
+            border-color: var(--accent-pink);
+            box-shadow: 0 10px 40px rgba(255, 45, 149, 0.2);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 2rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    
+    <div class="toast-container" id="toastContainer"></div>
+
+    <header>
+        <h1 class="logo">VINTED SNIPER</h1>
+        <p class="tagline">🎯 Tracker d'Offres Intelligent</p>
+    </header>
+
+    <div class="container">
+        <!-- Search Section -->
+        <section class="search-section">
+            <h2 class="section-title">Configuration de Recherche</h2>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Mots-clés (Entrée pour ajouter)</label>
+                    <input type="text" id="keywordInput" placeholder="Ex: Nike Air Max, Jordan..." onkeypress="handleKeywordInput(event)">
+                    <div class="keywords-container" id="keywordsContainer"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Prix Maximum (€)</label>
+                    <input type="number" id="maxPrice" placeholder="Ex: 50">
+                </div>
+
+                <div class="form-group">
+                    <label>Taille</label>
+                    <input type="text" id="size" placeholder="Ex: 42, M, L...">
+                </div>
+
+                <div class="form-group">
+                    <label>Catégorie</label>
+                    <select id="category">
+                        <option value="">Toutes catégories</option>
+                        <option value="1206">Vêtements Homme</option>
+                        <option value="1904">Vêtements Femme</option>
+                        <option value="1187">Chaussures Homme</option>
+                        <option value="16">Chaussures Femme</option>
+                        <option value="1193">Accessoires</option>
+                        <option value="4">Enfants</option>
+                        <option value="1438">Électronique</option>
+                        <option value="88">Maison</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>État</label>
+                    <select id="condition">
+                        <option value="">Tous états</option>
+                        <option value="1">Neuf avec étiquette</option>
+                        <option value="2">Neuf sans étiquette</option>
+                        <option value="3">Très bon état</option>
+                        <option value="4">Bon état</option>
+                        <option value="5">Satisfaisant</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Tri</label>
+                    <select id="sortBy">
+                        <option value="newest_first">Plus récents</option>
+                        <option value="price_low_to_high">Prix croissant</option>
+                        <option value="price_high_to_low">Prix décroissant</option>
+                        <option value="relevance">Pertinence</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="searchVinted()">
+                    🔍 Lancer la Recherche
+                </button>
+                <button class="btn btn-alert" onclick="createAlert()">
+                    🔔 Créer une Alerte
+                </button>
+            </div>
+        </section>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-value" id="totalResults">0</div>
+                <div class="stat-label">Résultats</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgPrice">0€</div>
+                <div class="stat-label">Prix Moyen</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="minPrice">0€</div>
+                <div class="stat-label">Prix Min</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="alertCount">0</div>
+                <div class="stat-label">Alertes Actives</div>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading" id="loading">
+            <div class="scanner"></div>
+        </div>
+
+        <!-- Results -->
+        <section class="results-section">
+            <div class="results-header">
+                <h2 class="section-title">Résultats de Recherche</h2>
+                <div class="sort-controls">
+                    <button class="sort-btn active" onclick="filterResults('all')">Tous</button>
+                    <button class="sort-btn" onclick="filterResults('hot')">🔥 Hot Deals</button>
+                    <button class="sort-btn" onclick="filterResults('new')">✨ Nouveaux</button>
+                </div>
+            </div>
+            
+            <div class="results-grid" id="resultsGrid">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🎯</div>
+                    <p>Ajoutez des mots-clés et lancez une recherche pour trouver les meilleures offres</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Alerts Panel -->
+        <section class="alerts-panel">
+            <h2 class="section-title" style="color: var(--accent-pink);">🔔 Alertes Configurées</h2>
+            <div id="alertsList">
+                <div class="empty-state" style="padding: 2rem;">
+                    <p>Aucune alerte configurée</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // State
+        let keywords = [];
+        let alerts = JSON.parse(localStorage.getItem('vintedAlerts') || '[]');
+        let searchResults = [];
+        let checkInterval = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderAlerts();
+            startAlertChecker();
+        });
+
+        // Keywords Management
+        function handleKeywordInput(event) {
+            if (event.key === 'Enter') {
+                const input = event.target;
+                const value = input.value.trim();
+                if (value && !keywords.includes(value)) {
+                    keywords.push(value);
+                    renderKeywords();
+                    input.value = '';
+                }
+            }
+        }
+
+        function renderKeywords() {
+            const container = document.getElementById('keywordsContainer');
+            container.innerHTML = keywords.map((kw, i) => `
+                <span class="keyword-tag">
+                    ${kw}
+                    <span class="remove" onclick="removeKeyword(${i})">×</span>
+                </span>
+            `).join('');
+        }
+
+        function removeKeyword(index) {
+            keywords.splice(index, 1);
+            renderKeywords();
+        }
+
+        // Vinted API Search (via CORS proxy)
+        async function searchVinted() {
+            if (keywords.length === 0) {
+                showToast('Ajoutez au moins un mot-clé', 'alert');
+                return;
+            }
+
+            const loading = document.getElementById('loading');
+            const grid = document.getElementById('resultsGrid');
+            
+            loading.classList.add('active');
+            grid.innerHTML = '';
+
+            try {
+                const params = new URLSearchParams({
+                    search_text: keywords.join(' '),
+                    catalog_ids: document.getElementById('category').value || '',
+                    price_to: document.getElementById('maxPrice').value || '',
+                    size_ids: document.getElementById('size').value || '',
+                    status_ids: document.getElementById('condition').value || '',
+                    order: document.getElementById('sortBy').value,
+                    per_page: '48'
+                });
+
+                // Clean empty params
+                [...params.entries()].forEach(([key, value]) => {
+                    if (!value) params.delete(key);
+                });
+
+                // Using AllOrigins as CORS proxy
+                const apiUrl = `https://www.vinted.fr/api/v2/catalog/items?${params}`;
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`;
+
+                const response = await fetch(proxyUrl, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) throw new Error('API Error');
+
+                const data = await response.json();
+                searchResults = data.items || [];
+                
+                updateStats(searchResults);
+                renderResults(searchResults);
+                showToast(`${searchResults.length} offres trouvées!`);
+
+            } catch (error) {
+                console.error('Search error:', error);
+                // Demo mode with sample data
+                searchResults = generateDemoData();
+                updateStats(searchResults);
+                renderResults(searchResults);
+                showToast('Mode démo - données simulées', 'alert');
+            }
+
+            loading.classList.remove('active');
+        }
+
+        // Generate demo data for testing
+        function generateDemoData() {
+            const brands = ['Nike', 'Adidas', 'Jordan', 'Puma', 'New Balance', 'Vans', 'Converse'];
+            const items = [];
+            
+            for (let i = 0; i < 20; i++) {
+                const brand = brands[Math.floor(Math.random() * brands.length)];
+                const price = Math.floor(Math.random() * 80) + 10;
+                const originalPrice = price + Math.floor(Math.random() * 50);
+                
+                items.push({
+                    id: i,
+                    title: `${brand} ${keywords[0] || 'Sneakers'} - Taille ${38 + Math.floor(Math.random() * 10)}`,
+                    price: price.toFixed(2),
+                    original_price: originalPrice.toFixed(2),
+                    photo: {
+                        url: `https://picsum.photos/400/400?random=${i}`
+                    },
+                    size_title: `${38 + Math.floor(Math.random() * 10)}`,
+                    url: `https://www.vinted.fr/items/${1000000 + i}`,
+                    user: {
+                        login: `seller_${i}`
+                    },
+                    created_at_ts: Date.now() / 1000 - Math.random() * 86400
+                });
+            }
+            
+            return items.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+        }
+
+        // Update Stats
+        function updateStats(items) {
+            const prices = items.map(i => parseFloat(i.price));
+            
+            document.getElementById('totalResults').textContent = items.length;
+            document.getElementById('avgPrice').textContent = prices.length 
+                ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) + '€' 
+                : '0€';
+            document.getElementById('minPrice').textContent = prices.length 
+                ? Math.min(...prices) + '€' 
+                : '0€';
+        }
+
+        // Render Results
+        function renderResults(items) {
+            const grid = document.getElementById('resultsGrid');
+            
+            if (items.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">😢</div>
+                        <p>Aucun résultat trouvé</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const avgPrice = items.reduce((sum, i) => sum + parseFloat(i.price), 0) / items.length;
+            
+            grid.innerHTML = items.map((item, index) => {
+                const isHot = parseFloat(item.price) < avgPrice * 0.7;
+                const discount = item.original_price 
+                    ? Math.round((1 - parseFloat(item.price) / parseFloat(item.original_price)) * 100)
+                    : 0;
+                
+                return `
+                    <div class="product-card ${isHot ? 'hot' : ''}" style="animation-delay: ${index * 0.05}s">
+                        <div class="product-image">
+                            <img src="${item.photo?.url || 'https://via.placeholder.com/400'}" 
+                                 alt="${item.title}"
+                                 loading="lazy"
+                                 onerror="this.src='https://via.placeholder.com/400?text=Image+indisponible'">
+                            <div class="product-overlay">
+                                <span class="product-price">${item.price}€</span>
+                                ${item.original_price && discount > 0 ? 
+                                    `<span class="product-original-price">${item.original_price}€</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-title">${item.title}</h3>
+                            <div class="product-meta">
+                                <span class="product-size">${item.size_title || 'Taille unique'}</span>
+                                <span>@${item.user?.login || 'vendeur'}</span>
+                            </div>
+                        </div>
+                        <div class="product-actions">
+                            <button class="action-btn" onclick="window.open('${item.url || '#'}', '_blank')">
+                                Voir l'offre →
+                            </button>
+                            <button class="action-btn fav" onclick="copyLink('${item.url || '#}')">
+                                📋
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Filter Results
+        function filterResults(type) {
+            document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            let filtered = [...searchResults];
+            const avgPrice = filtered.reduce((sum, i) => sum + parseFloat(i.price), 0) / filtered.length;
+
+            switch(type) {
+                case 'hot':
+                    filtered = filtered.filter(i => parseFloat(i.price) < avgPrice * 0.7);
+                    break;
+                case 'new':
+                    const oneDayAgo = Date.now() / 1000 - 86400;
+                    filtered = filtered.filter(i => i.created_at_ts > oneDayAgo);
+                    break;
+            }
+
+            renderResults(filtered);
+        }
+
+        // Copy Link
+        function copyLink(url) {
+            navigator.clipboard.writeText(url);
+            showToast('Lien copié!');
+        }
+
+        // Alerts Management
+        function createAlert() {
+            if (keywords.length === 0) {
+                showToast('Ajoutez des mots-clés pour créer une alerte', 'alert');
+                return;
+            }
+
+            const alert = {
+                id: Date.now(),
+                keywords: [...keywords],
+                maxPrice: document.getElementById('maxPrice').value,
+                category: document.getElementById('category').value,
+                size: document.getElementById('size').value,
+                condition: document.getElementById('condition').value,
+                createdAt: new Date().toISOString(),
+                lastCheck: null,
+                seenItems: []
+            };
+
+            alerts.push(alert);
+            saveAlerts();
+            renderAlerts();
+            showToast('🔔 Alerte créée avec succès!');
+        }
+
+        function renderAlerts() {
+            const container = document.getElementById('alertsList');
+            document.getElementById('alertCount').textContent = alerts.length;
+
+            if (alerts.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="padding: 2rem;">
+                        <p>Aucune alerte configurée</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = alerts.map(alert => `
+                <div class="alert-item">
+                    <div>
+                        <span class="alert-keywords">${alert.keywords.join(', ')}</span>
+                        ${alert.maxPrice ? `<span class="alert-price"> | Max: ${alert.maxPrice}€</span>` : ''}
+                    </div>
+                    <span class="alert-delete" onclick="deleteAlert(${alert.id})">🗑️</span>
+                </div>
+            `).join('');
+        }
+
+        function deleteAlert(id) {
+            alerts = alerts.filter(a => a.id !== id);
+            saveAlerts();
+            renderAlerts();
+            showToast('Alerte supprimée');
+        }
+
+        function saveAlerts() {
+            localStorage.setItem('vintedAlerts', JSON.stringify(alerts));
+        }
+
+        // Alert Checker
+        function startAlertChecker() {
+            // Check every 2 minutes
+            checkInterval = setInterval(checkAlerts, 120000);
+        }
+
+        async function checkAlerts() {
+            for (const alert of alerts) {
+                // Implementation for checking new items matching alert criteria
+                console.log('Checking alert:', alert.keywords);
+            }
+        }
+
+        // Toast Notification
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span>${type === 'alert' ? '⚠️' : '✅'}</span>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Telegram Export
+        function exportForTelegram() {
+            const config = {
+                keywords: keywords,
+                maxPrice: document.getElementById('maxPrice').value,
+                category: document.getElementById('category').value,
+                alerts: alerts
+            };
+            
+            const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'vinted-config.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showToast('Configuration exportée!');
+        }
+    </script>
+</body>
+</html>
