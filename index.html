@@ -661,9 +661,12 @@
             if (!serverConnected || alerts.length === 0) return;
             
             console.log('🔍 Vérification des alertes...');
+            const loading = document.getElementById('loading');
             document.getElementById('loadingText').textContent = '🔔 Vérification des alertes...';
+            loading.classList.add('active');
             
             let totalNewItems = 0;
+            newItems = []; // Reset des nouveaux items
             
             for (const alert of alerts) {
                 try {
@@ -709,8 +712,10 @@
                         
                         // Update alert stats
                         alert.lastFound = newAlertItems.length;
-                        alert.lastCheck = new Date().toISOString();
                     }
+                    
+                    // Toujours mettre à jour l'heure du dernier check
+                    alert.lastCheck = new Date().toISOString();
                     
                     // Petit délai entre les requêtes
                     await new Promise(r => setTimeout(r, 1000));
@@ -723,12 +728,21 @@
             if (totalNewItems > 0) {
                 showNewItemsBar(totalNewItems);
                 updateBadge(totalNewItems);
+                
+                // AFFICHER AUTOMATIQUEMENT les résultats
+                searchResults = [...newItems];
+                renderResults(newItems, true);
+                updateStats(newItems);
+                
+                // Scroll vers les résultats
+                document.getElementById('resultsGrid').scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
             
             saveAlerts();
             renderAlerts();
             updateNextCheckTime();
             document.getElementById('loadingText').textContent = 'Scan en cours sur Vinted...';
+            loading.classList.remove('active');
         }
 
         function showNewItemsBar(count) {
