@@ -429,7 +429,6 @@
             const dot = document.getElementById('statusDot');
             const text = document.getElementById('statusText');
             const searchBtn = document.getElementById('searchBtn');
-            document.getElementById('apiUrlDisplay').textContent = API_URL.replace('https://', '').replace('http://', '');
             
             try {
                 const response = await fetch(`${API_URL}/health`, { method: 'GET' });
