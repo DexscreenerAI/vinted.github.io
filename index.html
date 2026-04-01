@@ -66,8 +66,6 @@
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
         .api-url-display { font-size: 0.75rem; color: var(--text-secondary); }
         .api-url-display code { background: rgba(0,245,255,0.1); padding: 0.2rem 0.5rem; border-radius: 4px; color: var(--accent-cyan); }
-        .config-btn { background: transparent; border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.75rem; }
-        .config-btn:hover { background: rgba(0,245,255,0.1); }
 
         header {
             padding: 2rem;
@@ -281,17 +279,6 @@
         .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
         .empty-state-icon { font-size: 4rem; margin-bottom: 1rem; }
 
-        /* Config Modal */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: none; justify-content: center; align-items: center; }
-        .modal-overlay.active { display: flex; }
-        .modal { background: var(--bg-card); border: 1px solid var(--border-glow); border-radius: 16px; padding: 2rem; max-width: 500px; width: 90%; }
-        .modal h3 { font-family: 'Orbitron', sans-serif; color: var(--accent-cyan); margin-bottom: 1rem; }
-        .modal input { width: 100%; margin-bottom: 1rem; }
-        .modal-buttons { display: flex; gap: 1rem; justify-content: flex-end; }
-        .modal-btn { padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-family: inherit; }
-        .modal-btn.save { background: var(--accent-cyan); color: var(--bg-dark); border: none; }
-        .modal-btn.cancel { background: transparent; color: var(--text-secondary); border: 1px solid var(--text-secondary); }
-
         @media (max-width: 768px) {
             .logo { font-size: 2rem; }
             .container { padding: 1rem; }
@@ -307,31 +294,12 @@
     <div class="orb orb-2"></div>
     <div class="toast-container" id="toastContainer"></div>
 
-    <!-- Config Modal -->
-    <div class="modal-overlay" id="configModal">
-        <div class="modal">
-            <h3>⚙️ Configuration API</h3>
-            <label>URL du serveur API</label>
-            <input type="text" id="apiUrlInput" placeholder="https://votre-app.railway.app">
-            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">
-                Entre l'URL de ton serveur déployé sur Railway/Render
-            </p>
-            <div class="modal-buttons">
-                <button class="modal-btn cancel" onclick="closeConfigModal()">Annuler</button>
-                <button class="modal-btn save" onclick="saveApiUrl()">Sauvegarder</button>
-            </div>
-        </div>
-    </div>
-
     <div class="server-status">
         <div class="status-indicator">
             <div class="status-dot" id="statusDot"></div>
             <span id="statusText">Vérification...</span>
         </div>
-        <div style="display: flex; align-items: center; gap: 1rem;">
-            <div class="api-url-display">API: <code id="apiUrlDisplay">-</code></div>
-            <button class="config-btn" onclick="openConfigModal()">⚙️ Config</button>
-        </div>
+        <div class="api-url-display">API: <code>web-production-b3512.up.railway.app</code></div>
     </div>
 
     <header>
@@ -437,11 +405,8 @@
         // CONFIGURATION
         // ============================================
         
-        // ⚠️ CHANGE CETTE URL APRÈS DÉPLOIEMENT SUR RAILWAY
-        const DEFAULT_API_URL = 'https://VOTRE-APP.railway.app';
-        
-        // Récupère l'URL sauvegardée ou utilise la valeur par défaut
-        let API_URL = localStorage.getItem('vintedApiUrl') || DEFAULT_API_URL;
+        // URL du serveur Railway
+        const API_URL = 'https://web-production-b3512.up.railway.app';
         
         let keywords = [];
         let alerts = JSON.parse(localStorage.getItem('vintedAlerts') || '[]');
@@ -449,35 +414,9 @@
         let serverConnected = false;
 
         // ============================================
-        // CONFIG MODAL
-        // ============================================
-        function openConfigModal() {
-            document.getElementById('apiUrlInput').value = API_URL;
-            document.getElementById('configModal').classList.add('active');
-        }
-        
-        function closeConfigModal() {
-            document.getElementById('configModal').classList.remove('active');
-        }
-        
-        function saveApiUrl() {
-            let url = document.getElementById('apiUrlInput').value.trim();
-            // Nettoyer l'URL
-            url = url.replace(/\/+$/, ''); // Enlever les / à la fin
-            if (!url.startsWith('http')) url = 'https://' + url;
-            
-            API_URL = url;
-            localStorage.setItem('vintedApiUrl', url);
-            closeConfigModal();
-            showToast('Configuration sauvegardée!');
-            checkServerStatus();
-        }
-
-        // ============================================
         // INITIALIZATION
         // ============================================
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('apiUrlDisplay').textContent = API_URL.replace('https://', '').replace('http://', '');
             checkServerStatus();
             renderAlerts();
             setInterval(checkServerStatus, 30000);
