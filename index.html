@@ -165,9 +165,27 @@
         .keyword-tag .remove { cursor: pointer; color: var(--accent-pink); font-weight: bold; }
 
         .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-        .stat-card { background: var(--bg-card); border: 1px solid var(--border-glow); border-radius: 12px; padding: 1.5rem; text-align: center; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border-glow); border-radius: 12px; padding: 1.5rem; text-align: center; position: relative; }
         .stat-value { font-family: 'Orbitron', sans-serif; font-size: 2rem; font-weight: 900; color: var(--accent-cyan); }
         .stat-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; margin-top: 0.5rem; }
+
+        /* Badge notification */
+        .badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--accent-pink);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 0.3rem 0.6rem;
+            border-radius: 20px;
+            animation: badgePulse 1s infinite;
+        }
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
 
         .results-section { margin-top: 2rem; }
         .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
@@ -195,6 +213,10 @@
             position: relative;
             animation: fadeInUp 0.5s ease forwards;
             opacity: 0;
+        }
+        .product-card.new-item {
+            border: 2px solid var(--accent-green);
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
         }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .product-card:hover { transform: translateY(-8px); border-color: var(--accent-cyan); box-shadow: 0 20px 60px rgba(0, 245, 255, 0.15); }
@@ -261,13 +283,91 @@
         @keyframes radar { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .loading-text { color: var(--text-secondary); font-size: 0.9rem; }
 
-        .alerts-panel { background: var(--bg-card); border: 1px solid rgba(255, 45, 149, 0.3); border-radius: 16px; padding: 1.5rem; margin-top: 2rem; }
-        .alert-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); flex-wrap: wrap; gap: 0.5rem; }
+        /* Alerts Panel Enhanced */
+        .alerts-panel {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 45, 149, 0.3);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        .alerts-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .alerts-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .toggle-switch.active {
+            background: var(--accent-green);
+        }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        .toggle-switch.active::after {
+            left: 27px;
+        }
+        .alerts-status {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .alerts-status.active {
+            color: var(--accent-green);
+        }
+        .alert-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
         .alert-item:last-child { border-bottom: none; }
+        .alert-info { display: flex; flex-direction: column; gap: 0.3rem; }
         .alert-keywords { color: var(--accent-cyan); }
-        .alert-price { color: var(--accent-green); }
+        .alert-price { color: var(--accent-green); font-size: 0.85rem; }
+        .alert-stats { font-size: 0.75rem; color: var(--text-secondary); }
+        .alert-actions { display: flex; gap: 0.5rem; }
         .alert-delete { color: var(--accent-pink); cursor: pointer; padding: 0.5rem; transition: transform 0.2s; }
         .alert-delete:hover { transform: scale(1.2); }
+
+        /* New items notification bar */
+        .new-items-bar {
+            display: none;
+            background: linear-gradient(90deg, var(--accent-green), #00cc6a);
+            color: var(--bg-dark);
+            padding: 1rem 2rem;
+            text-align: center;
+            font-weight: bold;
+            cursor: pointer;
+            animation: slideDown 0.3s ease;
+        }
+        .new-items-bar.active { display: block; }
+        @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
 
         .toast-container { position: fixed; top: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
         .toast { background: var(--bg-card); border-radius: 12px; padding: 1rem 1.5rem; display: flex; align-items: center; gap: 1rem; animation: slideIn 0.3s ease; }
@@ -293,6 +393,11 @@
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
     <div class="toast-container" id="toastContainer"></div>
+
+    <!-- New items notification bar -->
+    <div class="new-items-bar" id="newItemsBar" onclick="showNewItems()">
+        🔔 <span id="newItemsCount">0</span> nouvelles offres trouvées ! Cliquez pour voir
+    </div>
 
     <div class="server-status">
         <div class="status-indicator">
@@ -369,12 +474,16 @@
             <div class="stat-card"><div class="stat-value" id="totalResults">0</div><div class="stat-label">Résultats</div></div>
             <div class="stat-card"><div class="stat-value" id="avgPrice">0€</div><div class="stat-label">Prix Moyen</div></div>
             <div class="stat-card"><div class="stat-value" id="minPriceStat">0€</div><div class="stat-label">Prix Min</div></div>
-            <div class="stat-card"><div class="stat-value" id="alertCount">0</div><div class="stat-label">Alertes</div></div>
+            <div class="stat-card" style="position: relative;">
+                <div class="stat-value" id="alertCount">0</div>
+                <div class="stat-label">Alertes</div>
+                <div class="badge" id="newAlertsBadge" style="display: none;">0</div>
+            </div>
         </div>
 
         <div class="loading" id="loading">
             <div class="scanner"></div>
-            <div class="loading-text">Scan en cours sur Vinted...</div>
+            <div class="loading-text" id="loadingText">Scan en cours sur Vinted...</div>
         </div>
 
         <section class="results-section">
@@ -384,6 +493,7 @@
                     <button class="sort-btn active" onclick="filterResults('all', this)">Tous</button>
                     <button class="sort-btn" onclick="filterResults('hot', this)">🔥 Hot Deals</button>
                     <button class="sort-btn" onclick="filterResults('cheap', this)">💰 Moins cher</button>
+                    <button class="sort-btn" onclick="filterResults('new', this)">✨ Nouveaux</button>
                 </div>
             </div>
             <div class="results-grid" id="resultsGrid">
@@ -395,23 +505,42 @@
         </section>
 
         <section class="alerts-panel">
-            <h2 class="section-title" style="color: var(--accent-pink);">🔔 Alertes Configurées</h2>
+            <div class="alerts-header">
+                <h2 class="section-title" style="color: var(--accent-pink); margin-bottom: 0;">🔔 Alertes Automatiques</h2>
+                <div class="alerts-toggle">
+                    <div class="toggle-switch" id="alertsToggle" onclick="toggleAlerts()"></div>
+                    <span class="alerts-status" id="alertsStatus">Désactivé</span>
+                </div>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                ⏱️ Vérifie automatiquement toutes les <strong>2 minutes</strong> • 
+                <span id="nextCheckTime">--:--</span>
+            </p>
             <div id="alertsList"><div class="empty-state" style="padding: 2rem;"><p>Aucune alerte configurée</p></div></div>
         </section>
     </div>
+
+    <!-- Audio pour notification -->
+    <audio id="notificationSound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2Onp+djHVjXXCIm6Cck4N0aXCAkpqYkIR3cHiCjJSUj4Z+eX6Cio+RjoqGgn+Ag4aKi4qIhYOBgIKEhoeHhoWDgoGBgoOEhYWFhISDgoKCgoKDhISEg4OCgoKBgoKDg4ODg4KCgoKCgoKCgoKCg4OCgoKCgoKCgoODg4ODgoKCg4ODg4ODgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCg4ODg4KCgoKDg4ODg4KCgoODg4ODgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCg4ODg4ODgoKCgoKCg4ODg4KCgoKDg4ODgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCg==" type="audio/wav">
+    </audio>
 
     <script>
         // ============================================
         // CONFIGURATION
         // ============================================
-        
-        // URL du serveur Railway
         const API_URL = 'https://web-production-b3512.up.railway.app';
+        const ALERT_CHECK_INTERVAL = 2 * 60 * 1000; // 2 minutes
         
         let keywords = [];
         let alerts = JSON.parse(localStorage.getItem('vintedAlerts') || '[]');
+        let seenItems = JSON.parse(localStorage.getItem('vintedSeenItems') || '{}');
         let searchResults = [];
+        let newItems = [];
         let serverConnected = false;
+        let alertsEnabled = localStorage.getItem('alertsEnabled') === 'true';
+        let alertCheckInterval = null;
+        let nextCheckTime = null;
 
         // ============================================
         // INITIALIZATION
@@ -419,8 +548,216 @@
         document.addEventListener('DOMContentLoaded', () => {
             checkServerStatus();
             renderAlerts();
+            updateAlertsToggle();
+            requestNotificationPermission();
+            
+            if (alertsEnabled && alerts.length > 0) {
+                startAlertChecker();
+            }
+            
             setInterval(checkServerStatus, 30000);
+            setInterval(updateNextCheckDisplay, 1000);
         });
+
+        // ============================================
+        // NOTIFICATIONS
+        // ============================================
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }
+
+        function sendNotification(title, body, url) {
+            // Play sound
+            try {
+                document.getElementById('notificationSound').play();
+            } catch(e) {}
+
+            // Browser notification
+            if ('Notification' in window && Notification.permission === 'granted') {
+                const notif = new Notification(title, {
+                    body: body,
+                    icon: '🔥',
+                    tag: 'vinted-alert'
+                });
+                notif.onclick = () => {
+                    window.open(url, '_blank');
+                    notif.close();
+                };
+            }
+        }
+
+        // ============================================
+        // ALERTS SYSTEM
+        // ============================================
+        function toggleAlerts() {
+            alertsEnabled = !alertsEnabled;
+            localStorage.setItem('alertsEnabled', alertsEnabled);
+            updateAlertsToggle();
+            
+            if (alertsEnabled && alerts.length > 0) {
+                startAlertChecker();
+                showToast('🔔 Alertes activées !');
+            } else {
+                stopAlertChecker();
+                showToast('🔕 Alertes désactivées');
+            }
+        }
+
+        function updateAlertsToggle() {
+            const toggle = document.getElementById('alertsToggle');
+            const status = document.getElementById('alertsStatus');
+            
+            if (alertsEnabled) {
+                toggle.classList.add('active');
+                status.textContent = 'Activé';
+                status.classList.add('active');
+            } else {
+                toggle.classList.remove('active');
+                status.textContent = 'Désactivé';
+                status.classList.remove('active');
+            }
+        }
+
+        function startAlertChecker() {
+            if (alertCheckInterval) clearInterval(alertCheckInterval);
+            
+            // Check immédiatement
+            checkAllAlerts();
+            
+            // Puis toutes les 2 minutes
+            alertCheckInterval = setInterval(checkAllAlerts, ALERT_CHECK_INTERVAL);
+            updateNextCheckTime();
+        }
+
+        function stopAlertChecker() {
+            if (alertCheckInterval) {
+                clearInterval(alertCheckInterval);
+                alertCheckInterval = null;
+            }
+            nextCheckTime = null;
+            document.getElementById('nextCheckTime').textContent = '--:--';
+        }
+
+        function updateNextCheckTime() {
+            nextCheckTime = Date.now() + ALERT_CHECK_INTERVAL;
+        }
+
+        function updateNextCheckDisplay() {
+            if (!nextCheckTime || !alertsEnabled) {
+                document.getElementById('nextCheckTime').textContent = '--:--';
+                return;
+            }
+            
+            const remaining = Math.max(0, nextCheckTime - Date.now());
+            const minutes = Math.floor(remaining / 60000);
+            const seconds = Math.floor((remaining % 60000) / 1000);
+            document.getElementById('nextCheckTime').textContent = 
+                `Prochain check: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        async function checkAllAlerts() {
+            if (!serverConnected || alerts.length === 0) return;
+            
+            console.log('🔍 Vérification des alertes...');
+            document.getElementById('loadingText').textContent = '🔔 Vérification des alertes...';
+            
+            let totalNewItems = 0;
+            
+            for (const alert of alerts) {
+                try {
+                    const params = new URLSearchParams({
+                        q: alert.keywords.join(' '),
+                        order: 'newest_first',
+                        per_page: '20'
+                    });
+                    
+                    if (alert.maxPrice) params.append('price_to', alert.maxPrice);
+                    if (alert.minPrice) params.append('price_from', alert.minPrice);
+                    if (alert.category) params.append('catalog_ids', alert.category);
+                    if (alert.condition) params.append('status_ids', alert.condition);
+                    
+                    const response = await fetch(`${API_URL}/api/search?${params}`);
+                    if (!response.ok) continue;
+                    
+                    const data = await response.json();
+                    const items = data.items || [];
+                    
+                    // Filtrer les nouveaux items
+                    const alertKey = `alert_${alert.id}`;
+                    const seen = seenItems[alertKey] || [];
+                    const newAlertItems = items.filter(item => !seen.includes(item.id));
+                    
+                    if (newAlertItems.length > 0) {
+                        totalNewItems += newAlertItems.length;
+                        
+                        // Mettre à jour les items vus
+                        seenItems[alertKey] = [...seen, ...newAlertItems.map(i => i.id)].slice(-500);
+                        localStorage.setItem('vintedSeenItems', JSON.stringify(seenItems));
+                        
+                        // Ajouter aux nouveaux items
+                        newItems = [...newItems, ...newAlertItems.map(i => ({...i, alertId: alert.id}))];
+                        
+                        // Notification pour le premier item
+                        const first = newAlertItems[0];
+                        sendNotification(
+                            `🔥 ${newAlertItems.length} nouvelle(s) offre(s) !`,
+                            `${first.title} - ${first.price}€`,
+                            first.url
+                        );
+                        
+                        // Update alert stats
+                        alert.lastFound = newAlertItems.length;
+                        alert.lastCheck = new Date().toISOString();
+                    }
+                    
+                    // Petit délai entre les requêtes
+                    await new Promise(r => setTimeout(r, 1000));
+                    
+                } catch (e) {
+                    console.error('Erreur check alert:', e);
+                }
+            }
+            
+            if (totalNewItems > 0) {
+                showNewItemsBar(totalNewItems);
+                updateBadge(totalNewItems);
+            }
+            
+            saveAlerts();
+            renderAlerts();
+            updateNextCheckTime();
+            document.getElementById('loadingText').textContent = 'Scan en cours sur Vinted...';
+        }
+
+        function showNewItemsBar(count) {
+            const bar = document.getElementById('newItemsBar');
+            document.getElementById('newItemsCount').textContent = count;
+            bar.classList.add('active');
+        }
+
+        function showNewItems() {
+            document.getElementById('newItemsBar').classList.remove('active');
+            
+            if (newItems.length > 0) {
+                searchResults = newItems;
+                renderResults(newItems, true);
+                updateStats(newItems);
+                newItems = [];
+                updateBadge(0);
+            }
+        }
+
+        function updateBadge(count) {
+            const badge = document.getElementById('newAlertsBadge');
+            if (count > 0) {
+                badge.textContent = count;
+                badge.style.display = 'block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
 
         // ============================================
         // SERVER STATUS
@@ -474,7 +811,7 @@
         // ============================================
         async function searchVinted() {
             if (!keywords.length) return showToast('Ajoutez au moins un mot-clé', 'alert');
-            if (!serverConnected) return showToast('Serveur non connecté! Clique sur ⚙️ Config', 'error');
+            if (!serverConnected) return showToast('Serveur non connecté!', 'error');
 
             const loading = document.getElementById('loading');
             const grid = document.getElementById('resultsGrid');
@@ -518,7 +855,7 @@
             document.getElementById('minPriceStat').textContent = prices.length ? Math.min(...prices).toFixed(0) + '€' : '0€';
         }
 
-        function renderResults(items) {
+        function renderResults(items, highlightNew = false) {
             const grid = document.getElementById('resultsGrid');
             if (!items.length) { grid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">😢</div><p>Aucun résultat</p></div>`; return; }
             const prices = items.map(i => parseFloat(i.price)).filter(p => !isNaN(p));
@@ -526,8 +863,9 @@
             grid.innerHTML = items.map((item, i) => {
                 const price = parseFloat(item.price);
                 const isHot = price < avgPrice * 0.6;
+                const isNew = highlightNew;
                 return `
-                    <div class="product-card ${isHot ? 'hot' : ''}" style="animation-delay: ${i * 0.05}s">
+                    <div class="product-card ${isHot ? 'hot' : ''} ${isNew ? 'new-item' : ''}" style="animation-delay: ${i * 0.05}s">
                         <div class="product-image">
                             <img src="${item.photo_url || 'https://via.placeholder.com/400'}" alt="${item.title}" loading="lazy" onerror="this.src='https://via.placeholder.com/400'">
                             <div class="product-overlay"><span class="product-price">${item.price}€</span></div>
@@ -558,7 +896,8 @@
             const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
             if (type === 'hot') filtered = filtered.filter(i => parseFloat(i.price) < avgPrice * 0.6);
             if (type === 'cheap') filtered = filtered.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-            renderResults(filtered);
+            if (type === 'new') filtered = newItems.length ? newItems : filtered;
+            renderResults(filtered, type === 'new');
         }
 
         function copyLink(url) { navigator.clipboard.writeText(url); showToast('Lien copié!'); }
@@ -568,34 +907,67 @@
         // ============================================
         function createAlert() {
             if (!keywords.length) return showToast('Ajoutez des mots-clés', 'alert');
-            alerts.push({
+            
+            const alert = {
                 id: Date.now(),
                 keywords: [...keywords],
                 maxPrice: document.getElementById('maxPrice').value,
                 minPrice: document.getElementById('minPrice').value,
                 category: document.getElementById('category').value,
                 condition: document.getElementById('condition').value,
-                createdAt: new Date().toISOString()
-            });
-            saveAlerts(); renderAlerts();
+                createdAt: new Date().toISOString(),
+                lastCheck: null,
+                lastFound: 0
+            };
+            
+            alerts.push(alert);
+            saveAlerts();
+            renderAlerts();
             showToast('🔔 Alerte créée!');
+            
+            // Activer le checker si pas déjà actif
+            if (alertsEnabled) {
+                startAlertChecker();
+            }
         }
 
         function renderAlerts() {
             const container = document.getElementById('alertsList');
             document.getElementById('alertCount').textContent = alerts.length;
-            if (!alerts.length) { container.innerHTML = `<div class="empty-state" style="padding: 2rem;"><p>Aucune alerte</p></div>`; return; }
+            
+            if (!alerts.length) { 
+                container.innerHTML = `<div class="empty-state" style="padding: 2rem;"><p>Aucune alerte configurée</p></div>`; 
+                return; 
+            }
+            
             container.innerHTML = alerts.map(a => `
                 <div class="alert-item">
-                    <div>
+                    <div class="alert-info">
                         <span class="alert-keywords">${a.keywords.join(', ')}</span>
-                        ${a.maxPrice ? `<span class="alert-price"> | Max: ${a.maxPrice}€</span>` : ''}
+                        <span class="alert-price">
+                            ${a.maxPrice ? `Max: ${a.maxPrice}€` : ''}
+                            ${a.minPrice ? ` | Min: ${a.minPrice}€` : ''}
+                        </span>
+                        <span class="alert-stats">
+                            ${a.lastCheck ? `Dernier check: ${new Date(a.lastCheck).toLocaleTimeString()}` : 'Jamais vérifié'}
+                            ${a.lastFound ? ` | ${a.lastFound} trouvé(s)` : ''}
+                        </span>
                     </div>
-                    <span class="alert-delete" onclick="deleteAlert(${a.id})">🗑️</span>
+                    <div class="alert-actions">
+                        <span class="alert-delete" onclick="deleteAlert(${a.id})">🗑️</span>
+                    </div>
                 </div>`).join('');
         }
 
-        function deleteAlert(id) { alerts = alerts.filter(a => a.id !== id); saveAlerts(); renderAlerts(); showToast('Alerte supprimée'); }
+        function deleteAlert(id) { 
+            alerts = alerts.filter(a => a.id !== id); 
+            delete seenItems[`alert_${id}`];
+            localStorage.setItem('vintedSeenItems', JSON.stringify(seenItems));
+            saveAlerts(); 
+            renderAlerts(); 
+            showToast('Alerte supprimée'); 
+        }
+        
         function saveAlerts() { localStorage.setItem('vintedAlerts', JSON.stringify(alerts)); }
 
         // ============================================
