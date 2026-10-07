@@ -61,7 +61,8 @@ Sur la page, vous pouvez :
 - les trier (plus récentes, meilleur multiplicateur, plus gros bénéfice) et les filtrer par marque ou par ville ;
 - marquer une affaire **Achetée** ou **Ignorée**, ce qui alimente le compteur de bénéfice ;
 - l'onglet « Toutes » montre aussi les annonces qui correspondent à une règle mais ne sont pas assez rentables ;
-- **tester une annonce à la main** : collez un titre et un prix.
+- **tester une annonce à la main** : collez un titre et un prix ;
+- **🔔 Activer les alertes** : une notification Windows et un son à chaque nouvelle bonne affaire, plus un compteur dans le titre de l'onglet. Il suffit que la page reste ouverte, même en arrière-plan. Telegram n'est plus nécessaire.
 
 La page se met à jour toute seule chaque minute.
 

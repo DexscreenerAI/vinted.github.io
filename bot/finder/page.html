@@ -46,6 +46,12 @@
   .tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
   @keyframes arrive { from { box-shadow: 0 0 0 3px var(--accent); } to { box-shadow: var(--shadow); } }
   .deal.arrived { animation: arrive 2.5s ease-out; }
+  .btn.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  #toasts { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 10;
+            max-width: min(360px, calc(100vw - 32px)); }
+  .toast { background: var(--card); border: 1px solid var(--accent); border-radius: 12px; padding: 10px 14px; box-shadow: 0 6px 20px rgba(0,0,0,.15);
+           color: var(--text); text-decoration: none; font-size: 14px; animation: arrive 2.5s ease-out; }
+  .toast b { color: var(--accent); }
 
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 12px; }
   .deal { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column; }
@@ -116,6 +122,7 @@
     <h1>Bonnes affaires Leboncoin → Vinted</h1>
     <div class="hbtns">
       <button class="btn" id="openConfig" hidden title="Ouvre config.yaml dans le Bloc-notes">Mes niches &amp; prix</button>
+      <button class="btn" id="notifBtn" title="Notification Windows + son à chaque nouvelle bonne affaire">🔔 Activer les alertes</button>
       <button class="btn" id="openSettings">Réglages</button>
     </div>
   </header>
@@ -160,6 +167,7 @@
   <div class="grid" id="grid"></div>
 </div>
 
+<div id="toasts"></div>
 <dialog id="settings">
   <form id="settingsForm" method="dialog">
     <h2>Réglages</h2>
@@ -376,6 +384,74 @@ fetch('/api/settings').then(r => r.ok ? r.json() : null).then(d => {
   openConfig.hidden = !d.can_open_config;
   if (!d.IMAP_HOST) openSettingsDialog();
 });
+
+// ---- Alertes : notification Windows + son + compteur dans l'onglet (page ouverte, même en arrière-plan) ----
+const store = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } },
+                set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+let alertsOn = store.get('alerts') === '1', knownGood = null, unseen = 0, audio = null;
+const baseTitle = document.title;
+
+function refreshNotifBtn() {
+  notifBtn.textContent = alertsOn ? '🔔 Alertes activées' : '🔔 Activer les alertes';
+  notifBtn.classList.toggle('on', alertsOn);
+}
+function beep() {
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    [880, 1320].forEach((f, i) => {
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.frequency.value = f; o.connect(g); g.connect(audio.destination);
+      const t = audio.currentTime + i * 0.16;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+      o.start(t); o.stop(t + 0.16);
+    });
+  } catch (e) {}
+}
+function toast(d) {
+  const a = document.createElement('a');
+  a.className = 'toast'; a.href = d.url || '#'; a.target = '_blank'; a.rel = 'noopener';
+  a.innerHTML = `🔥 <b>x${d.ratio.toFixed(1)} · +${euro(d.net_profit)}</b><br>${esc(d.title)}`;
+  toasts.prepend(a);
+  setTimeout(() => a.remove(), 20000);
+}
+function announce(d) {
+  toast(d);
+  if (!alertsOn) return;
+  if ('Notification' in window && Notification.permission === 'granted') {
+    const n = new Notification(`🔥 x${d.ratio.toFixed(1)} · bénéfice ≈ ${euro(d.net_profit)}`, {
+      body: `${d.title}\n${euro(d.price)} sur Leboncoin · ${d.category || ''}`,
+      icon: d.image || undefined, tag: d.key });
+    n.onclick = () => { window.focus(); if (d.url) window.open(d.url, '_blank'); n.close(); };
+  }
+}
+async function checkNew() {
+  try {
+    const data = await (await fetch('/api/deals?view=bonnes')).json();
+    const keys = new Set(data.deals.map(d => d.key));
+    if (knownGood) {
+      const fresh = data.deals.filter(d => !knownGood.has(d.key));
+      fresh.slice(0, 5).forEach(announce);
+      if (fresh.length) {
+        if (alertsOn) beep();
+        if (document.hidden) { unseen += fresh.length; document.title = `(${unseen}) ${baseTitle}`; }
+      }
+    }
+    knownGood = keys;
+  } catch (e) {}
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { unseen = 0; document.title = baseTitle; } });
+notifBtn.addEventListener('click', async () => {
+  if (alertsOn) { alertsOn = false; store.set('alerts', '0'); refreshNotifBtn(); return; }
+  if ('Notification' in window && Notification.permission !== 'granted') {
+    const p = await Notification.requestPermission();
+    if (p !== 'granted') alert("Les notifications sont bloquées par le navigateur : seuls le son et l'encadré dans la page fonctionneront.");
+  }
+  alertsOn = true; store.set('alerts', '1'); refreshNotifBtn(); beep();
+});
+refreshNotifBtn();
+checkNew();
+setInterval(checkNew, 15000);
 
 load();
 setInterval(load, 15000);
