@@ -94,7 +94,10 @@ def evaluate(listing: Listing, rule: Rule, cfg: Config, hand_delivery: Optional[
             notes.append(f"nombre de pièces inconnu, estimé à {pieces}")
     sold = max(1, round(pieces * (rule.sellable_rate if rule.lot else 1)))
 
-    buy_cost = price if hand else price + c.buy_fee_fixed + c.buy_fee_rate * price + c.buy_shipping
+    if listing.buy_cost is not None:  # coût fourni par la source (eBay : port, enchères : frais acheteur…)
+        buy_cost = listing.buy_cost
+    else:
+        buy_cost = price if hand else price + c.buy_fee_fixed + c.buy_fee_rate * price + c.buy_shipping
     est_resale = rule.ref_price * c.resale_discount * sold
     net_profit = est_resale * (1 - c.tax_rate) - c.packaging * sold - buy_cost
     ratio = est_resale / buy_cost if buy_cost > 0 else float("inf")

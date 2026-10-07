@@ -13,6 +13,7 @@ class Listing:
     location: str = ""
     source: str = "leboncoin"   # leboncoin, ebay, interencheres, kleinanzeigen…
     ends_at: str = ""           # fin d'enchère (ISO 8601, UTC) si c'est une enchère
+    buy_cost: Optional[float] = None  # coût d'achat total connu (prix + port + frais) ; None = calcul Leboncoin
 
     @property
     def key(self) -> str:
