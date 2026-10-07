@@ -13,10 +13,12 @@ from urllib.parse import parse_qs, urlparse
 
 from .email_source import test_login
 from .models import Listing
+from .sales import set_ref_price
 from .scoring import Config, find_deals, is_good, reload_if_changed
 from .store import Seen
 
 PAGE = Path(__file__).with_name("page.html")
+MIN_SALES_FOR_REF = 3  # ventes nécessaires avant de proposer « Mettre à jour la cote »
 
 # Réglages modifiables depuis la page (enregistrés dans .env)
 SETTINGS = ("IMAP_HOST", "IMAP_USER", "IMAP_PASSWORD", "EBAY_CLIENT_ID", "EBAY_CLIENT_SECRET",
@@ -119,6 +121,73 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
             except ValueError:
                 return {}
 
+        def _sales_payload(self) -> dict:
+            if config_path:
+                try:
+                    reload_if_changed(cfg, config_path)
+                except Exception:
+                    pass  # erreur de config déjà signalée par la boucle principale
+            c = cfg.costs
+            refs = {r.name: r.ref_price for r in cfg.rules}
+            return {
+                "sales": seen.sales(c.tax_rate, c.packaging),
+                "stats": seen.sale_stats(c.tax_rate, c.packaging, refs),
+                "rules": [{"name": r.name, "category": r.category, "lot": r.lot} for r in cfg.rules],
+                "costs": {"tax_rate": c.tax_rate, "packaging": c.packaging},
+                "min_sales": MIN_SALES_FOR_REF,
+                "can_edit": self._admin(),
+                "can_update_ref": bool(config_path),
+            }
+
+        def _record_sale(self, data: dict) -> None:
+            try:
+                sale_price = float(data["sale_price"])
+                fees = float(data.get("fees") or 0)
+                pieces = int(data["pieces"]) if data.get("pieces") else None
+            except (KeyError, ValueError, TypeError):
+                self._json({"ok": False, "error": "prix de vente requis"}, 400)
+                return
+            if sale_price < 0 or fees < 0 or (pieces is not None and pieces < 1):
+                self._json({"ok": False, "error": "valeurs invalides"}, 400)
+                return
+            if data.get("key"):  # vente d'une affaire achetée via la page
+                sale_id = seen.sell_deal(str(data["key"]), sale_price, fees, pieces)
+                if sale_id is None:
+                    self._json({"ok": False, "error": "affaire introuvable"}, 404)
+                    return
+                self._json({"ok": True, "id": sale_id})
+                return
+            rules = {r.name: r for r in cfg.rules}
+            title = str(data.get("title", "")).strip()
+            rule = rules.get(str(data.get("rule", "")))
+            try:
+                buy_price = float(data["buy_price"])
+            except (KeyError, ValueError, TypeError):
+                buy_price = -1
+            if not title or rule is None or buy_price < 0:
+                self._json({"ok": False, "error": "titre, règle et prix d'achat requis"}, 400)
+                return
+            sale_id = seen.add_sale(rule.name, title, buy_price, sale_price, fees, rule.category, pieces=pieces or 1)
+            self._json({"ok": True, "id": sale_id})
+
+        def _update_ref_price(self, data: dict) -> None:
+            rule = str(data.get("rule", ""))
+            if not config_path:
+                self._json({"ok": False, "error": "config.yaml inconnu"}, 400)
+                return
+            found = seen.rule_median(rule)
+            if not found or found[0] < MIN_SALES_FOR_REF:
+                self._json({"ok": False, "error": f"il faut au moins {MIN_SALES_FOR_REF} ventes"}, 400)
+                return
+            value = round(found[1])  # médiane arrondie à l'euro, calculée ici (pas envoyée par la page)
+            try:
+                old = set_ref_price(config_path, rule, value)
+                reload_if_changed(cfg, config_path)
+            except (OSError, ValueError) as e:
+                self._json({"ok": False, "error": str(e)}, 400)
+                return
+            self._json({"ok": True, "rule": rule, "old": old, "ref_price": value})
+
         def do_GET(self):
             if not self._guard():
                 return
@@ -128,6 +197,8 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
             elif url.path == "/api/deals":
                 view = parse_qs(url.query).get("view", ["bonnes"])[0]
                 self._json({"stats": seen.stats(), "deals": seen.deals(view), "status": seen.status})
+            elif url.path == "/api/sales":
+                self._json(self._sales_payload())
             elif url.path == "/api/settings":
                 if not self._admin_guard():
                     return
@@ -162,8 +233,19 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
                      "notes": d.notes, "good": is_good(d, rules[d.rule_name], cfg)}
                     for d in deals
                 ])
-            elif self.path in ("/api/settings", "/api/test-email", "/api/open-config") and not self._admin_guard():
+            elif self.path in ("/api/settings", "/api/test-email", "/api/open-config", "/api/sales",
+                               "/api/sales/delete", "/api/ref-price") and not self._admin_guard():
                 return
+            elif self.path == "/api/sales":
+                self._record_sale(data)
+            elif self.path == "/api/sales/delete":
+                try:
+                    ok = seen.delete_sale(int(data.get("id")))
+                except (TypeError, ValueError):
+                    ok = False
+                self._json({"ok": ok}, 200 if ok else 404)
+            elif self.path == "/api/ref-price":
+                self._update_ref_price(data)
             elif self.path == "/api/settings":
                 values = {}
                 for k in SETTINGS:
