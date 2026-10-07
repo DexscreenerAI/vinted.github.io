@@ -1,0 +1,88 @@
+# Copiez ce fichier en config.yaml puis ajustez les prix avec VOS ventes réelles.
+#
+# ref_price = prix auquel l'article se vend habituellement sur Vinted (par pièce pour un lot).
+# Les valeurs ci-dessous sont des ordres de grandeur issus de l'étude (docs/etude-niches-arbitrage.md),
+# volontairement prudents : remplacez-les dès que vous avez vos propres chiffres.
+
+min_ratio: 2.5        # multiplicateur minimum : revente estimée / coût d'achat
+min_profit: 15        # bénéfice net minimum en euros (après cotisations, impôt, emballage)
+hand_delivery: false  # false = on compte les frais d'achat sécurisé + port Leboncoin (prudent)
+
+costs:
+  buy_fee_fixed: 0.70
+  buy_fee_rate: 0.05
+  buy_shipping: 3.50
+  packaging: 0.50
+  resale_discount: 0.85   # les prix affichés sur Vinted sont plus hauts que les prix réellement vendus
+  tax_rate: 0.134         # micro-entreprise : URSSAF 12,3 % + 0,1 % + versement libératoire 1 %
+
+# Mots qui excluent une annonce, quelle que soit la règle.
+exclude: [replica, copie, contrefacon, imitation, inspire, "style carhartt", "type carhartt", "facon", "recherche", "echange", "cherche"]
+
+rules:
+  # --- Niche 1 : workwear / streetwear vintage homme ---
+  - name: Carhartt Detroit / Active jacket
+    all: [carhartt]
+    any: [detroit, active, chore, santa fe, "michigan"]
+    ref_price: 85
+    max_buy: 45
+
+  - name: Carhartt (autres pièces)
+    all: [carhartt]
+    none: [detroit, active, chore, "t-shirt", tshirt, bonnet, lot]
+    ref_price: 40
+    max_buy: 15
+
+  - name: The North Face Nuptse / doudoune 700
+    all: ["north face"]
+    any: [nuptse, "700", doudoune, himalayan]
+    ref_price: 110
+    max_buy: 50
+
+  - name: Levi's 501 (pièce)
+    any: ["levis 501", "levi's 501", "501 levis", "501 levi's"]
+    none: [lot]
+    ref_price: 35
+    max_buy: 12
+
+  - name: Ralph Lauren (pièce)
+    any: ["ralph lauren", "polo ralph", "rrl"]
+    none: [lot, enfant, bebe, fille, garcon]
+    ref_price: 35
+    max_buy: 12
+
+  # --- Lots à séparer (prix ref = par pièce, nombre de pièces lu dans le titre) ---
+  - name: Lot vêtements marque homme
+    all: [lot]
+    any: ["ralph lauren", carhartt, "levis", "levi's", "tommy hilfiger", lacoste, "north face", patagonia, "stone island"]
+    none: [enfant, bebe, fille, garcon, femme]
+    lot: true
+    ref_price: 25
+    default_pieces: 5
+    sellable_rate: 0.65
+
+  # --- Niche 2 : lots vêtements enfant de marque ---
+  - name: Lot enfant de marque
+    all: [lot]
+    any: ["petit bateau", jacadi, bonpoint, "tartine et chocolat", "cyrillus", "bonton"]
+    lot: true
+    ref_price: 7
+    default_pieces: 8
+    sellable_rate: 0.75
+    min_profit: 10
+
+  # --- Niche 3 : rétro gaming ---
+  - name: Pack console rétro + jeux
+    any: [snes, "super nintendo", "nes", "game boy", gameboy, n64, "nintendo 64", gamecube, "megadrive", "mega drive", "dreamcast", "ps1", "playstation 1"]
+    none: [mini, classic, "jeu seul", reproduction, repro]
+    ref_price: 180
+    max_buy: 150
+    min_profit: 40
+
+  # --- Niche 4 : Pokémon anciens ---
+  - name: Classeur / lot Pokémon ancien
+    all: [pokemon]
+    any: [classeur, "1ere edition", "premiere edition", wizards, "set de base", "1999", "2000"]
+    ref_price: 120
+    max_buy: 60
+    min_profit: 30

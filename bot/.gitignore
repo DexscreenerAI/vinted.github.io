@@ -1,0 +1,4 @@
+config.yaml
+.env
+*.db
+__pycache__/

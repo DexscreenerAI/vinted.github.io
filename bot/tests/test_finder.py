@@ -1,0 +1,68 @@
+import unittest
+from pathlib import Path
+
+import yaml
+
+from finder.email_source import parse_alert_html
+from finder.models import Listing
+from finder.scoring import Config, find_deals
+from finder.text import lot_size, parse_price
+
+ROOT = Path(__file__).resolve().parent.parent
+CFG = Config.from_dict(yaml.safe_load((ROOT / "config.example.yaml").read_text(encoding="utf-8")))
+
+
+class TextTest(unittest.TestCase):
+    def test_parse_price(self):
+        self.assertEqual(parse_price("25 €"), 25)
+        self.assertEqual(parse_price("1 200 €"), 1200)
+        self.assertEqual(parse_price("35,50 €"), 35.5)
+        self.assertIsNone(parse_price("Lyon 69003"))
+
+    def test_lot_size(self):
+        self.assertEqual(lot_size("Lot de 12 polos Ralph Lauren"), 12)
+        self.assertEqual(lot_size("15 pulls homme"), 15)
+        self.assertIsNone(lot_size("Lot vêtements"))
+
+
+class ParseTest(unittest.TestCase):
+    def test_alert_email(self):
+        html = (ROOT / "tests/fixtures/alerte_lbc.html").read_text(encoding="utf-8")
+        listings = parse_alert_html(html)
+        self.assertEqual([l.price for l in listings], [25, 1200, 15])
+        first = listings[0]
+        self.assertEqual(first.title, "Veste Carhartt Detroit vintage marron")
+        self.assertEqual(first.key, "2876543210")
+        self.assertEqual(first.image, "https://img.leboncoin.fr/1.jpg")
+        self.assertEqual(first.location, "Lyon 69003")
+        self.assertEqual(listings[1].title, "Lot de 12 polos Ralph Lauren homme")
+
+
+class ScoringTest(unittest.TestCase):
+    def test_good_deal(self):
+        deals = find_deals(Listing("Veste Carhartt Detroit vintage", 20), CFG)
+        self.assertEqual(deals[0].rule_name, "Carhartt Detroit / Active jacket")
+        self.assertGreaterEqual(deals[0].ratio, 2.5)
+
+    def test_too_expensive(self):
+        self.assertEqual(find_deals(Listing("Veste Carhartt Detroit", 60), CFG), [])
+
+    def test_excluded_fake(self):
+        self.assertEqual(find_deals(Listing("Veste style carhartt detroit", 15), CFG, only_good=False), [])
+
+    def test_lot_uses_piece_count(self):
+        deal = find_deals(Listing("Lot de 12 polos Ralph Lauren homme", 40), CFG)[0]
+        self.assertEqual(deal.pieces, 8)  # 12 x 65 % vendables
+        self.assertGreater(deal.net_profit, 90)
+
+    def test_hand_delivery_has_no_fees(self):
+        CFG.hand_delivery = True
+        try:
+            deal = find_deals(Listing("Veste Carhartt Detroit", 20), CFG)[0]
+        finally:
+            CFG.hand_delivery = False
+        self.assertEqual(deal.buy_cost, 20)
+
+
+if __name__ == "__main__":
+    unittest.main()
