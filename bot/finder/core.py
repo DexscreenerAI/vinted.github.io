@@ -76,7 +76,10 @@ def import_listings(items: list, source: str, cfg: Config, seen: Seen) -> dict:
         if seen.add(listing.key, listing.title, listing.price):
             seen.save_deal(deal, good)
             if good:
-                send(deal)
+                try:
+                    send(deal)
+                except Exception as e:  # une notification ratée ne doit pas bloquer l'analyse
+                    print(f"[notification] {e}", file=sys.stderr)
         results.append({"title": title, "price": price, "url": listing.url, "image": listing.image,
                         "rule": deal.rule_name, "category": deal.category, "ratio": deal.ratio,
                         "net_profit": deal.net_profit, "buy_cost": deal.buy_cost, "est_resale": deal.est_resale,

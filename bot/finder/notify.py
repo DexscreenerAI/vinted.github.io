@@ -1,6 +1,7 @@
 import html
 import json
 import os
+import sys
 import urllib.request
 
 from .models import Deal
@@ -31,7 +32,12 @@ def send(deal: Deal) -> None:
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID")
     if not (token and chat_id):
-        print(text.replace("<b>", "").replace("</b>", ""), end="\n\n")
+        plain = text.replace("<b>", "").replace("</b>", "")
+        try:
+            print(plain, end="\n\n")
+        except UnicodeEncodeError:  # console Windows sans emojis (cp1252)
+            enc = getattr(sys.stdout, "encoding", None) or "ascii"
+            print(plain.encode(enc, errors="replace").decode(enc), end="\n\n")
         return
     body = json.dumps({"chat_id": chat_id, "text": text, "parse_mode": "HTML"}).encode()
     req = urllib.request.Request(

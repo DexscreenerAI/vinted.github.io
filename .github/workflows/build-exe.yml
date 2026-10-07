@@ -37,6 +37,13 @@ jobs:
           --add-data "extension;extension"
           lancer.py
 
+      - name: Zipper l'extension Chrome
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist/chasseur-extension | Out-Null
+          Copy-Item extension/* dist/chasseur-extension/
+          Compress-Archive -Path dist/chasseur-extension -DestinationPath dist/chasseur-extension.zip -Force
+
       - uses: actions/upload-artifact@v4
         with:
           name: ChasseurAffaires
@@ -49,7 +56,9 @@ jobs:
           name: Chasseur d'affaires v${{ github.run_number }}
           target_commitish: ${{ github.sha }}
           make_latest: true
-          files: bot/dist/ChasseurAffaires.exe
+          files: |
+            bot/dist/ChasseurAffaires.exe
+            bot/dist/chasseur-extension.zip
           body: |
             **Télécharger :** `ChasseurAffaires.exe` ci-dessous.
 
@@ -59,3 +68,5 @@ jobs:
             4. Laissez la fenêtre noire ouverte pendant que le bot tourne.
 
             Vos fichiers (`config.yaml`, `.env`, `finder.db`) sont créés dans le même dossier que le .exe.
+
+            **Extension Chrome (analyse automatique des pages Leboncoin / Vinted / eBay) :** téléchargez `chasseur-extension.zip`, extrayez-le, puis `chrome://extensions` → Mode développeur → « Charger l'extension non empaquetée » → dossier `chasseur-extension`.
