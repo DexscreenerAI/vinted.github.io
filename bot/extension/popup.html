@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+  body { width: 300px; margin: 0; padding: 14px; font: 13px/1.45 system-ui, sans-serif; color: #1d1d1b; background: #fff; }
+  @media (prefers-color-scheme: dark) { body { background: #1e1e1c; color: #ecece8; } .muted { color: #9b9b94 !important; } }
+  h1 { font-size: 15px; margin: 0 0 10px; }
+  .row { display: flex; gap: 8px; align-items: baseline; margin: 6px 0; }
+  .muted { color: #6b6b66; }
+  .ok { color: #0a7f6f; font-weight: 600; } .ko { color: #b4540a; font-weight: 600; }
+  button { font: inherit; width: 100%; margin-top: 8px; padding: 8px; border-radius: 8px; border: 1px solid #d0d0ca;
+           background: #f6f6f3; color: #1d1d1b; cursor: pointer; }
+  button.primary { background: #0a7f6f; border-color: #0a7f6f; color: #fff; font-weight: 600; }
+  #msg { margin-top: 8px; min-height: 1em; }
+</style>
+</head>
+<body>
+  <h1>Chasseur d'affaires</h1>
+  <div class="row"><span class="muted">Logiciel :</span><span id="bot">vérification…</span></div>
+  <div class="row"><span class="muted">Cette page :</span><span id="page">—</span></div>
+  <button class="primary" id="scan">Analyser cette page maintenant</button>
+  <button id="open">Ouvrir le logiciel</button>
+  <button id="diag">Copier le diagnostic</button>
+  <div id="msg" class="muted"></div>
+  <script src="popup.js"></script>
+</body>
+</html>

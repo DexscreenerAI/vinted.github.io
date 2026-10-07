@@ -212,6 +212,8 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
                 from .core import SOURCES
                 status = dict(seen.status, configured=[name for name, ok, _ in SOURCES if ok()])
                 self._json({"stats": seen.stats(), "deals": seen.deals(view), "status": status})
+            elif url.path == "/api/ping":
+                self._json({"ok": True, "app": "chasseur"})
             elif url.path == "/extension.zip":
                 body = extension_zip()
                 self.send_response(200)
