@@ -21,6 +21,7 @@ class Costs:
 class Rule:
     name: str
     ref_price: float                # prix de revente Vinted habituel (par pièce si lot)
+    category: str = "Autre"
     all: List = field(default_factory=list)        # tous ces mots doivent être présents ([a, b] = a ou b)
     any: List[str] = field(default_factory=list)   # au moins un de ces mots
     none: List[str] = field(default_factory=list)  # aucun de ces mots
@@ -102,7 +103,7 @@ def evaluate(listing: Listing, rule: Rule, cfg: Config, hand_delivery: Optional[
         notes.append(f"au-dessus du prix max ({rule.max_buy:.0f} €)")
 
     return Deal(listing, rule.name, sold, round(buy_cost, 2), round(est_resale, 2),
-                round(net_profit, 2), round(ratio, 2), notes)
+                round(net_profit, 2), round(ratio, 2), notes, rule.category)
 
 
 def is_good(deal: Deal, rule: Rule, cfg: Config) -> bool:

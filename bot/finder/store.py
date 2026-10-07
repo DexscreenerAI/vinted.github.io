@@ -27,6 +27,10 @@ class Seen:
                 found_at TEXT DEFAULT (datetime('now', 'localtime')));
             """
         )
+        cols = {r[1] for r in self.db.execute("PRAGMA table_info(deals)")}
+        if "category" not in cols:  # base créée par une version précédente
+            self.db.execute("ALTER TABLE deals ADD COLUMN category TEXT DEFAULT 'Autre'")
+            self.db.commit()
 
     def add(self, key: str, title: str, price) -> bool:
         """True si l'annonce est nouvelle."""
@@ -42,11 +46,11 @@ class Seen:
         with self.lock:
             self.db.execute(
                 "INSERT OR REPLACE INTO deals (key, title, price, url, image, location, rule, pieces,"
-                " buy_cost, est_resale, net_profit, ratio, good, notes)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                " buy_cost, est_resale, net_profit, ratio, good, notes, category)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (l.key, l.title, l.price, l.url, l.image, l.location, deal.rule_name, deal.pieces,
                  deal.buy_cost, deal.est_resale, deal.net_profit, deal.ratio, int(good),
-                 json.dumps(deal.notes, ensure_ascii=False)),
+                 json.dumps(deal.notes, ensure_ascii=False), deal.category),
             )
             self.db.commit()
 

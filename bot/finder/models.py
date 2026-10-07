@@ -32,3 +32,4 @@ class Deal:
     net_profit: float        # après cotisations / impôt / emballage
     ratio: float             # multiplicateur = revente estimée / coût d'achat
     notes: list = field(default_factory=list)
+    category: str = "Autre"

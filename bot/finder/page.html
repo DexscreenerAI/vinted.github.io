@@ -36,6 +36,16 @@
   .tabs button.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
   select, input { font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
   .grow { flex: 1; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin: -4px 0 14px; }
+  .chips button { font: inherit; font-size: 13px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line);
+                  background: var(--card); color: var(--muted); cursor: pointer; }
+  .chips button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .chips small { opacity: .75; margin-left: 3px; }
+  .cathead { grid-column: 1 / -1; margin: 10px 0 0; font-size: 15px; display: flex; gap: 8px; align-items: baseline; }
+  .cathead span { color: var(--muted); font-weight: normal; font-size: 13px; }
+  .tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+  @keyframes arrive { from { box-shadow: 0 0 0 3px var(--accent); } to { box-shadow: var(--shadow); } }
+  .deal.arrived { animation: arrive 2.5s ease-out; }
 
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 12px; }
   .deal { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column; }
@@ -139,11 +149,13 @@
     </div>
     <input class="grow" id="search" placeholder="Filtrer (marque, règle, ville…)">
     <select id="sort">
-      <option value="date">Plus récentes</option>
+      <option value="profit">Plus rentables (bénéfice)</option>
       <option value="ratio">Meilleur multiplicateur</option>
-      <option value="profit">Plus gros bénéfice</option>
+      <option value="category">Par catégorie</option>
+      <option value="date">Plus récentes</option>
     </select>
   </div>
+  <div class="chips" id="chips"></div>
 
   <div class="grid" id="grid"></div>
 </div>
@@ -178,13 +190,16 @@
 <script>
 const euro = n => (n ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' €';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-let view = 'bonnes', deals = [];
+let view = 'bonnes', deals = [], category = '', known = null, arrived = new Set();
 
 async function load() {
   try {
     const r = await fetch('/api/deals?view=' + view);
     const data = await r.json();
     deals = data.deals;
+    const keys = new Set(deals.map(d => d.key));
+    if (known) deals.forEach(d => { if (!known.has(d.key)) arrived.add(d.key); });
+    known = keys;
     renderStatus(data.status);
     const s = data.stats;
     sBonnes.textContent = s.bonnes;
@@ -193,6 +208,7 @@ async function load() {
     sProfit.textContent = euro(s.profit_achetes);
     updated.textContent = s.annonces_lues + ' annonces analysées · mis à jour ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     render();
+    if (arrived.size) setTimeout(() => arrived.clear(), 3000);
   } catch (e) {
     updated.textContent = 'Connexion au bot perdue…';
   }
@@ -207,24 +223,44 @@ function ago(ts) {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
 
+function renderChips() {
+  const counts = {};
+  deals.forEach(d => { const c = d.category || 'Autre'; counts[c] = (counts[c] || 0) + 1; });
+  if (category && !counts[category]) category = '';
+  const cats = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+  chips.innerHTML = cats.length < 2 ? '' :
+    `<button data-cat="" class="${category ? '' : 'on'}">Toutes<small>${deals.length}</small></button>` +
+    cats.map(c => `<button data-cat="${esc(c)}" class="${c === category ? 'on' : ''}">${esc(c)}<small>${counts[c]}</small></button>`).join('');
+}
+
 function render() {
+  renderChips();
   const q = search.value.trim().toLowerCase();
-  let list = deals.filter(d => !q || [d.title, d.rule, d.location].join(' ').toLowerCase().includes(q));
+  let list = deals.filter(d => (!category || (d.category || 'Autre') === category) &&
+    (!q || [d.title, d.rule, d.location, d.category].join(' ').toLowerCase().includes(q)));
   const key = sort.value;
   if (key === 'ratio') list.sort((a, b) => b.ratio - a.ratio);
-  if (key === 'profit') list.sort((a, b) => b.net_profit - a.net_profit);
+  if (key === 'profit' || key === 'category') list.sort((a, b) => b.net_profit - a.net_profit);
+  if (key === 'category') list.sort((a, b) => (a.category || 'Autre').localeCompare(b.category || 'Autre'));
 
   if (!list.length) {
     grid.innerHTML = '<div class="empty" style="grid-column:1/-1">' +
       (view === 'bonnes' ? "Aucune bonne affaire pour l'instant. Le bot vérifie les alertes Leboncoin en continu." : 'Rien ici.') + '</div>';
     return;
   }
+  let lastCat = null;
   grid.innerHTML = list.map(d => {
+    let head = '';
+    if (key === 'category' && (d.category || 'Autre') !== lastCat) {
+      lastCat = d.category || 'Autre';
+      const n = list.filter(x => (x.category || 'Autre') === lastCat).length;
+      head = `<h3 class="cathead">${esc(lastCat)} <span>${n} affaire${n > 1 ? 's' : ''}</span></h3>`;
+    }
     const fresh = (Date.now() - new Date(d.found_at.replace(' ', 'T'))) < 3600000;
     const btns = d.status === 'nouveau'
       ? `<button data-key="${esc(d.key)}" data-status="achete">Acheté</button><button data-key="${esc(d.key)}" data-status="ignore">Ignorer</button>`
       : `<button data-key="${esc(d.key)}" data-status="nouveau">Remettre</button>`;
-    return `<article class="deal ${d.good ? '' : 'weak'}">
+    return head + `<article class="deal ${d.good ? '' : 'weak'} ${arrived.has(d.key) ? 'arrived' : ''}">
       <div class="photo ${d.image ? '' : 'none'}">
         ${d.image ? `<img src="${esc(d.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}
         <span class="ratio">x${d.ratio.toFixed(1)}</span>
@@ -232,7 +268,7 @@ function render() {
       </div>
       <div class="body">
         <a class="title" href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.title)}</a>
-        <div class="meta">${esc(d.rule)}${d.location ? ' · ' + esc(d.location) : ''} · ${ago(d.found_at)}</div>
+        <div class="meta"><span class="tag">${esc(d.category || 'Autre')}</span> ${esc(d.rule)}${d.location ? ' · ' + esc(d.location) : ''} · ${ago(d.found_at)}</div>
         <div class="nums">
           <div><small>Prix LBC</small><b>${euro(d.price)}</b></div>
           <div><small>Revente estimée${d.pieces > 1 ? ' (' + d.pieces + ' p.)' : ''}</small><b>${euro(d.est_resale)}</b></div>
@@ -265,6 +301,12 @@ tabs.addEventListener('click', e => {
   load();
 });
 search.addEventListener('input', render);
+chips.addEventListener('click', e => {
+  const b = e.target.closest('button[data-cat]');
+  if (!b) return;
+  category = b.dataset.cat;
+  render();
+});
 sort.addEventListener('change', render);
 
 checkForm.addEventListener('submit', async e => {
@@ -324,7 +366,7 @@ function renderStatus(st) {
     banner.innerHTML = `<div class="banner warn"><span class="grow">⚠ ${esc(st.config_error || st.error)}</span>
       ${st.error && !st.config_error ? '<button class="btn" onclick="openSettingsDialog()">Ouvrir les réglages</button>' : ''}</div>`;
   } else if (st && st.last_check) {
-    banner.innerHTML = `<div class="banner ok">✓ Alertes email vérifiées à ${esc(st.last_check)} (toutes les 2 min)</div>`;
+    banner.innerHTML = `<div class="banner ok">✓ Alertes email vérifiées à ${esc(st.last_check)} (nouvelles affaires affichées automatiquement)</div>`;
   } else banner.innerHTML = '';
 }
 
@@ -336,7 +378,7 @@ fetch('/api/settings').then(r => r.ok ? r.json() : null).then(d => {
 });
 
 load();
-setInterval(load, 60000);
+setInterval(load, 15000);
 </script>
 </body>
 </html>
