@@ -29,6 +29,10 @@ jobs:
       - name: Tests
         run: python -m unittest discover -s tests
 
+      - name: Numéro de version
+        shell: pwsh
+        run: Set-Content -Encoding utf8 finder/_version.py 'VERSION = "v${{ github.run_number }}"'
+
       - name: Construire ChasseurAffaires.exe
         run: >
           pyinstaller --onefile --noconfirm --name ChasseurAffaires

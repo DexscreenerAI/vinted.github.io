@@ -77,6 +77,11 @@ def launch() -> int:
             pass
 
     _disable_quickedit()
+    try:
+        from ._version import VERSION
+    except ImportError:
+        VERSION = "dev"
+    print(f"Chasseur d'affaires {VERSION} : démarrage…", flush=True)
     running = _already_running()
     if running:
         print(f"Le logiciel est déjà lancé : ouverture de {running}")
@@ -90,13 +95,21 @@ def launch() -> int:
             shutil.copy(_bundled("config.example.yaml"), "config.yaml")
             print("config.yaml créé (vos niches et prix de revente).")
         else:
+            print("Vérification des règles…", flush=True)
             from .sales import upgrade_config
             if upgrade_config("config.yaml", str(_bundled("config.example.yaml"))):
                 print("Règles mises à jour (vos prix et réglages sont gardés, ancien fichier sauvegardé).")
         _install_extension_folder()
         load_env(".env")
         cfg = load_config("config.yaml")
-        seen = Seen("finder.db")
+        print(f"{len(cfg.rules)} règles chargées. Ouverture de la base…", flush=True)
+        try:
+            seen = Seen("finder.db")
+        except Exception as e:
+            if "locked" in str(e):
+                raise RuntimeError("finder.db est utilisé par un autre Chasseur d'affaires encore ouvert : fermez toutes "
+                                   "les fenêtres noires (ou ChasseurAffaires.exe dans le Gestionnaire des tâches) puis relancez.")
+            raise
         server = None
         for port in range(8000, 8020):
             try:
@@ -125,7 +138,7 @@ def launch() -> int:
         url = f"http://localhost:{server.server_address[1]}"
         print("=" * 60)
         print("  Chasseur d'affaires Leboncoin -> Vinted")
-        print(f"  Page des résultats : {url}")
+        print(f"  Version {VERSION} · page des résultats : {url}")
         print(f"  Dossier : {base}")
         print("  Laissez cette fenêtre ouverte. Fermez-la pour arrêter.")
         print("=" * 60)
