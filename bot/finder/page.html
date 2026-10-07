@@ -18,6 +18,7 @@
     }
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   body { margin: 0; background: var(--bg); color: var(--text);
          font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   .wrap { max-width: 1080px; margin: 0 auto; padding: 20px 16px 60px; }
@@ -110,6 +111,44 @@
   #checkResult { margin-top: 10px; font-size: 14px; }
   #checkResult .row { padding: 6px 0; border-top: 1px solid var(--line); }
 
+  /* ---- Mes ventes ---- */
+  .actions button.sell { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .sechead { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: 22px 0 10px; }
+  .sechead h2 { font-size: 17px; margin: 0; }
+  .sechead p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .tbl th { text-align: left; font-weight: 600; font-size: 12px; color: var(--muted); padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .tbl td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; font-variant-numeric: tabular-nums; }
+  .tbl tr:last-child td { border-bottom: 0; }
+  .tbl .num { text-align: right; white-space: nowrap; }
+  .tbl small { display: block; color: var(--muted); font-size: 12px; }
+  .tbl .btn { font-size: 13px; padding: 5px 10px; white-space: nowrap; }
+  .tbl .del { border: 0; background: none; color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer; padding: 2px 6px; }
+  .tbl .del:hover { color: var(--warn); }
+  .pos { color: var(--accent); font-weight: 600; }
+  .neg { color: var(--warn); font-weight: 600; }
+  .muted { color: var(--muted); }
+  #salesMsg { font-size: 14px; min-height: 1.2em; margin-top: 6px; }
+  .preview { font-size: 14px; color: var(--muted); margin: 0; }
+  .preview b { color: var(--accent); }
+  dialog select { width: 100%; }
+  dialog .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  @media (max-width: 640px) {
+    /* tableaux → une fiche par ligne */
+    .tbl thead { display: none; }
+    .tbl tr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 10px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+    .tbl tr:last-child { border-bottom: 0; }
+    .tbl td { padding: 0; border: 0; }
+    .tbl .num { text-align: left; }
+    .tbl td.main { grid-column: 1 / -1; }
+    .tbl td.end { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
+    .tbl td.end:empty { display: none; }
+    .tbl td[data-l]::before { content: attr(data-l); display: block; color: var(--muted); font-size: 11px; font-weight: normal; }
+    .tbl td.hide-sm { display: none; }
+  }
+
   @media (max-width: 640px) {
     .stats { grid-template-columns: repeat(2, 1fr); }
     .grid { grid-template-columns: 1fr; }
@@ -154,7 +193,9 @@
       <button data-view="bonnes" class="on">Bonnes affaires</button>
       <button data-view="toutes">Toutes</button>
       <button data-view="achete">Achetées</button>
+      <button data-view="vendu">Vendues</button>
       <button data-view="ignore">Ignorées</button>
+      <button data-view="ventes">Mes ventes</button>
     </div>
     <input class="grow" id="search" placeholder="Filtrer (marque, règle, ville…)">
     <select id="sort">
@@ -167,7 +208,63 @@
   <div class="chips" id="chips"></div>
 
   <div class="grid" id="grid"></div>
+
+  <section id="ventes" hidden>
+    <div class="stats">
+      <div class="stat"><b id="vProfit">–</b><span>bénéfice réel total</span></div>
+      <div class="stat"><b id="vCount">–</b><span>ventes</span></div>
+      <div class="stat"><b id="vAvg">–</b><span>bénéfice moyen par vente</span></div>
+      <div class="stat"><b id="vDays">–</b><span>délai moyen de revente</span></div>
+    </div>
+    <div class="sechead">
+      <div><h2>Prix réels par règle</h2><p>Comparez vos vrais prix de vente à la cote de config.yaml.</p></div>
+      <button class="btn primary" id="addSale">+ Ajouter une vente</button>
+    </div>
+    <div id="salesMsg"></div>
+    <div class="panel"><table class="tbl" id="ruleTable"></table></div>
+    <div class="sechead"><div><h2>Historique</h2></div></div>
+    <div class="panel"><table class="tbl" id="salesTable"></table></div>
+  </section>
 </div>
+
+<dialog id="sellDialog">
+  <form id="sellForm" method="dialog">
+    <h2>Vendu !</h2>
+    <p class="help" id="sellTitle"></p>
+    <div class="two">
+      <label>Prix de vente (€)<input name="sale_price" type="number" step="0.01" min="0" required></label>
+      <label>Frais (€, facultatif)<input name="fees" type="number" step="0.01" min="0" placeholder="0"></label>
+    </div>
+    <label id="sellPiecesLabel">Pièces vendues<input name="pieces" type="number" step="1" min="1"></label>
+    <p class="preview" id="sellPreview"></p>
+    <div id="sellResult"></div>
+    <div class="row2">
+      <button class="btn" value="cancel" formnovalidate>Annuler</button>
+      <button class="btn primary">Enregistrer la vente</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="saleDialog">
+  <form id="saleForm" method="dialog">
+    <h2>Ajouter une vente</h2>
+    <p class="help">Pour un article acheté en dehors du bot. Le prix d'achat inclut les frais et le port payés.</p>
+    <label>Article<input name="title" required placeholder="Veste Carhartt Detroit marron" autocomplete="off"></label>
+    <label>Règle<select name="rule" id="saleRule" required></select></label>
+    <div class="two">
+      <label>Prix d'achat (€)<input name="buy_price" type="number" step="0.01" min="0" required></label>
+      <label>Prix de vente (€)<input name="sale_price" type="number" step="0.01" min="0" required></label>
+      <label>Frais (€, facultatif)<input name="fees" type="number" step="0.01" min="0" placeholder="0"></label>
+      <label>Pièces vendues<input name="pieces" type="number" step="1" min="1" value="1"></label>
+    </div>
+    <p class="preview" id="salePreview"></p>
+    <div id="saleResult"></div>
+    <div class="row2">
+      <button class="btn" value="cancel" formnovalidate>Annuler</button>
+      <button class="btn primary">Enregistrer</button>
+    </div>
+  </form>
+</dialog>
 
 <div id="toasts"></div>
 <dialog id="settings">
@@ -216,12 +313,15 @@ let view = 'bonnes', deals = [], category = '', known = null, arrived = new Set(
 
 async function load() {
   try {
-    const r = await fetch('/api/deals?view=' + view);
+    const salesView = view === 'ventes';
+    const r = await fetch('/api/deals?view=' + (salesView ? 'bonnes' : view));
     const data = await r.json();
-    deals = data.deals;
-    const keys = new Set(deals.map(d => d.key));
-    if (known) deals.forEach(d => { if (!known.has(d.key)) arrived.add(d.key); });
-    known = keys;
+    if (!salesView) {
+      deals = data.deals;
+      const keys = new Set(deals.map(d => d.key));
+      if (known) deals.forEach(d => { if (!known.has(d.key)) arrived.add(d.key); });
+      known = keys;
+    }
     renderStatus(data.status);
     const s = data.stats;
     sBonnes.textContent = s.bonnes;
@@ -229,7 +329,7 @@ async function load() {
     sBought.textContent = s.achetes;
     sProfit.textContent = euro(s.profit_achetes);
     updated.textContent = s.annonces_lues + ' annonces analysées · mis à jour ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    render();
+    if (salesView) await loadSales(); else render();
     if (arrived.size) setTimeout(() => arrived.clear(), 3000);
   } catch (e) {
     updated.textContent = 'Connexion au bot perdue…';
@@ -279,9 +379,16 @@ function render() {
       head = `<h3 class="cathead">${esc(lastCat)} <span>${n} affaire${n > 1 ? 's' : ''}</span></h3>`;
     }
     const fresh = (Date.now() - new Date(d.found_at.replace(' ', 'T'))) < 3600000;
+    const k = esc(d.key);
     const btns = d.status === 'nouveau'
-      ? `<button data-key="${esc(d.key)}" data-status="achete">Acheté</button><button data-key="${esc(d.key)}" data-status="ignore">Ignorer</button>`
-      : `<button data-key="${esc(d.key)}" data-status="nouveau">Remettre</button>`;
+      ? `<button data-key="${k}" data-status="achete">Acheté</button><button data-key="${k}" data-status="ignore">Ignorer</button>`
+      : d.status === 'achete'
+      ? `<button class="sell" data-sell="${k}">Vendu</button><button data-key="${k}" data-status="nouveau">Remettre</button>`
+      : d.status === 'vendu'
+      ? (d.sale_id ? `<button data-unsell="${d.sale_id}">Annuler la vente</button>` : '')
+      : `<button data-key="${k}" data-status="nouveau">Remettre</button>`;
+    const sold = d.status === 'vendu' && d.sale_price != null;
+    const realProfit = sold ? profitOf({ buy_price: d.buy_cost, sale_price: d.sale_price, fees: d.sale_fees, pieces: d.sale_pieces }) : 0;
     return head + `<article class="deal ${d.good ? '' : 'weak'} ${arrived.has(d.key) ? 'arrived' : ''}">
       <div class="photo ${d.image ? '' : 'none'}">
         ${d.image ? `<img src="${esc(d.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}
@@ -291,11 +398,14 @@ function render() {
       <div class="body">
         <a class="title" href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.title)}</a>
         <div class="meta"><span class="tag src">${esc(SOURCES[d.source] || d.source || 'Leboncoin')}</span> <span class="tag">${esc(d.category || 'Autre')}</span> ${esc(d.rule)}${d.ends_at ? ' · <b class="ends">' + endsIn(d.ends_at) + '</b>' : ''}${d.location ? ' · ' + esc(d.location) : ''} · ${ago(d.found_at)}</div>
-        <div class="nums">
+        <div class="nums">${sold ? `
+          <div><small>Coût d'achat</small><b>${euro(d.buy_cost)}</b></div>
+          <div><small>Vendu${d.sale_pieces > 1 ? ' (' + d.sale_pieces + ' p.)' : ''}</small><b>${euro(d.sale_price)}</b></div>
+          <div class="profit"><small>Bénéfice réel</small><b class="${realProfit < 0 ? 'neg' : ''}">${euro(realProfit)}</b></div>` : `
           <div><small>Prix ${esc(SOURCES[d.source] || 'Leboncoin')}</small><b>${euro(d.price)}</b></div>
           <div><small>Revente estimée${d.pieces > 1 ? ' (' + d.pieces + ' p.)' : ''}</small><b>${euro(d.est_resale)}</b></div>
-          <div class="profit"><small>Bénéfice net</small><b>${euro(d.net_profit)}</b></div>
-        </div>
+          <div class="profit"><small>Bénéfice net</small><b>${euro(d.net_profit)}</b></div>`}
+        </div>${sold ? `<div class="meta">Estimation de départ : revente ${euro(d.est_resale)}, bénéfice ${euro(d.net_profit)}</div>` : ''}
         ${d.notes.map(n => `<div class="note">⚠ ${esc(n)}</div>`).join('')}
         <a class="vinted" href="https://www.vinted.fr/catalog?search_text=${encodeURIComponent(d.title)}" target="_blank" rel="noopener">Vérifier les prix sur Vinted →</a>
       </div>
@@ -308,6 +418,16 @@ function render() {
 }
 
 grid.addEventListener('click', async e => {
+  const sell = e.target.closest('button[data-sell]');
+  if (sell) { openSell(deals.find(d => d.key === sell.dataset.sell)); return; }
+  const unsell = e.target.closest('button[data-unsell]');
+  if (unsell) {
+    if (!confirm('Annuler cette vente ? L\'article revient dans « Achetées ».')) return;
+    const res = await post('/api/sales/delete', { id: +unsell.dataset.unsell });
+    if (!res.ok) alert(res.error || 'Erreur');
+    load();
+    return;
+  }
   const b = e.target.closest('button[data-status]');
   if (!b) return;
   await fetch('/api/status', { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -320,6 +440,9 @@ tabs.addEventListener('click', e => {
   if (!b) return;
   tabs.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
   view = b.dataset.view;
+  const salesView = view === 'ventes';
+  ventes.hidden = !salesView;
+  [grid, chips, search, sort].forEach(el => { el.hidden = salesView; });
   load();
 });
 search.addEventListener('input', render);
@@ -383,6 +506,141 @@ saveSettings.addEventListener('click', async () => {
 });
 openSettings.addEventListener('click', openSettingsDialog);
 openConfig.addEventListener('click', () => post('/api/open-config'));
+
+// ---- Mes ventes : ventes réelles, bénéfice réel et mise à jour de la cote ----
+let salesData = null, sellKey = null;
+const signed = n => (n > 0 ? '+' : n < 0 ? '−' : '') + euro(Math.abs(n));
+function profitOf(s) {
+  const c = (salesData && salesData.costs) || { tax_rate: 0.134, packaging: 0.5 };
+  return s.sale_price - s.buy_price - (s.fees || 0) - c.tax_rate * s.sale_price - c.packaging * (s.pieces || 1);
+}
+function days(n) {
+  if (n == null) return '–';
+  return n < 1 ? '< 1 j' : n.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' j';
+}
+async function loadSales() {
+  try {
+    const r = await fetch('/api/sales');
+    salesData = await r.json();
+  } catch (e) { return; }
+  if (view === 'ventes') renderSales();
+}
+function renderSales() {
+  const st = salesData.stats, edit = salesData.can_edit;
+  vProfit.textContent = euro(st.total_profit);
+  vProfit.className = st.total_profit < 0 ? 'neg' : '';
+  vCount.textContent = st.count;
+  vAvg.textContent = st.avg_profit == null ? '–' : euro(st.avg_profit);
+  vDays.textContent = days(st.avg_days);
+  addSale.hidden = !edit;
+
+  ruleTable.innerHTML = !st.rules.length
+    ? '<tbody><tr><td class="muted main">Aucune vente enregistrée. Cliquez sur « Vendu » dans l\'onglet Achetées, ou ajoutez une vente.</td></tr></tbody>'
+    : `<thead><tr><th>Règle</th><th>Catégorie</th><th class="num">Ventes</th><th class="num">Prix vendu médian</th>
+        <th class="num">Cote actuelle</th><th class="num">Écart</th><th></th></tr></thead><tbody>` +
+      st.rules.map(r => {
+        const can = edit && salesData.can_update_ref && r.ref_price != null && r.count >= salesData.min_sales
+          && Math.round(r.median_price) !== r.ref_price;
+        const diff = r.diff == null ? '<span class="muted">règle supprimée</span>'
+          : `<span class="${r.diff >= 0 ? 'pos' : 'neg'}">${signed(r.diff)}</span>`;
+        return `<tr>
+          <td class="main"><b>${esc(r.rule || '—')}</b></td>
+          <td class="hide-sm" data-l="Catégorie">${esc(r.category)}</td>
+          <td class="num" data-l="Ventes">${r.count}</td>
+          <td class="num" data-l="Médiane vendue">${euro(r.median_price)}</td>
+          <td class="num" data-l="Cote actuelle">${r.ref_price == null ? '–' : euro(r.ref_price)}</td>
+          <td class="num" data-l="Écart">${diff}</td>
+          <td class="end">${can ? `<button class="btn" data-ref="${esc(r.rule)}" data-old="${r.ref_price}" data-new="${Math.round(r.median_price)}"
+              title="Remplace ref_price dans config.yaml par la médiane de vos ventes">Mettre à jour la cote</button>`
+            : (r.ref_price != null && r.count < salesData.min_sales ? `<small>cote modifiable à ${salesData.min_sales} ventes</small>` : '')}</td>
+        </tr>`;
+      }).join('') + '</tbody>';
+
+  salesTable.innerHTML = !salesData.sales.length ? '<tbody><tr><td class="muted main">Pas encore de vente.</td></tr></tbody>'
+    : `<thead><tr><th>Date</th><th>Article</th><th class="num">Achat</th><th class="num">Vente</th><th class="num">Frais</th>
+        <th class="num">Bénéfice réel</th><th></th></tr></thead><tbody>` +
+      salesData.sales.map(s => `<tr>
+        <td class="hide-sm">${new Date(s.sold_at.replace(' ', 'T')).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</td>
+        <td class="main">${esc(s.title)}<small>${esc(s.rule)}${s.pieces > 1 ? ' · ' + s.pieces + ' pièces' : ''}${s.days != null ? ' · revendu en ' + days(s.days) : ''}</small></td>
+        <td class="num" data-l="Achat">${euro(s.buy_price)}</td>
+        <td class="num" data-l="Vente">${euro(s.sale_price)}</td>
+        <td class="num hide-sm" data-l="Frais">${s.fees ? euro(s.fees) : '–'}</td>
+        <td class="num" data-l="Bénéfice réel"><span class="${s.profit >= 0 ? 'pos' : 'neg'}">${euro(s.profit)}</span></td>
+        <td class="end">${edit ? `<button class="del" data-del="${s.id}" title="Supprimer cette vente" aria-label="Supprimer cette vente">×</button>` : ''}</td>
+      </tr>`).join('') + '</tbody>';
+}
+
+ruleTable.addEventListener('click', async e => {
+  const b = e.target.closest('button[data-ref]');
+  if (!b) return;
+  if (!confirm(`Cote de « ${b.dataset.ref} » : ${b.dataset.old} € → ${b.dataset.new} € (médiane de vos ventes).\nconfig.yaml sera modifié (seulement cette ligne).`)) return;
+  const res = await post('/api/ref-price', { rule: b.dataset.ref });
+  salesMsg.innerHTML = res.ok ? `✅ Cote de <b>${esc(res.rule)}</b> passée de ${euro(res.old)} à ${euro(res.ref_price)}.`
+    : `❌ ${esc(res.error || 'Erreur')}`;
+  loadSales();
+});
+salesTable.addEventListener('click', async e => {
+  const b = e.target.closest('button[data-del]');
+  if (!b || !confirm('Supprimer cette vente ?')) return;
+  const res = await post('/api/sales/delete', { id: +b.dataset.del });
+  if (!res.ok) salesMsg.textContent = '❌ ' + (res.error || 'Erreur');
+  loadSales();
+});
+
+const num = v => parseFloat(String(v).replace(',', '.'));
+function preview(el, s) {
+  el.innerHTML = !salesData || isNaN(s.sale_price) || isNaN(s.buy_price) ? ''
+    : `Bénéfice réel ≈ <b>${euro(profitOf(s))}</b> (après ${(salesData.costs.tax_rate * 100).toLocaleString('fr-FR')} % de cotisations et l'emballage)`;
+}
+async function openSell(d) {
+  if (!d) return;
+  if (!salesData) await loadSales();
+  sellKey = d.key;
+  sellForm.reset();
+  sellTitle.textContent = `${d.title} — acheté ${euro(d.buy_cost)}`;
+  sellPiecesLabel.hidden = !(d.pieces > 1);
+  sellForm.elements.pieces.value = d.pieces || 1;
+  sellResult.textContent = sellPreview.textContent = '';
+  sellDialog.showModal();
+}
+sellForm.addEventListener('input', () => {
+  const f = sellForm.elements, d = deals.find(x => x.key === sellKey);
+  if (d) preview(sellPreview, { buy_price: d.buy_cost, sale_price: num(f.sale_price.value), fees: num(f.fees.value) || 0, pieces: +f.pieces.value || 1 });
+});
+sellForm.addEventListener('submit', async e => {
+  if (e.submitter && e.submitter.value === 'cancel') return;
+  e.preventDefault();
+  const f = sellForm.elements;
+  const res = await post('/api/sales', { key: sellKey, sale_price: num(f.sale_price.value), fees: num(f.fees.value) || 0,
+    pieces: +f.pieces.value || null });
+  if (!res.ok) { sellResult.textContent = '❌ ' + (res.error || 'Erreur'); return; }
+  sellDialog.close();
+  salesData = null;
+  load();
+});
+
+addSale.addEventListener('click', () => {
+  saleForm.reset();
+  saleRule.innerHTML = '<option value="">Choisir…</option>' + salesData.rules.map(r =>
+    `<option value="${esc(r.name)}">${esc(r.category)} · ${esc(r.name)}</option>`).join('');
+  saleResult.textContent = salePreview.textContent = '';
+  saleDialog.showModal();
+});
+saleForm.addEventListener('input', () => {
+  const f = saleForm.elements;
+  preview(salePreview, { buy_price: num(f.buy_price.value), sale_price: num(f.sale_price.value), fees: num(f.fees.value) || 0, pieces: +f.pieces.value || 1 });
+});
+saleForm.addEventListener('submit', async e => {
+  if (e.submitter && e.submitter.value === 'cancel') return;
+  e.preventDefault();
+  const f = saleForm.elements;
+  const res = await post('/api/sales', { title: f.title.value.trim(), rule: f.rule.value, buy_price: num(f.buy_price.value),
+    sale_price: num(f.sale_price.value), fees: num(f.fees.value) || 0, pieces: +f.pieces.value || 1 });
+  if (!res.ok) { saleResult.textContent = '❌ ' + (res.error || 'Erreur'); return; }
+  saleDialog.close();
+  salesMsg.textContent = '';
+  loadSales();
+});
 
 function renderStatus(st) {
   if (st && (st.error || st.config_error)) {
@@ -468,6 +726,7 @@ refreshNotifBtn();
 checkNew();
 setInterval(checkNew, 15000);
 
+loadSales();
 load();
 setInterval(load, 15000);
 </script>

@@ -89,12 +89,21 @@ Cette commande fait deux choses en même temps : elle lit les alertes email tout
 Sur la page, vous pouvez :
 - **voir les bonnes affaires** avec la photo, le prix Leboncoin, la revente estimée, le bénéfice net et le multiplicateur ;
 - les trier (plus récentes, meilleur multiplicateur, plus gros bénéfice) et les filtrer par marque ou par ville ;
-- marquer une affaire **Achetée** ou **Ignorée**, ce qui alimente le compteur de bénéfice ;
+- marquer une affaire **Achetée** ou **Ignorée**, ce qui alimente le compteur de bénéfice, puis **Vendue** (voir « Mes ventes ») ;
 - l'onglet « Toutes » montre aussi les annonces qui correspondent à une règle mais ne sont pas assez rentables ;
 - **tester une annonce à la main** : collez un titre et un prix ;
 - **🔔 Activer les alertes** : une notification Windows et un son à chaque nouvelle bonne affaire, plus un compteur dans le titre de l'onglet. Il suffit que la page reste ouverte, même en arrière-plan. Telegram n'est plus nécessaire.
 
 La page se met à jour toute seule chaque minute.
+
+### Mes ventes : les vrais prix
+Les `ref_price` de départ sont des estimations. En notant ce que vous vendez vraiment, le bot apprend vos prix réels :
+- dans l'onglet **Achetées**, le bouton **Vendu** demande le prix de vente (et les frais éventuels : port non remboursé, boost…). L'affaire passe dans **Vendues** avec son bénéfice réel ;
+- un article acheté en dehors du bot s'ajoute avec **+ Ajouter une vente** (titre, règle, prix d'achat, prix de vente) ;
+- l'onglet **Mes ventes** affiche le bénéfice réel total (vente − achat − frais − 13,4 % − emballage), le nombre de ventes, le bénéfice moyen et le délai moyen entre l'achat et la vente ;
+- le tableau par règle compare le **prix vendu médian** (par pièce pour un lot) à la cote de `config.yaml`. Dès **3 ventes**, le bouton **Mettre à jour la cote** remplace le `ref_price` de cette règle par la médiane arrondie à l'euro. Seule cette ligne de `config.yaml` est modifiée (commentaires conservés) et la nouvelle cote est prise en compte sans redémarrer.
+
+Comme les réglages, l'enregistrement des ventes et la mise à jour de la cote ne sont possibles que depuis le PC du bot, ou avec `ADMIN_PASSWORD`.
 
 **Page publique** : avec `python -m finder web`, la page est consultable par tout le monde, mais les **réglages** (boîte mail, Telegram) ne sont modifiables que depuis la machine du bot, ou avec `ADMIN_PASSWORD`. Pour cacher toute la page, définissez `WEB_PASSWORD`.
 
