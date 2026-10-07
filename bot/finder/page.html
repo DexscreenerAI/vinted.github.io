@@ -942,9 +942,13 @@ function scanPage() {
       box = box.parentElement;
     }
     const all = (a.getAttribute('title') || '') + '\n' + text;
-    const m = all.match(/(\d[\d   .]*(?:,\d{1,2})?)\s?€/);
+    // Prix : d'abord l'élément marqué « prix » par le site, sinon le texte de la carte.
+    // Les milliers doivent faire 3 chiffres (« 1 200 € ») : « Taille 42 30 € » donne 30 €, pas 4230 €.
+    const priceEl = (box || a).querySelector('[data-test-id='price'], [data-qa-id='aditem_price'], [data-testid$='--price-text'], [data-testid*='price'], .s-item__price');
+    const PRICE_RE = /(\d{1,3}(?:[ \u00a0\u202f.]\d{3})+|\d+)(?:,(\d{1,2}))?\s?(?:€|EUR\b)/;
+    const m = (priceEl && (priceEl.innerText || priceEl.textContent || '').match(PRICE_RE)) || all.match(PRICE_RE);
     if (!m) continue;
-    const price = parseFloat(m[1].replace(/[   .]/g, '').replace(',', '.'));
+    const price = parseFloat(m[1].replace(/[ \u00a0\u202f.]/g, '') + '.' + (m[2] || '0'));
     const GENERIC = /^(voir( l[’']annonce)?|see|ansehen|zur anzeige)\s*$/i;
     const clean = t => (t || '').replace(/^voir l[’']annonce\s*:\s*/i, '').split(/,\s*[\d \u00a0.,]+\s?€/)[0].trim();
     const titled = (box || a).querySelector("[data-qa-id='aditem_title'], [data-test-id='adcard-title']");

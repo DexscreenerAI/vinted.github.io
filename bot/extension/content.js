@@ -42,13 +42,17 @@
       let box = a, text = "";
       for (let i = 0; i < 7 && box; i++) {
         text = box.innerText || "";
-        if (/\d\s?€/.test(text) || /\d\s?€/.test(a.title || "") || /\d\s?€/.test(a.getAttribute("aria-label") || "")) break;
+        if (/\d\s?(€|EUR\b)/.test(text) || /\d\s?€/.test(a.title || "") || /\d\s?€/.test(a.getAttribute("aria-label") || "")) break;
         box = box.parentElement;
       }
       const all = (a.getAttribute("title") || "") + "\n" + (a.getAttribute("aria-label") || "") + "\n" + text;
-      const m = all.match(/(\d[\d   .]*(?:,\d{1,2})?)\s?€/);
+      // Prix : d'abord l'élément marqué « prix » par le site, sinon le texte de la carte.
+      // Les milliers doivent faire 3 chiffres (« 1 200 € ») : « Taille 42 30 € » donne 30 €, pas 4230 €.
+      const priceEl = (box || a).querySelector("[data-test-id='price'], [data-qa-id='aditem_price'], [data-testid$='--price-text'], [data-testid*='price'], .s-item__price");
+      const PRICE_RE = /(\d{1,3}(?:[ \u00a0\u202f.]\d{3})+|\d+)(?:,(\d{1,2}))?\s?(?:€|EUR\b)/;
+      const m = (priceEl && (priceEl.innerText || priceEl.textContent || '').match(PRICE_RE)) || all.match(PRICE_RE);
       if (!m) continue;
-      const price = parseFloat(m[1].replace(/[   .]/g, "").replace(",", "."));
+      const price = parseFloat(m[1].replace(/[ \u00a0\u202f.]/g, '') + '.' + (m[2] || '0'));
       const title = titleOf(a, box, text);
       if (!title) continue;
       const img = (box || a).querySelector("img");
@@ -64,8 +68,9 @@
     if (!card || card.querySelector(":scope > .chasseur-badge")) return;
     const b = document.createElement("div");
     b.className = "chasseur-badge";
-    b.textContent = d.good ? `🔥 x${d.ratio.toFixed(1)} · +${Math.round(d.net_profit)} €` : `x${d.ratio.toFixed(1)}`;
-    b.title = `${d.rule} — revente ≈ ${Math.round(d.est_resale)} €, coût ${Math.round(d.buy_cost)} €, bénéfice net ≈ ${Math.round(d.net_profit)} €`;
+    const lu = `${Math.round(d.price)} €`;  // prix lu sur la page : permet de repérer une erreur de lecture
+    b.textContent = d.good ? `🔥 ${lu} → x${d.ratio.toFixed(1)} · +${Math.round(d.net_profit)} €` : `${lu} → x${d.ratio.toFixed(1)}`;
+    b.title = `Prix lu : ${d.price} € · ${d.rule} — revente ≈ ${Math.round(d.est_resale)} €, coût ${Math.round(d.buy_cost)} €, bénéfice net ≈ ${Math.round(d.net_profit)} €`;
     Object.assign(b.style, {
       position: "absolute", top: "6px", left: "6px", zIndex: 5, padding: "3px 8px", borderRadius: "999px",
       font: "600 12px system-ui, sans-serif", color: "#fff", background: d.good ? "#0a7f6f" : "#8a8a84",
