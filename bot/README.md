@@ -47,6 +47,17 @@ Gmail : activez la validation en 2 étapes, puis créez un **mot de passe d'appl
 
 Sans Telegram, les résultats sont seulement sur la page web.
 
+### 4. Source eBay (facultatif)
+Le bot peut aussi chercher sur **eBay.fr** via l'**API officielle Browse** (gratuite, aucun scraping).
+1. Créez un compte gratuit sur **developer.ebay.com** (avec votre compte eBay), puis ouvrez *Application Keys*.
+2. Créez un jeu de clés **Production** (pas *Sandbox*).
+3. eBay demande de gérer les *Marketplace account deletion notifications* avant d'activer les clés : choisissez l'**exemption** (« I do not persist eBay data »). Le bot ne stocke aucune donnée d'utilisateur eBay, seulement les annonces.
+4. Collez l'**App ID** (Client ID) et le **Cert ID** (Client Secret) dans la page : **Réglages → eBay**.
+
+Chaque règle donne deux recherches, en France uniquement et sous `max_buy` : les annonces à prix fixe les plus récentes, et les enchères qui finissent dans les 3 heures avec 0 à 2 offres. La requête est déduite des mots-clés (`all` + premier `any`) ; on peut la fixer avec `search:` et ajouter des fautes courantes avec `variants: [carhart detroit]`.
+
+Le quota gratuit est d'environ 5 000 appels par jour : le bot fait au plus 4 recherches toutes les 2 minutes, chaque recherche revient toutes les 30 minutes (`EBAY_INTERVAL_MIN`), plus si le nombre de règles l'exige, et jamais plus de 4 000 recherches par jour. Le coût d'achat compte le port et les **frais de Protection acheteurs** eBay (0,10 € + 7 % jusqu'à 20 €, 4 % jusqu’à 300 €, 2 % jusqu’à 4 000 €) pour les vendeurs particuliers, en vigueur depuis le 1er septembre 2026. Variables facultatives : `EBAY_MARKETPLACE` (`EBAY_FR`), `EBAY_COUNTRY` (`FR`).
+
 ## La page des résultats
 
 ```bash

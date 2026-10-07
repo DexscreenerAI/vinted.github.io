@@ -7,6 +7,8 @@
 #   Remplacez-les par la médiane de VOS ventes dès que possible.
 # max_buy  = prix Leboncoin maximum pour viser au moins x2,5.
 # Mots-clés : sans accents ni majuscules. all = tous requis ([a, b] = a ou b), any = au moins un, none = aucun.
+# eBay (facultatif) : search = requête eBay (sinon déduite de all + premier any), variants = requêtes en plus
+#   pour les fautes de frappe courantes (annonces moins vues, donc moins chères). Chaque requête coûte du quota.
 # Règle d'or : jamais une marque seule, toujours un modèle précis (une marque seule se vend 20-30 €).
 
 min_ratio: 2.2        # multiplicateur minimum, frais d'achat et port INCLUS (≈ x2,5 sur le prix affiché)
@@ -32,6 +34,7 @@ rules:
     all: [carhartt]
     any: [detroit]
     none: [enfant, junior, kids, style]
+    variants: [carhart detroit]
     ref_price: 85
     max_buy: 34
   - name: Carhartt Active jacket

@@ -31,6 +31,8 @@ class Rule:
     sellable_rate: float = 0.7      # part des pièces d'un lot réellement vendable
     min_ratio: Optional[float] = None
     min_profit: Optional[float] = None
+    search: str = ""                # requête eBay ; vide = déduite des mots-clés
+    variants: List[str] = field(default_factory=list)  # requêtes eBay en plus (fautes courantes : carhart…)
 
     def matches(self, title: str, global_none: List[str]) -> bool:
         t = normalize(title)
