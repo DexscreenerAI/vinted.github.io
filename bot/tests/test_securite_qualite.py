@@ -142,6 +142,39 @@ class MiseAJourReglesTest(unittest.TestCase):
         self.assertEqual([d["title"] for d in seen.deals("toutes")], ["Game Boy Color violette"])
 
 
+class RetrogamingTest(unittest.TestCase):
+    """Consoles et jeux rétro : chaque titre doit tomber sur la bonne règle (et un jeu jamais sur la console)."""
+
+    def rule(self, title, price=10):
+        best = best_deal(Listing(title, price), CFG)
+        return best[0].rule_name if best else None
+
+    def test_bonne_regle(self):
+        cas = {
+            "Console Dreamcast + 2 manettes": "Console Dreamcast",
+            "Shenmue 2 Dreamcast": "Shenmue II Dreamcast",
+            "Panzer Dragoon Saga Saturn complet": "Panzer Dragoon Saga Saturn",
+            "Silent Hill 2 PS2": "Silent Hill 2 PS2",
+            "Silent Hill 2 PS2 platinum": "Silent Hill 2 Platinum PS2",
+            "Castlevania Symphony of the night playstation": "Castlevania Symphony of the Night PS1",
+            "Console NES + Super Mario Bros": "Nintendo NES console",
+            "Paper Mario N64 complet en boite": "Paper Mario N64 complet",
+            "Zelda Twilight Princess GameCube": "Zelda Twilight Princess GameCube",
+            "3DS XL bleue + chargeur": "Nintendo 3DS XL console",
+            "Console PSOne + écran LCD": "Console PSOne avec ecran LCD",
+        }
+        for title, rule in cas.items():
+            self.assertEqual(self.rule(title), rule, title)
+
+    def test_pas_de_fausse_cote(self):
+        for t in ["Sega Mega Drive Classics PS4", "Console Xbox Series X", "Console Xbox 360 Elite",
+                  "PC Engine Hucard Bomberman", "Virtual Boy Mario Tennis", "PS Vita Uncharted",
+                  "Metal Slug Neo Geo AES", "Zelda Twilight Princess Wii", "Mario Kart 7 3DS",
+                  "Final Fantasy VII Remake PS4", "Robe black taille 38", "R4 3DS linker",
+                  "Housse PSP", "Coque PS Vita", "Lot 5 jeux Saturn"]:
+            self.assertIsNone(self.rule(t), t)
+
+
 class AvisIaAutoTest(unittest.TestCase):
     """Une bonne affaire attend le verdict de Claude ; « à éviter » ou état insuffisant = retirée des bonnes affaires."""
 

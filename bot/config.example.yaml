@@ -11,7 +11,7 @@
 #   pour les fautes de frappe courantes (annonces moins vues, donc moins chères). Chaque requête coûte du quota.
 # Règle d'or : jamais une marque seule, toujours un modèle précis (une marque seule se vend 20-30 €).
 
-config_version: 5     # mis à jour automatiquement par le logiciel (vos prix et réglages sont conservés)
+config_version: 6     # mis à jour automatiquement par le logiciel (vos prix et réglages sont conservés)
 
 min_ratio: 2.2        # multiplicateur minimum, frais d'achat et port INCLUS (≈ x2,5 sur le prix affiché)
 min_profit: 10        # bénéfice net minimum en euros (après cotisations, impôt, emballage)
@@ -27,7 +27,7 @@ costs:
   tax_rate: 0.134         # micro-entreprise : URSSAF 12,3 % + 0,1 % + versement libératoire 1 %
 
 # Mots qui excluent une annonce, quelle que soit la règle (contrefaçons, recherches, échanges).
-exclude: [replica, replique, copie, contrefacon, imitation, inspire, "style carhartt", "type carhartt",
+exclude: [everdrive, r4, linker, multi jeux, famiclone, bootleg, replica, replique, copie, contrefacon, imitation, inspire, "style carhartt", "type carhartt",
           facon, recherche, cherche, echange, "pour pieces", "hors service", "ne fonctionne pas", proxy,
           hs, "ne s allume pas", "en panne", "a reparer", defectueux, repro, reproduction, fake, "non officiel", compatible]
 
@@ -315,13 +315,6 @@ rules:
     none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
     ref_price: 55
     max_buy: 22
-  - name: Nintendo GameCube console
-    category: Rétrogaming
-    all: [gamecube]
-    any: [console, pack]
-    none: [manette seule, jeu seul, carte memoire, boite vide]
-    ref_price: 100
-    max_buy: 40
   - name: Nintendo 64 console
     category: Rétrogaming
     all: [[nintendo 64, n64]]
@@ -357,20 +350,2318 @@ rules:
     none: [carte, boite vide, notice seule, ds, alpha, omega]
     ref_price: 50
     max_buy: 20
-  - name: Jeux N64 phares
+
+  # ============ Rétrogaming Nintendo : GameCube, Wii, N64, SNES, NES, Game Boy, DS/3DS (prix PAL/FR prudents) ============
+  # « complet » = boîte + notice (x2 à x3 sur N64/SNES). Jamais sortis en PAL : Earthbound, Chrono Trigger SNES, FF VI, Mario RPG → repro.
+  # Faux : étiquette trop brillante, pas de code NUS-/SNSP-/AGB-xxx-FRA/EUR au dos, vis cruciforme, puce sous résine noire.
+  # ---------- GameCube ----------
+  - name: Nintendo GameCube console
     category: Rétrogaming
-    all: [[nintendo 64, n64]]
-    any: [goldeneye, mario 64, ocarina, mario kart 64, majora, smash bros, banjo]
-    none: [boite vide, notice seule, ds, switch, 3ds]
-    ref_price: 25
-    max_buy: 10
-  - name: Jeux GameCube phares
+    all: [[gamecube, game cube, ngc]]
+    any: [console, pack, coffret]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, carte memoire seule, jeu seul]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 80
+    max_buy: 32
+  - name: Game Boy Player GameCube
     category: Rétrogaming
-    all: [gamecube]
-    any: [colosseum, pokemon xd, melee, wind waker, eternal darkness, skies of arcadia, pokemon box, metroid prime]
-    none: [boite vide, notice seule, wii u, switch]
+    all: [game boy player]
+    none: [sans disque, disque seul, boite vide, boite seule, repro, copie, hs, pour pieces]
+    ref_price: 70
+    max_buy: 27
+  - name: Manette Wavebird GameCube
+    category: Rétrogaming
+    all: [wavebird]
+    any: [wavebird, manette]
+    none: [recepteur seul, sans recepteur, hs, pour pieces, compatible, copie, boite vide]
+    ref_price: 55
+    max_buy: 20
+  - name: Zelda Twilight Princess GameCube
+    category: Rétrogaming
+    all: [[twilight princess], [gamecube, game cube, ngc]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, wii u, hd, switch]
+    ref_price: 60
+    max_buy: 23
+  - name: Zelda Twilight Princess GameCube complet
+    category: Rétrogaming
+    all: [[twilight princess], [gamecube, game cube, ngc]]
+    any: [complet, complete, notice, cib]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, wii u, hd, switch, sans notice]
+    ref_price: 90
+    max_buy: 36
+  - name: Zelda Wind Waker GameCube
+    category: Rétrogaming
+    all: [[wind waker], [gamecube, game cube, ngc]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, wii u, hd]
+    ref_price: 30
+    max_buy: 9
+  - name: Zelda Collector's Edition GameCube
+    category: Rétrogaming
+    all: [[zelda], [collector, collectors, master quest], [gamecube, game cube, ngc]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, 3ds, n64, nintendo 64]
+    ref_price: 35
+    max_buy: 11
+  - name: Zelda Four Swords Adventures GameCube
+    category: Rétrogaming
+    all: [[four swords], [gamecube, game cube, ngc]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, gba, game boy, dsi, switch]
     ref_price: 45
+    max_buy: 16
+  - name: Paper Mario La Porte Millenaire GameCube
+    category: Rétrogaming
+    all: [[porte millenaire, thousand year door, mille ans], [gamecube, game cube, ngc]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, switch]
+    ref_price: 45
+    max_buy: 16
+  - name: Kirby Air Ride GameCube
+    category: Rétrogaming
+    all: [kirby air ride]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, switch]
+    ref_price: 60
+    max_buy: 23
+  - name: Fire Emblem Path of Radiance GameCube
+    category: Rétrogaming
+    all: [path of radiance]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie]
+    ref_price: 100
+    max_buy: 41
+  - name: Pokemon Box GameCube
+    category: Rétrogaming
+    all: [[pokemon box], [gamecube, game cube, ngc]]
+    none: [boite seule, boite vide, notice seule, repro, copie, carte, cartes, booster, etb]
+    ref_price: 80
+    max_buy: 32
+  - name: Chibi-Robo GameCube
+    category: Rétrogaming
+    all: [chibi robo]
+    none: [boite seule, boite vide, notice seule, repro, copie, ds, 3ds, park patrol, zip lash, amiibo, figurine]
+    ref_price: 90
+    max_buy: 36
+  - name: Metal Gear Solid Twin Snakes GameCube
+    category: Rétrogaming
+    all: [twin snakes]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie]
+    ref_price: 60
+    max_buy: 23
+  - name: Skies of Arcadia Legends GameCube
+    category: Rétrogaming
+    all: [skies of arcadia]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, dreamcast]
+    ref_price: 55
+    max_buy: 20
+  - name: Animal Crossing GameCube
+    category: Rétrogaming
+    all: [[animal crossing], [gamecube, game cube, ngc]]
+    none: [boite seule, boite vide, notice seule, repro, copie, wii, ds, 3ds, switch, amiibo, new leaf, new horizons]
+    ref_price: 50
     max_buy: 18
+  - name: Super Smash Bros Melee GameCube
+    category: Rétrogaming
+    all: [smash, melee]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, brawl, ultimate]
+    ref_price: 25
+    max_buy: 7
+  - name: Mario Kart Double Dash GameCube
+    category: Rétrogaming
+    all: [double dash]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie]
+    ref_price: 25
+    max_buy: 7
+  - name: Mario Party 6 GameCube
+    category: Rétrogaming
+    all: [mario party 6]
+    none: [boite seule, boite vide, notice seule, micro seul, repro, copie]
+    ref_price: 35
+    max_buy: 11
+  - name: Mario Party 7 GameCube
+    category: Rétrogaming
+    all: [mario party 7]
+    none: [boite seule, boite vide, notice seule, micro seul, repro, copie]
+    ref_price: 40
+    max_buy: 14
+  - name: Wario World GameCube
+    category: Rétrogaming
+    all: [wario world]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie]
+    ref_price: 35
+    max_buy: 11
+  - name: F-Zero GX GameCube
+    category: Rétrogaming
+    all: [f zero gx]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie]
+    ref_price: 30
+    max_buy: 9
+  # ---------- Wii ----------
+  - name: Nintendo Wii console
+    category: Rétrogaming
+    all: [wii]
+    any: [console, pack, coffret]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, wii u, wiiu, puce, flashee, jeu seul]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 35
+    max_buy: 11
+  - name: Fire Emblem Radiant Dawn Wii
+    category: Rétrogaming
+    all: [radiant dawn]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie]
+    ref_price: 55
+    max_buy: 20
+  - name: Xenoblade Chronicles Wii
+    category: Rétrogaming
+    all: [[xenoblade], [wii]]
+    none: [boite seule, boite vide, notice seule, repro, copie, wii u, chronicles x, 3ds, switch, definitive]
+    ref_price: 35
+    max_buy: 11
+  - name: The Last Story Wii
+    category: Rétrogaming
+    all: [[last story], [wii]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, wii u]
+    ref_price: 40
+    max_buy: 14
+  - name: Pandora's Tower Wii
+    category: Rétrogaming
+    all: [[pandoras tower, pandora tower]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, wii u]
+    ref_price: 40
+    max_buy: 14
+  - name: Rhythm Paradise Wii
+    category: Rétrogaming
+    all: [[rhythm paradise], [wii]]
+    none: [boite seule, boite vide, notice seule, repro, copie, ds, 3ds, megamix, switch, wii u]
+    ref_price: 35
+    max_buy: 11
+  - name: Project Zero 2 Wii Edition
+    category: Rétrogaming
+    all: [[project zero 2], [wii]]
+    none: [boite seule, boite vide, notice seule, repro, copie, ps2, xbox, wii u]
+    ref_price: 40
+    max_buy: 14
+  - name: Metroid Prime Trilogy Wii
+    category: Rétrogaming
+    all: [metroid prime trilogy]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, steelbook seul]
+    ref_price: 40
+    max_buy: 14
+  # ---------- Nintendo 64 ----------
+  - name: Expansion Pak N64
+    category: Rétrogaming
+    all: [[expansion pak, expansion pack]]
+    none: [repro, reproduction, copie, compatible, hs, pour pieces, jumper pak, boite vide]
+    ref_price: 40
+    max_buy: 14
+  - name: Conker's Bad Fur Day N64
+    category: Rétrogaming
+    all: [[conker], [nintendo 64, n64]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, xbox, reloaded]
+    ref_price: 110
+    max_buy: 46
+  - name: Zelda Ocarina of Time N64
+    category: Rétrogaming
+    all: [[ocarina], [nintendo 64, n64]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, 3ds, 3 d, master quest, collector, gamecube, game cube]
+    ref_price: 28
+    max_buy: 8
+  - name: Zelda Ocarina of Time N64 complet
+    category: Rétrogaming
+    all: [[ocarina], [nintendo 64, n64]]
+    any: [complet, complete, boite, notice, cib]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, 3ds, 3 d, master quest, collector, gamecube, game cube, sans boite]
+    ref_price: 70
+    max_buy: 27
+  - name: Zelda Majora's Mask N64
+    category: Rétrogaming
+    all: [[majora, majoras], [nintendo 64, n64]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, 3ds, 3 d, gamecube]
+    ref_price: 45
+    max_buy: 16
+  - name: Zelda Majora's Mask N64 complet
+    category: Rétrogaming
+    all: [[majora, majoras], [nintendo 64, n64]]
+    any: [complet, complete, boite, notice, cib]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, 3ds, 3 d, gamecube, sans boite]
+    ref_price: 110
+    max_buy: 46
+  - name: Super Mario 64 N64 complet
+    category: Rétrogaming
+    all: [[mario 64], [nintendo 64, n64]]
+    any: [complet, complete, boite, notice, cib]
+    none: [boite seule, boite vide, notice seule, repro, copie, ds, all stars, switch, sans boite, party]
+    ref_price: 55
+    max_buy: 20
+  - name: Mario Kart 64
+    category: Rétrogaming
+    all: [mario kart 64]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie]
+    ref_price: 25
+    max_buy: 7
+  - name: Mario Kart 64 complet
+    category: Rétrogaming
+    all: [mario kart 64]
+    any: [complet, complete, boite, notice, cib]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, sans boite]
+    ref_price: 55
+    max_buy: 20
+  - name: Super Smash Bros N64
+    category: Rétrogaming
+    all: [[smash bros], [nintendo 64, n64]]
+    none: [boite seule, boite vide, notice seule, repro, copie, melee, brawl, wii, 3ds, switch, ultimate, gamecube]
+    ref_price: 32
+    max_buy: 10
+  - name: Super Smash Bros N64 complet
+    category: Rétrogaming
+    all: [[smash bros], [nintendo 64, n64]]
+    any: [complet, complete, boite, notice, cib]
+    none: [boite seule, boite vide, notice seule, repro, copie, melee, brawl, wii, 3ds, switch, ultimate, gamecube, sans boite]
+    ref_price: 75
+    max_buy: 30
+  - name: Paper Mario N64
+    category: Rétrogaming
+    all: [[paper mario], [nintendo 64, n64]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, porte, sticker, color splash, origami, gamecube, switch, 3ds, wii]
+    ref_price: 85
+    max_buy: 34
+  - name: Paper Mario N64 complet
+    category: Rétrogaming
+    all: [[paper mario], [nintendo 64, n64]]
+    any: [complet, complete, boite, notice, cib]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, porte, sticker, color splash, origami, gamecube, switch, 3ds, wii, sans boite]
+    ref_price: 200
+    max_buy: 86
+  - name: Banjo-Tooie N64
+    category: Rétrogaming
+    all: [banjo tooie]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, xbox, rare replay]
+    ref_price: 40
+    max_buy: 14
+  - name: Mario Party 2 N64
+    category: Rétrogaming
+    all: [[mario party 2], [nintendo 64, n64]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie]
+    ref_price: 40
+    max_buy: 14
+  - name: Mario Party 3 N64
+    category: Rétrogaming
+    all: [[mario party 3], [nintendo 64, n64]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie]
+    ref_price: 60
+    max_buy: 23
+  - name: Kirby 64 N64
+    category: Rétrogaming
+    all: [[kirby 64, crystal shards]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, switch]
+    ref_price: 55
+    max_buy: 20
+  - name: Resident Evil 2 N64
+    category: Rétrogaming
+    all: [[resident evil 2], [nintendo 64, n64]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, ps1, playstation, remake]
+    ref_price: 85
+    max_buy: 34
+  # ---------- Super Nintendo (PAL) ----------
+  - name: Super Nintendo console
+    category: Rétrogaming
+    all: [[super nintendo, snes, super nes]]
+    any: [console, pack, coffret]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, mini, classic mini, clone, retro console, super famicom, jeu seul]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 70
+    max_buy: 27
+  - name: Super Mario Kart SNES
+    category: Rétrogaming
+    all: [super mario kart]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, 64, ds, wii, mini, super famicom]
+    ref_price: 25
+    max_buy: 7
+  - name: Super Mario Kart SNES complet
+    category: Rétrogaming
+    all: [super mario kart]
+    any: [complet, complete, boite, notice, cib]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, 64, ds, wii, mini, super famicom, sans boite]
+    ref_price: 55
+    max_buy: 20
+  - name: Zelda A Link to the Past SNES
+    category: Rétrogaming
+    all: [[link to the past], [super nintendo, snes, super nes]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, gba, advance, four swords, switch, 3ds, between worlds, mini, super famicom]
+    ref_price: 30
+    max_buy: 9
+  - name: Zelda A Link to the Past SNES complet
+    category: Rétrogaming
+    all: [[link to the past], [super nintendo, snes, super nes]]
+    any: [complet, complete, boite, notice, cib]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, gba, advance, four swords, switch, 3ds, between worlds, mini, super famicom, sans boite]
+    ref_price: 90
+    max_buy: 36
+  - name: Super Metroid SNES
+    category: Rétrogaming
+    all: [super metroid]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, wii, wii u, switch, mini, super famicom]
+    ref_price: 55
+    max_buy: 20
+  - name: Super Metroid SNES complet
+    category: Rétrogaming
+    all: [super metroid]
+    any: [complet, complete, boite, notice, cib]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, wii, wii u, switch, mini, super famicom, sans boite]
+    ref_price: 150
+    max_buy: 64
+  - name: Yoshi's Island SNES
+    category: Rétrogaming
+    all: [[yoshis island, yoshi island], [super nintendo, snes, super nes]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, gba, advance, ds, 3ds, switch, mini, super famicom]
+    ref_price: 35
+    max_buy: 11
+  - name: Secret of Mana SNES
+    category: Rétrogaming
+    all: [[secret of mana], [super nintendo, snes, super nes]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, ps4, switch, collection, mini, super famicom, seiken]
+    ref_price: 35
+    max_buy: 11
+  - name: Secret of Mana SNES complet
+    category: Rétrogaming
+    all: [[secret of mana], [super nintendo, snes, super nes]]
+    any: [complet, complete, boite, notice, cib]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, ps4, switch, collection, mini, super famicom, seiken, sans boite]
+    ref_price: 100
+    max_buy: 41
+  - name: Terranigma SNES
+    category: Rétrogaming
+    all: [terranigma]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, super famicom, tenchi]
+    ref_price: 45
+    max_buy: 16
+  - name: Terranigma SNES complet
+    category: Rétrogaming
+    all: [terranigma]
+    any: [complet, complete, boite, notice, cib]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, super famicom, tenchi, sans boite]
+    ref_price: 180
+    max_buy: 77
+  - name: Illusion of Time SNES
+    category: Rétrogaming
+    all: [illusion of time]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, super famicom]
+    ref_price: 35
+    max_buy: 11
+  - name: Lufia SNES
+    category: Rétrogaming
+    all: [[lufia], [super nintendo, snes, super nes]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, gba, game boy, ds, super famicom]
+    ref_price: 35
+    max_buy: 11
+  - name: Secret of Evermore SNES complet
+    category: Rétrogaming
+    all: [secret of evermore]
+    any: [complet, complete, boite, notice, cib]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, sans boite]
+    ref_price: 100
+    max_buy: 41
+  - name: Super Castlevania IV SNES
+    category: Rétrogaming
+    all: [[castlevania iv, castlevania 4, super castlevania]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, super famicom, collection]
+    ref_price: 35
+    max_buy: 11
+  - name: Mega Man X SNES
+    category: Rétrogaming
+    all: [[mega man x, megaman x], [super nintendo, snes, super nes]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, x2, x3, x4, collection, legacy, gba, mini, super famicom, rockman]
+    ref_price: 60
+    max_buy: 23
+  - name: Mega Man X2 SNES
+    category: Rétrogaming
+    all: [[mega man x2, megaman x2], [super nintendo, snes, super nes]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, collection, super famicom, rockman]
+    ref_price: 110
+    max_buy: 46
+  - name: Mega Man X3 SNES               # très contrefait
+    category: Rétrogaming
+    all: [[mega man x3, megaman x3], [super nintendo, snes, super nes]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, collection, super famicom, rockman, ps1, playstation]
+    ref_price: 300
+    max_buy: 132
+  - name: Demon's Crest SNES             # très contrefait
+    category: Rétrogaming
+    all: [[demons crest, demon crest]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, super famicom, collection]
+    ref_price: 150
+    max_buy: 64
+  - name: Sunset Riders SNES
+    category: Rétrogaming
+    all: [[sunset riders], [super nintendo, snes, super nes]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, megadrive, mega drive, super famicom]
+    ref_price: 70
+    max_buy: 27
+  - name: Dragon Ball Z Hyper Dimension SNES
+    category: Rétrogaming
+    all: [hyper dimension]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, super famicom]
+    ref_price: 50
+    max_buy: 18
+  - name: Dragon Ball Z Super Butoden SNES
+    category: Rétrogaming
+    all: [[butoden, butouden], [super nintendo, snes, super nes]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, extreme, super famicom, ds]
+    ref_price: 25
+    max_buy: 7
+  - name: Sailor Moon SNES
+    category: Rétrogaming
+    all: [[sailor moon, sailormoon], [super nintendo, snes, super nes]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, super famicom, figurine, dvd, manga, carte, cartes]
+    ref_price: 50
+    max_buy: 18
+  # ---------- NES ----------
+  - name: Nintendo NES console
+    category: Rétrogaming
+    all: [nes]
+    any: [console, pack, coffret]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, super nes, super nintendo, snes, mini, classic, clone, famiclone, jeu seul]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 65
+    max_buy: 25
+  - name: Zelda NES
+    category: Rétrogaming
+    all: [[zelda], [nes]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, super, snes, zelda ii, zelda 2, adventure of link, gba, classic, series, switch, mini, link to the past, awakening, famicom]
+    ref_price: 35
+    max_buy: 11
+  - name: Zelda NES complet
+    category: Rétrogaming
+    all: [[zelda], [nes]]
+    any: [complet, complete, boite, notice, cib]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, super, snes, zelda ii, zelda 2, adventure of link, gba, classic, series, switch, mini, link to the past, awakening, famicom, sans boite]
+    ref_price: 90
+    max_buy: 36
+  - name: Metroid NES
+    category: Rétrogaming
+    all: [[metroid], [nes]]
+    none: [boite seule, boite vide, notice seule, repro, copie, super, snes, prime, fusion, zero mission, gba, classic, series, return of samus, dread, other m, famicom]
+    ref_price: 35
+    max_buy: 11
+  - name: Punch-Out NES
+    category: Rétrogaming
+    all: [[punch out], [nes]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, super, snes, wii, famicom]
+    ref_price: 35
+    max_buy: 11
+  - name: Mega Man 5 NES
+    category: Rétrogaming
+    all: [[mega man 5, megaman 5], [nes]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, game boy, super, snes, legacy, famicom, rockman]
+    ref_price: 70
+    max_buy: 27
+  - name: Duck Tales 2 NES
+    category: Rétrogaming
+    all: [[duck tales 2, ducktales 2], [nes]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, game boy, remastered, famicom]
+    ref_price: 45
+    max_buy: 16
+  - name: Castlevania NES
+    category: Rétrogaming
+    all: [[castlevania], [nes]]
+    none: [boite seule, boite vide, notice seule, repro, copie, iii, 3, ii, 2, super, snes, game boy, gba, classic, series, famicom]
+    ref_price: 35
+    max_buy: 11
+  - name: Castlevania III NES
+    category: Rétrogaming
+    all: [[castlevania iii, castlevania 3, draculas curse], [nes]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, super, snes, famicom]
+    ref_price: 70
+    max_buy: 27
+  - name: Snow Bros NES
+    category: Rétrogaming
+    all: [[snow bros, snow brothers], [nes]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, game boy, megadrive, mega drive, famicom]
+    ref_price: 100
+    max_buy: 41
+  # ---------- Game Boy / Game Boy Color ----------
+  - name: Zelda Link's Awakening DX Game Boy Color
+    category: Rétrogaming
+    all: [[zelda], [awakening], [dx]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, switch, 3ds]
+    ref_price: 32
+    max_buy: 10
+  - name: Zelda Link's Awakening Game Boy complet
+    category: Rétrogaming
+    all: [[zelda], [awakening], [game boy, gbc]]
+    any: [complet, complete, boite, notice, cib]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, switch, 3ds, sans boite]
+    ref_price: 75
+    max_buy: 30
+  - name: Metroid II Game Boy complet
+    category: Rétrogaming
+    all: [[metroid ii, metroid 2, return of samus], [game boy]]
+    any: [complet, complete, boite, notice, cib]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, samus returns, 3ds, sans boite]
+    ref_price: 120
+    max_buy: 50
+  - name: Mega Man IV / V Game Boy
+    category: Rétrogaming
+    all: [[mega man iv, megaman iv, mega man v, megaman v, mega man 4, mega man 5], [game boy]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, nes, battle network, zero, xtreme, color, advance, rockman]
+    ref_price: 80
+    max_buy: 32
+  - name: Zelda Oracle of Seasons / Ages GBC
+    category: Rétrogaming
+    all: [[oracle of seasons, oracle of ages]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, 3ds, switch]
+    ref_price: 32
+    max_buy: 10
+  - name: Zelda Oracle of Seasons / Ages GBC complet
+    category: Rétrogaming
+    all: [[oracle of seasons, oracle of ages]]
+    any: [complet, complete, boite, notice, cib]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, 3ds, switch, sans boite]
+    ref_price: 100
+    max_buy: 41
+  - name: Metal Gear Solid Game Boy Color
+    category: Rétrogaming
+    all: [[metal gear], [game boy, gbc]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, advance, ps1, playstation]
+    ref_price: 45
+    max_buy: 16
+  - name: Resident Evil Gaiden GBC
+    category: Rétrogaming
+    all: [resident evil gaiden]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie]
+    ref_price: 65
+    max_buy: 25
+  # ---------- Game Boy Advance (jeux) ----------
+  - name: Zelda Minish Cap GBA            # très contrefait
+    category: Rétrogaming
+    all: [minish cap]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, wii u, 3ds, switch]
+    ref_price: 35
+    max_buy: 11
+  - name: Zelda Minish Cap GBA complet
+    category: Rétrogaming
+    all: [minish cap]
+    any: [complet, complete, boite, notice, cib]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, wii u, 3ds, switch, sans boite]
+    ref_price: 100
+    max_buy: 41
+  - name: Metroid Fusion GBA
+    category: Rétrogaming
+    all: [metroid fusion]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, wii u, 3ds, switch]
+    ref_price: 30
+    max_buy: 9
+  - name: Metroid Zero Mission GBA
+    category: Rétrogaming
+    all: [zero mission]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, wii u, 3ds, switch]
+    ref_price: 50
+    max_buy: 18
+  - name: Golden Sun L'Age Perdu GBA
+    category: Rétrogaming
+    all: [[golden sun], [age perdu, lost age]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, wii u, switch]
+    ref_price: 30
+    max_buy: 9
+  - name: Fire Emblem GBA
+    category: Rétrogaming
+    all: [[fire emblem], [gba, game boy advance]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, ds, 3ds, switch, wii u, gamecube, wii, carte, cartes]
+    ref_price: 35
+    max_buy: 11
+  - name: Kirby Labyrinthe des Miroirs GBA complet
+    category: Rétrogaming
+    all: [[labyrinthe des miroirs, amazing mirror]]
+    any: [complet, complete, boite, notice, cib]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, wii u, switch, sans boite]
+    ref_price: 110
+    max_buy: 46
+  - name: Castlevania Aria of Sorrow GBA
+    category: Rétrogaming
+    all: [aria of sorrow]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, collection, switch, ps4]
+    ref_price: 50
+    max_buy: 18
+  - name: WarioWare Twisted GBA
+    category: Rétrogaming
+    all: [[warioware, wario ware], [twisted]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie]
+    ref_price: 80
+    max_buy: 32
+  - name: Hamtaro GBA
+    category: Rétrogaming
+    all: [[hamtaro], [gba, game boy advance]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, peluche, dvd, figurine, ds]
+    ref_price: 40
+    max_buy: 14
+  # ---------- Consoles portables ----------
+  - name: Game Boy Advance console
+    category: Rétrogaming
+    all: [[game boy advance, gba]]
+    any: [console, pack, coffret]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, sp, micro, player, ecran seul, jeu seul]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 45
+    max_buy: 16
+  - name: Game Boy Micro console
+    category: Rétrogaming
+    all: [game boy micro]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, facade seule, chargeur seul]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 80
+    max_buy: 32
+  - name: Nintendo DS Lite console
+    category: Rétrogaming
+    all: [ds lite]
+    any: [console, pack, coffret, chargeur]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, charniere cassee, ecran casse, jeu seul, r4]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 40
+    max_buy: 14
+  - name: Nintendo 3DS console
+    category: Rétrogaming
+    all: [3ds]
+    any: [console, pack, coffret, chargeur]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, xl, ll, new, 2ds, ecran casse, jeu seul]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 85
+    max_buy: 34
+  - name: Nintendo 3DS XL console
+    category: Rétrogaming
+    all: [[3ds xl, 3ds ll]]
+    any: [console, pack, coffret, chargeur]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, new, 2ds, ecran casse, jeu seul]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 120
+    max_buy: 50
+  - name: New Nintendo 3DS console
+    category: Rétrogaming
+    all: [new 3ds]
+    any: [console, pack, coffret, chargeur]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, xl, ll, 2ds, ecran casse, jeu seul]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 140
+    max_buy: 59
+  - name: New Nintendo 3DS XL console
+    category: Rétrogaming
+    all: [[new 3ds xl, new 3ds ll]]
+    any: [console, pack, coffret, chargeur]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, 2ds, ecran casse, jeu seul]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 170
+    max_buy: 73
+  - name: Nintendo 2DS console
+    category: Rétrogaming
+    all: [2ds]
+    any: [console, pack, coffret, chargeur]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, xl, ll, new, ecran casse, jeu seul]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 50
+    max_buy: 18
+  - name: New Nintendo 2DS XL console
+    category: Rétrogaming
+    all: [[new 2ds xl, new 2ds ll]]
+    any: [console, pack, coffret, chargeur]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, ecran casse, jeu seul]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 120
+    max_buy: 50
+  # ---------- Nintendo DS (hors Pokémon) ----------
+  - name: Chrono Trigger DS
+    category: Rétrogaming
+    all: [[chrono trigger], [ds]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, snes, super nintendo, playstation, ps1, switch, r4]
+    ref_price: 45
+    max_buy: 16
+  - name: Castlevania Order of Ecclesia DS
+    category: Rétrogaming
+    all: [order of ecclesia]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, collection, switch]
+    ref_price: 40
+    max_buy: 14
+  - name: Fire Emblem Shadow Dragon DS
+    category: Rétrogaming
+    all: [[fire emblem], [shadow dragon]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, switch, nes]
+    ref_price: 35
+    max_buy: 11
+  - name: Kirby Super Star Ultra DS
+    category: Rétrogaming
+    all: [super star ultra]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie]
+    ref_price: 30
+    max_buy: 9
+  - name: Okamiden DS
+    category: Rétrogaming
+    all: [[okamiden, okami den]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie]
+    ref_price: 30
+    max_buy: 9
+  - name: Resident Evil Deadly Silence DS
+    category: Rétrogaming
+    all: [deadly silence]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie]
+    ref_price: 45
+    max_buy: 16
+  - name: Dragon Quest V La Fiancee Celeste DS
+    category: Rétrogaming
+    all: [[fiancee celeste, heavenly bride, dragon quest v]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, super famicom, switch, ps2, mobile]
+    ref_price: 50
+    max_buy: 18
+  - name: Tingle Rosy Rupeeland DS
+    category: Rétrogaming
+    all: [[tingle], [ds]]
+    none: [boite seule, boite vide, notice seule, repro, reproduction, copie, figurine, amiibo]
+    ref_price: 60
+    max_buy: 23
+
+  # ============ Rétrogaming Sega, Xbox, Neo Geo, Atari… (prix PAL complets boîte + notice, à affiner) ============
+  # Faux fréquents : CD gravés (dessous violet/bleu/vert), cartouches repro. Saturn originale : dessous noir ; Dreamcast : GD-ROM argenté.
+  # ----- CONSOLES -----
+  - name: Console Mega Drive
+    category: Rétrogaming
+    all: [[mega drive, megadrive], [console, pack, coffret]]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, mini, atgames, classic, jeux integres, portable, flashback, 32x, mega cd, ps4, switch]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 50
+    max_buy: 18
+  - name: Mega Drive Mini officielle
+    category: Rétrogaming
+    all: [[mega drive mini, megadrive mini]]
+    none: [mini 2, mini ii, atgames, hs, pour pieces, boite vide, manette seule]
+    ref_price: 50
+    max_buy: 18
+  - name: Mega Drive Mini 2
+    category: Rétrogaming
+    all: [[mega drive mini 2, megadrive mini 2, mega drive mini ii]]
+    none: [atgames, hs, pour pieces, boite vide, manette seule]
+    ref_price: 120
+    max_buy: 50
+  - name: Sega 32X
+    category: Rétrogaming
+    all: [[32x], [sega, mega drive, megadrive]]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, cartouche seule]
+    ref_price: 60
+    max_buy: 23
+  - name: Console Mega CD
+    category: Rétrogaming
+    all: [[mega cd, megacd, mega-cd], [console, lecteur, pack, extension]]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, ne lit pas, courroie]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 90
+    max_buy: 36
+  - name: Console Master System
+    category: Rétrogaming
+    all: [[master system, mastersystem], [console, pack, coffret]]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, evolution, retro-bit, jeux integres, portable]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 40
+    max_buy: 14
+  - name: Console Game Gear
+    category: Rétrogaming
+    all: [[game gear, gamegear], [console, portable, pack]]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, ne s allume, ecran, condensateurs, micro, sacoche seule]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 45
+    max_buy: 16
+  - name: Console Sega Saturn
+    category: Rétrogaming
+    all: [[sega saturn, saturn sega], [console, pack, coffret]]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, ne lit pas]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 80
+    max_buy: 32
+  - name: Console Dreamcast
+    category: Rétrogaming
+    all: [[dreamcast], [console, pack, coffret]]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, ne lit pas, lit pas, vmu seul]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 80
+    max_buy: 32
+  - name: Console Xbox originale
+    category: Rétrogaming
+    all: [[xbox], [console, pack]]
+    none: [xbox 360, x360, xbox one, series x, series s, hs, pour pieces, coque seule, boite vide, manette seule, kinect, halo edition]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 45
+    max_buy: 16
+  - name: Xbox Edition Halo verte
+    category: Rétrogaming
+    all: [[xbox], [halo], [verte, green, edition limitee, collector]]
+    none: [xbox 360, x360, xbox one, series, hs, pour pieces, coque seule, boite vide, manette seule]
+    ref_price: 150
+    max_buy: 64
+  - name: Steel Battalion avec cockpit Xbox
+    category: Rétrogaming
+    all: [[steel battalion], [manette, controleur, controller, cockpit, complet]]
+    none: [heavy armor, line of contact, kinect, xbox 360, sans manette, jeu seul, boite vide]
+    ref_price: 150
+    max_buy: 64
+  - name: Console Neo Geo AES
+    category: Rétrogaming
+    all: [[neo geo, neogeo], [aes], [console, pack, coffret, chargeur, alimentation, fonctionne, fonctionnelle, complete]]
+    none: [mini, x gold, neo geo x, hs, pour pieces, coque seule, boite vide, manette seule, arcade stick seul]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 400
+    max_buy: 177
+  - name: Console Neo Geo CD
+    category: Rétrogaming
+    all: [[neo geo cd, neogeo cd], [console, pack, coffret, chargeur, alimentation, fonctionne, fonctionnelle, complete]]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, ne lit pas]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 200
+    max_buy: 86
+  - name: Neo Geo Pocket Color
+    category: Rétrogaming
+    all: [[neo geo pocket, neogeo pocket], [console, pack, coffret, chargeur, alimentation, fonctionne, fonctionnelle, complete]]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, ecran raye]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 70
+    max_buy: 27
+  - name: Console PC Engine
+    category: Rétrogaming
+    all: [[pc engine, pc-engine, coregrafx, core grafx], [console, pack, coffret, chargeur, alimentation, fonctionne, fonctionnelle, complete]]
+    none: [mini, duo, hucard seule, hs, pour pieces, coque seule, boite vide, manette seule]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches, hucard], unless: [console, pack, coffret, avec]}
+    ref_price: 120
+    max_buy: 50
+  - name: PC Engine Duo
+    category: Rétrogaming
+    all: [[pc engine duo, pc-engine duo, turbo duo], [console, pack, coffret, chargeur, alimentation, fonctionne, fonctionnelle, complete]]
+    none: [mini, hs, pour pieces, coque seule, boite vide, manette seule]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 300
+    max_buy: 132
+  - name: Console Atari Lynx
+    category: Rétrogaming
+    all: [[atari lynx, lynx atari, lynx 2, lynx ii], [console, pack, coffret, chargeur, alimentation, fonctionne, fonctionnelle, complete]]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, ecran mort]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 60
+    max_buy: 23
+  - name: Console Atari 2600
+    category: Rétrogaming
+    all: [[atari 2600, atari vcs], [console, pack]]
+    none: [flashback, plus, hs, pour pieces, coque seule, boite vide, manette seule, jeux integres]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 45
+    max_buy: 16
+  - name: Nintendo Virtual Boy
+    category: Rétrogaming
+    all: [[virtual boy], [console, pack, coffret, chargeur, alimentation, fonctionne, fonctionnelle, complete]]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, pied seul, ecran defectueux]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 200
+    max_buy: 86
+  # ----- MEGA DRIVE -----
+  - name: Streets of Rage 3 Mega Drive
+    category: Rétrogaming
+    all: [[streets of rage 3, streets of rage iii], [mega drive, megadrive]]
+    none: [classics, collection, compilation, ps3, ps4, switch, mini, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 50
+    max_buy: 18
+  - name: Castlevania New Generation Mega Drive
+    category: Rétrogaming
+    all: [[castlevania], [mega drive, megadrive]]
+    none: [ps1, ps4, switch, collection, mini, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 60
+    max_buy: 23
+  - name: Probotector Mega Drive
+    category: Rétrogaming
+    all: [[probotector, contra hard corps], [mega drive, megadrive]]
+    none: [nes, game boy, collection, mini, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 70
+    max_buy: 27
+  - name: Phantasy Star IV Mega Drive
+    category: Rétrogaming
+    all: [[phantasy star iv, phantasy star 4], [mega drive, megadrive]]
+    none: [collection, classics, ps2, mini, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 60
+    max_buy: 23
+  - name: Phantasy Star II/III Mega Drive
+    category: Rétrogaming
+    all: [[phantasy star ii, phantasy star 2, phantasy star iii, phantasy star 3], [mega drive, megadrive]]
+    none: [collection, classics, ps2, mini, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 30
+    max_buy: 9
+  - name: Shining Force II Mega Drive
+    category: Rétrogaming
+    all: [[shining force ii, shining force 2], [mega drive, megadrive]]
+    none: [classics, mini, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 45
+    max_buy: 16
+  - name: Shining Force Mega Drive
+    category: Rétrogaming
+    all: [[shining force], [mega drive, megadrive]]
+    none: [shining force ii, shining force 2, classics, mini, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 35
+    max_buy: 11
+  - name: Shining in the Darkness Mega Drive
+    category: Rétrogaming
+    all: [[shining in the darkness], [mega drive, megadrive]]
+    none: [classics, mini, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 25
+    max_buy: 7
+  - name: Alien Soldier Mega Drive
+    category: Rétrogaming
+    all: [[alien soldier], [mega drive, megadrive]]
+    none: [mini, collection, boite seule, boite vide, notice seule, copie, grave, repro, reproduction]
+    ref_price: 120
+    max_buy: 50
+  - name: Mega Man Wily Wars Mega Drive
+    category: Rétrogaming
+    all: [[wily wars], [mega drive, megadrive]]
+    none: [mini, boite seule, boite vide, notice seule, copie, grave, repro, reproduction]
+    ref_price: 120
+    max_buy: 50
+  - name: Mega Turrican Mega Drive
+    category: Rétrogaming
+    all: [[mega turrican], [mega drive, megadrive]]
+    none: [anthology, switch, ps4, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 60
+    max_buy: 23
+  - name: Gunstar Heroes Mega Drive
+    category: Rétrogaming
+    all: [[gunstar heroes], [mega drive, megadrive]]
+    none: [classics, collection, mini, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 45
+    max_buy: 16
+  - name: Ristar Mega Drive
+    category: Rétrogaming
+    all: [[ristar], [mega drive, megadrive]]
+    none: [classics, collection, mini, game gear, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 45
+    max_buy: 16
+  - name: Thunder Force IV Mega Drive
+    category: Rétrogaming
+    all: [[thunder force iv, thunder force 4, lightening force], [mega drive, megadrive]]
+    none: [switch, ps4, mini, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 45
+    max_buy: 16
+  - name: Zero Kamikaze Squirrel Mega Drive
+    category: Rétrogaming
+    all: [[kamikaze squirrel], [mega drive, megadrive]]
+    none: [snes, super nintendo, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 70
+    max_buy: 27
+  - name: Flink Mega Drive
+    category: Rétrogaming
+    all: [[flink], [mega drive, megadrive]]
+    none: [mega cd, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 70
+    max_buy: 27
+  - name: Batman Robin Mega Drive
+    category: Rétrogaming
+    all: [[batman], [robin], [mega drive, megadrive]]
+    none: [mega cd, snes, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 50
+    max_buy: 18
+  - name: Skeleton Krew Mega Drive
+    category: Rétrogaming
+    all: [[skeleton krew], [mega drive, megadrive]]
+    none: [amiga, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 50
+    max_buy: 18
+  - name: McDonald's Treasure Land Mega Drive
+    category: Rétrogaming
+    all: [[treasure land], [mega drive, megadrive]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 45
+    max_buy: 16
+  - name: Demolition Man Mega Drive
+    category: Rétrogaming
+    all: [[demolition man], [mega drive, megadrive]]
+    none: [mega cd, snes, dvd, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 40
+    max_buy: 14
+  - name: Soleil Mega Drive
+    category: Rétrogaming
+    all: [[soleil, crusader of centy], [mega drive, megadrive]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 40
+    max_buy: 14
+  - name: Story of Thor Mega Drive
+    category: Rétrogaming
+    all: [[story of thor, beyond oasis], [mega drive, megadrive]]
+    none: [saturn, thor 2, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 35
+    max_buy: 11
+  - name: Wonder Boy in Monster World Mega Drive
+    category: Rétrogaming
+    all: [[monster world], [mega drive, megadrive]]
+    none: [switch, ps4, collection, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 35
+    max_buy: 11
+  - name: Landstalker Mega Drive
+    category: Rétrogaming
+    all: [[landstalker], [mega drive, megadrive]]
+    none: [classics, collection, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 30
+    max_buy: 9
+  - name: Light Crusader Mega Drive
+    category: Rétrogaming
+    all: [[light crusader], [mega drive, megadrive]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 30
+    max_buy: 9
+  - name: Rocket Knight Adventures Mega Drive
+    category: Rétrogaming
+    all: [[rocket knight, sparkster], [mega drive, megadrive]]
+    none: [ps3, xbox, snes, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 30
+    max_buy: 9
+  - name: Dynamite Headdy Mega Drive
+    category: Rétrogaming
+    all: [[dynamite headdy], [mega drive, megadrive]]
+    none: [game gear, classics, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 30
+    max_buy: 9
+  - name: Alisia Dragoon Mega Drive
+    category: Rétrogaming
+    all: [[alisia dragoon], [mega drive, megadrive]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 30
+    max_buy: 9
+  - name: Comix Zone Mega Drive
+    category: Rétrogaming
+    all: [[comix zone], [mega drive, megadrive]]
+    none: [classics, collection, mini, ps4, switch, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 25
+    max_buy: 7
+  # ----- MEGA CD -----
+  - name: Snatcher Mega CD
+    category: Rétrogaming
+    all: [[snatcher], [mega cd, megacd, mega-cd, sega cd]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro, reproduction]
+    ref_price: 250
+    max_buy: 109
+  - name: Keio Flying Squadron Mega CD
+    category: Rétrogaming
+    all: [[keio flying squadron, keio], [mega cd, megacd, mega-cd]]
+    none: [saturn, keio 2, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 100
+    max_buy: 41
+  - name: Robo Aleste Mega CD
+    category: Rétrogaming
+    all: [[robo aleste], [mega cd, megacd, mega-cd]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 60
+    max_buy: 23
+  - name: Sonic CD Mega CD
+    category: Rétrogaming
+    all: [[sonic cd], [mega cd, megacd, mega-cd]]
+    none: [pc, gems, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 40
+    max_buy: 14
+  # ----- MASTER SYSTEM -----
+  - name: Schtroumpfs Autour du Monde Master System
+    category: Rétrogaming
+    all: [[schtroumpfs autour du monde, smurfs travel], [master system, mastersystem]]
+    none: [game gear, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 150
+    max_buy: 64
+  - name: Power Strike II Master System
+    category: Rétrogaming
+    all: [[power strike ii, power strike 2], [master system, mastersystem]]
+    none: [game gear, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 100
+    max_buy: 41
+  - name: Sonic Blast Master System
+    category: Rétrogaming
+    all: [[sonic blast], [master system, mastersystem]]
+    none: [game gear, 3d blast, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 80
+    max_buy: 32
+  - name: Streets of Rage 2 Master System
+    category: Rétrogaming
+    all: [[streets of rage 2, streets of rage ii], [master system, mastersystem]]
+    none: [mega drive, game gear, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 80
+    max_buy: 32
+  - name: Buggy Run Master System
+    category: Rétrogaming
+    all: [[buggy run], [master system, mastersystem]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 80
+    max_buy: 32
+  - name: Phantasy Star Master System
+    category: Rétrogaming
+    all: [[phantasy star], [master system, mastersystem]]
+    none: [mega drive, collection, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 50
+    max_buy: 18
+  - name: Sonic Spinball Master System
+    category: Rétrogaming
+    all: [[sonic spinball], [master system, mastersystem]]
+    none: [mega drive, game gear, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 50
+    max_buy: 18
+  - name: Mean Bean Machine Master System
+    category: Rétrogaming
+    all: [[mean bean machine], [master system, mastersystem]]
+    none: [mega drive, game gear, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 50
+    max_buy: 18
+  - name: Golden Axe Warrior Master System
+    category: Rétrogaming
+    all: [[golden axe warrior], [master system, mastersystem]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 45
+    max_buy: 16
+  - name: Master of Darkness Master System
+    category: Rétrogaming
+    all: [[master of darkness], [master system, mastersystem]]
+    none: [game gear, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 40
+    max_buy: 14
+  - name: Ninja Gaiden Master System
+    category: Rétrogaming
+    all: [[ninja gaiden], [master system, mastersystem]]
+    none: [xbox, game gear, nes, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 35
+    max_buy: 11
+  # ----- GAME GEAR -----
+  - name: Sonic Blast Game Gear
+    category: Rétrogaming
+    all: [[sonic blast], [game gear, gamegear]]
+    none: [master system, 3d blast, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 70
+    max_buy: 27
+  - name: Power Strike II Game Gear
+    category: Rétrogaming
+    all: [[power strike ii, power strike 2], [game gear, gamegear]]
+    none: [master system, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 80
+    max_buy: 32
+  - name: Schtroumpfs Autour du Monde Game Gear
+    category: Rétrogaming
+    all: [[schtroumpfs autour du monde, smurfs travel], [game gear, gamegear]]
+    none: [master system, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 60
+    max_buy: 23
+  - name: Tails Adventure Game Gear
+    category: Rétrogaming
+    all: [[tails adventure, tails adventures], [game gear, gamegear]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 45
+    max_buy: 16
+  - name: Mortal Kombat 3 Game Gear
+    category: Rétrogaming
+    all: [[mortal kombat 3], [game gear, gamegear]]
+    none: [ultimate, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 50
+    max_buy: 18
+  - name: Shining Force Game Gear
+    category: Rétrogaming
+    all: [[shining force], [game gear, gamegear]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 35
+    max_buy: 11
+  - name: Ristar Game Gear
+    category: Rétrogaming
+    all: [[ristar], [game gear, gamegear]]
+    none: [mega drive, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 35
+    max_buy: 11
+  - name: Sonic Labyrinth Game Gear
+    category: Rétrogaming
+    all: [[sonic labyrinth], [game gear, gamegear]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 30
+    max_buy: 9
+  # ----- SATURN -----
+  - name: Panzer Dragoon Saga Saturn
+    category: Rétrogaming
+    all: [[panzer dragoon saga, azel], [saturn]]
+    none: [disque manquant, incomplet, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 250
+    max_buy: 109
+  - name: Deep Fear Saturn
+    category: Rétrogaming
+    all: [[deep fear], [saturn]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 200
+    max_buy: 86
+  - name: Mega Man X3 Saturn
+    category: Rétrogaming
+    all: [[mega man x3, megaman x3], [saturn]]
+    none: [snes, super nintendo, ps1, playstation, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 150
+    max_buy: 64
+  - name: Burning Rangers Saturn
+    category: Rétrogaming
+    all: [[burning rangers], [saturn]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 120
+    max_buy: 50
+  - name: Keio Flying Squadron 2 Saturn
+    category: Rétrogaming
+    all: [[keio flying squadron 2, keio 2], [saturn]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 120
+    max_buy: 50
+  - name: Shining Force III Saturn
+    category: Rétrogaming
+    all: [[shining force iii, shining force 3], [saturn]]
+    none: [scenario, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 100
+    max_buy: 41
+  - name: Radiant Silvergun Saturn
+    category: Rétrogaming
+    all: [[radiant silvergun], [saturn]]
+    none: [xbox, xbox 360, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 100
+    max_buy: 41
+  - name: Three Dirty Dwarves Saturn
+    category: Rétrogaming
+    all: [[three dirty dwarves, 3 dirty dwarves], [saturn]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 80
+    max_buy: 32
+  - name: Mr Bones Saturn
+    category: Rétrogaming
+    all: [[mr bones, mr. bones], [saturn]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 80
+    max_buy: 32
+  - name: Dragon Force Saturn
+    category: Rétrogaming
+    all: [[dragon force], [saturn]]
+    none: [ps2, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 70
+    max_buy: 27
+  - name: Shinobi X Saturn
+    category: Rétrogaming
+    all: [[shinobi x, shinobi legions], [saturn]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 60
+    max_buy: 23
+  - name: Shining the Holy Ark Saturn
+    category: Rétrogaming
+    all: [[holy ark], [saturn]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 60
+    max_buy: 23
+  - name: Saturn Bomberman
+    category: Rétrogaming
+    all: [[bomberman], [saturn]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 60
+    max_buy: 23
+  - name: Batman Forever Arcade Saturn
+    category: Rétrogaming
+    all: [[batman forever], [saturn]]
+    none: [dvd, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 60
+    max_buy: 23
+  - name: Guardian Heroes Saturn
+    category: Rétrogaming
+    all: [[guardian heroes], [saturn]]
+    none: [xbox 360, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 50
+    max_buy: 18
+  - name: Enemy Zero Saturn
+    category: Rétrogaming
+    all: [[enemy zero], [saturn]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 40
+    max_buy: 14
+  - name: Panzer Dragoon Zwei Saturn
+    category: Rétrogaming
+    all: [[panzer dragoon zwei, panzer dragoon ii, panzer dragoon 2], [saturn]]
+    none: [remake, switch, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 30
+    max_buy: 9
+  # ----- DREAMCAST -----
+  - name: Cannon Spike Dreamcast
+    category: Rétrogaming
+    all: [[cannon spike], [dreamcast]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 150
+    max_buy: 64
+  - name: Project Justice Dreamcast
+    category: Rétrogaming
+    all: [[project justice, rival schools 2], [dreamcast]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 80
+    max_buy: 32
+  - name: Samba de Amigo Dreamcast
+    category: Rétrogaming
+    all: [[samba de amigo], [dreamcast]]
+    none: [wii, switch, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 80
+    max_buy: 32
+  - name: Marvel vs Capcom 2 Dreamcast
+    category: Rétrogaming
+    all: [[marvel vs capcom 2, marvel vs. capcom 2, marvel versus capcom 2], [dreamcast]]
+    none: [ps2, xbox, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 70
+    max_buy: 27
+  - name: Ikaruga Dreamcast
+    category: Rétrogaming
+    all: [[ikaruga], [dreamcast]]
+    none: [gamecube, switch, xbox, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 70
+    max_buy: 27
+  - name: Rez Dreamcast
+    category: Rétrogaming
+    all: [[rez], [dreamcast]]
+    none: [infinite, ps2, ps4, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 60
+    max_buy: 23
+  - name: Evolution 2 Dreamcast
+    category: Rétrogaming
+    all: [[evolution 2], [dreamcast]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 60
+    max_buy: 23
+  - name: Skies of Arcadia Dreamcast
+    category: Rétrogaming
+    all: [[skies of arcadia], [dreamcast]]
+    none: [legends, gamecube, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 50
+    max_buy: 18
+  - name: Street Fighter III 3rd Strike Dreamcast
+    category: Rétrogaming
+    all: [[3rd strike, third strike], [dreamcast]]
+    none: [ps2, xbox, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 50
+    max_buy: 18
+  - name: Street Fighter III Double Impact Dreamcast
+    category: Rétrogaming
+    all: [[double impact], [dreamcast]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 45
+    max_buy: 16
+  - name: Bangai-O Dreamcast
+    category: Rétrogaming
+    all: [[bangai-o, bangaio, bangai o], [dreamcast]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 50
+    max_buy: 18
+  - name: JoJo Bizarre Adventure Dreamcast
+    category: Rétrogaming
+    all: [[jojo], [dreamcast]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 50
+    max_buy: 18
+  - name: Shenmue II Dreamcast
+    category: Rétrogaming
+    all: [[shenmue ii, shenmue 2], [dreamcast]]
+    none: [xbox, ps4, shenmue 3, shenmue iii, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 40
+    max_buy: 14
+  - name: Grandia II Dreamcast
+    category: Rétrogaming
+    all: [[grandia ii, grandia 2], [dreamcast]]
+    none: [ps2, pc, hd, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 40
+    max_buy: 14
+  - name: Power Stone 2 Dreamcast
+    category: Rétrogaming
+    all: [[power stone 2], [dreamcast]]
+    none: [psp, collection, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 40
+    max_buy: 14
+  - name: Resident Evil 2 Dreamcast
+    category: Rétrogaming
+    all: [[resident evil 2, resident evil ii], [dreamcast]]
+    none: [ps1, ps4, remake, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 40
+    max_buy: 14
+  - name: Spawn Dreamcast
+    category: Rétrogaming
+    all: [[spawn], [dreamcast]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 40
+    max_buy: 14
+  - name: Tech Romancer Dreamcast
+    category: Rétrogaming
+    all: [[tech romancer], [dreamcast]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 30
+    max_buy: 9
+  - name: Shenmue Dreamcast
+    category: Rétrogaming
+    all: [[shenmue], [dreamcast]]
+    none: [shenmue 2, shenmue ii, shenmue 3, shenmue iii, ps4, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 25
+    max_buy: 7
+  - name: Jet Set Radio Dreamcast
+    category: Rétrogaming
+    all: [[jet set radio], [dreamcast]]
+    none: [future, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 25
+    max_buy: 7
+  - name: Code Veronica Dreamcast
+    category: Rétrogaming
+    all: [[code veronica], [dreamcast]]
+    none: [ps2, gamecube, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 25
+    max_buy: 7
+  # ----- XBOX (2001) -----
+  - name: Godzilla Destroy All Monsters Xbox
+    category: Rétrogaming
+    all: [[godzilla], [xbox]]
+    none: [xbox 360, x360, xbox one, series, ps4, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 50
+    max_buy: 18
+  - name: Castlevania Curse of Darkness Xbox
+    category: Rétrogaming
+    all: [[curse of darkness], [xbox]]
+    none: [ps2, xbox 360, xbox one, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 45
+    max_buy: 16
+  - name: OutRun 2006 Xbox
+    category: Rétrogaming
+    all: [[outrun 2006, out run 2006, coast 2 coast], [xbox]]
+    none: [ps2, psp, xbox 360, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 40
+    max_buy: 14
+  - name: Spikeout Battle Street Xbox
+    category: Rétrogaming
+    all: [[spikeout, spike out], [xbox]]
+    none: [xbox 360, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 40
+    max_buy: 14
+  - name: Otogi Xbox
+    category: Rétrogaming
+    all: [[otogi], [xbox]]
+    none: [xbox 360, xbox one, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 35
+    max_buy: 11
+  - name: Panzer Dragoon Orta Xbox
+    category: Rétrogaming
+    all: [[panzer dragoon orta, panzer dragoon], [xbox]]
+    none: [xbox one, series, saturn, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 35
+    max_buy: 11
+  - name: Silent Hill 2 Xbox
+    category: Rétrogaming
+    all: [[silent hill 2, inner fears], [xbox]]
+    none: [ps2, ps5, xbox 360, hd collection, remake, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 35
+    max_buy: 11
+  - name: Project Zero 2 Xbox
+    category: Rétrogaming
+    all: [[project zero 2, project zero ii, fatal frame 2, crimson butterfly], [xbox]]
+    none: [ps2, wii, xbox 360, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 35
+    max_buy: 11
+  - name: Ninja Gaiden Black Xbox
+    category: Rétrogaming
+    all: [[ninja gaiden], [xbox]]
+    none: [xbox 360, x360, ninja gaiden 2, ninja gaiden ii, ninja gaiden 3, sigma, ps3, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 30
+    max_buy: 9
+  - name: Silent Hill 4 Xbox
+    category: Rétrogaming
+    all: [[silent hill 4, the room], [xbox]]
+    none: [ps2, xbox 360, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 30
+    max_buy: 9
+  - name: Metal Slug Xbox
+    category: Rétrogaming
+    all: [[metal slug], [xbox]]
+    none: [xbox 360, xbox one, series, ps4, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 30
+    max_buy: 9
+  - name: Taito Legends 2 Xbox
+    category: Rétrogaming
+    all: [[taito legends 2], [xbox]]
+    none: [ps2, pc, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 30
+    max_buy: 9
+  - name: Call of Cthulhu Xbox
+    category: Rétrogaming
+    all: [[cthulhu], [xbox]]
+    none: [xbox one, series, ps4, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 30
+    max_buy: 9
+  - name: Jet Set Radio Future Xbox
+    category: Rétrogaming
+    all: [[jet set radio future, jet set radio], [xbox]]
+    none: [xbox 360, xbox one, dreamcast, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 25
+    max_buy: 7
+  - name: Gunvalkyrie Xbox
+    category: Rétrogaming
+    all: [[gunvalkyrie], [xbox]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 25
+    max_buy: 7
+  - name: Conker Live Reloaded Xbox
+    category: Rétrogaming
+    all: [[conker], [xbox]]
+    none: [n64, nintendo 64, xbox one, rare replay, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 20
+    max_buy: 5
+  # ----- XBOX 360 (rares seulement) -----
+  - name: Deadpool Xbox 360
+    category: Rétrogaming
+    all: [[deadpool], [xbox 360, x360]]
+    none: [ps4, xbox one, figurine, dvd, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 40
+    max_buy: 14
+  - name: Deathsmiles Xbox 360
+    category: Rétrogaming
+    all: [[deathsmiles], [xbox 360, x360]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 50
+    max_buy: 18
+  - name: Raiden Fighters Aces Xbox 360
+    category: Rétrogaming
+    all: [[raiden fighters], [xbox 360, x360]]
+    none: [boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 40
+    max_buy: 14
+  - name: Transformers Fall of Cybertron Xbox 360
+    category: Rétrogaming
+    all: [[fall of cybertron, war for cybertron], [xbox 360, x360]]
+    none: [ps4, xbox one, figurine, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 30
+    max_buy: 9
+  - name: Amazing Spider-Man 2 Xbox 360
+    category: Rétrogaming
+    all: [[amazing spider-man 2, amazing spiderman 2], [xbox 360, x360]]
+    none: [ps4, xbox one, dvd, blu-ray, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 30
+    max_buy: 9
+  - name: Tales of Vesperia Xbox 360
+    category: Rétrogaming
+    all: [[tales of vesperia], [xbox 360, x360]]
+    none: [definitive, ps4, switch, boite seule, boite vide, notice seule, copie, grave, repro]
+    ref_price: 25
+    max_buy: 7
+
+  # ============ Rétrogaming Sony : PS1, PS2, PSP, Vita, PS3 (prix PAL complets, version originale) ============
+  # Platinum = 30 à 50 % du prix (sauf Silent Hill). Vrai CD PS1 : dessous noir ; CD-R vert/bleu/doré = copie.
+  # Sans valeur : FIFA, PES, Singstar, Buzz, sports, GTA, Need for Speed, la plupart des « lot 20 jeux PS2 ».
+  - name: Console PlayStation 1 fat
+    category: Rétrogaming
+    all: [[console playstation, console ps1, console psx, playstation 1, ps1 fat, scph], [console, pack, complete, fonctionne]]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, puce, psone, ps one, ps2, ps3, ps4, ps5, classic, mini]
+    none_unless: {words: [jeu, jeux], unless: [console, pack, coffret, avec]}
+    ref_price: 35          # loose + 1 manette + cables
+    max_buy: 11
+  - name: Console PSOne avec ecran LCD
+    category: Rétrogaming
+    all: [[psone, ps one], [ecran, lcd]]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, puce, ecran seul, sans console]
+    none_unless: {words: [jeu, jeux], unless: [console, pack, coffret, avec]}
+    ref_price: 120          # PSOne + ecran LCD officiel
+    max_buy: 50
+  - name: Console PSOne
+    category: Rétrogaming
+    all: [[psone, ps one], [console, pack, complete, fonctionne]]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, puce, ecran, lcd, classic, mini]
+    none_unless: {words: [jeu, jeux], unless: [console, pack, coffret, avec]}
+    ref_price: 35
+    max_buy: 11
+  - name: Final Fantasy VII PS1
+    category: Rétrogaming
+    all: [[final fantasy vii, final fantasy 7, ff7, ffvii], [ps1, psx, psone, ps one, playstation 1]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, final fantasy viii, final fantasy 8, ff8, ffviii, remake, crisis core, rebirth]
+    ref_price: 30          # 3 CD + boite + notice
+    max_buy: 9
+  - name: Final Fantasy VIII PS1
+    category: Rétrogaming
+    all: [[final fantasy viii, final fantasy 8, ff8, ffviii], [ps1, psx, psone, ps one, playstation 1]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, remastered]
+    ref_price: 20
+    max_buy: 5
+  - name: Final Fantasy IX PS1
+    category: Rétrogaming
+    all: [[final fantasy ix, final fantasy 9, ff9, ffix], [ps1, psx, psone, ps one, playstation 1]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 25
+    max_buy: 7
+  - name: Suikoden II PS1
+    category: Rétrogaming
+    all: [[suikoden ii, suikoden 2], [ps1, psx, psone, ps one, playstation 1, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, ps2, psp, hd remaster, star leap]
+    ref_price: 140          # tres copie: verifier dessous noir + code SLES
+    max_buy: 59
+  - name: Suikoden PS1
+    category: Rétrogaming
+    all: [[suikoden], [ps1, psx, psone, ps one, playstation 1]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, suikoden ii, suikoden 2, suikoden iii, suikoden iv, suikoden v, suikoden 3, suikoden 4, suikoden 5, tactics, ps2, psp]
+    ref_price: 55
+    max_buy: 20
+  - name: Castlevania Symphony of the Night PS1
+    category: Rétrogaming
+    all: [[symphony of the night], [ps1, psx, psone, ps one, playstation 1, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, xbox, ps4, requiem, dracula x chronicles, psp]
+    ref_price: 170          # cible n.1 des repros
+    max_buy: 73
+  - name: Silent Hill PS1
+    category: Rétrogaming
+    all: [[silent hill], [ps1, psx, psone, ps one, playstation 1]]
+    none: [boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, silent hill 2, silent hill 3, silent hill 4, origins, shattered, homecoming, downpour, collection, ps2]
+    ref_price: 75          # la version Platinum vaut presque autant
+    max_buy: 30
+  - name: Resident Evil 2 PS1
+    category: Rétrogaming
+    all: [[resident evil 2], [ps1, psx, psone, ps one, playstation 1]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, remake, ps4, ps5, gamecube, dualshock]
+    ref_price: 45
+    max_buy: 16
+  - name: Resident Evil 3 Nemesis PS1
+    category: Rétrogaming
+    all: [[resident evil 3, nemesis], [ps1, psx, psone, ps one, playstation 1]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, remake, ps4, ps5]
+    ref_price: 30
+    max_buy: 9
+  - name: Parasite Eve II PS1
+    category: Rétrogaming
+    all: [[parasite eve 2, parasite eve ii], [ps1, psx, psone, ps one, playstation 1, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 40
+    max_buy: 14
+  - name: Vagrant Story PS1
+    category: Rétrogaming
+    all: [[vagrant story], [ps1, psx, psone, ps one, playstation 1, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 30
+    max_buy: 9
+  - name: Legend of Dragoon PS1
+    category: Rétrogaming
+    all: [[legend of dragoon], [ps1, psx, psone, ps one, playstation 1, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 50          # 4 CD
+    max_buy: 18
+  - name: Legend of Legaia PS1
+    category: Rétrogaming
+    all: [[legend of legaia, legaia], [ps1, psx, psone, ps one, playstation 1, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, legaia 2, duel saga]
+    ref_price: 45
+    max_buy: 16
+  - name: Breath of Fire III/IV PS1
+    category: Rétrogaming
+    all: [[breath of fire], [ps1, psx, psone, ps one, playstation 1]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, psp, gba, super nintendo, snes]
+    ref_price: 50
+    max_buy: 18
+  - name: Star Ocean Second Story PS1
+    category: Rétrogaming
+    all: [[star ocean], [ps1, psx, psone, ps one, playstation 1]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, till the end, psp, ps2, ps4]
+    ref_price: 55
+    max_buy: 20
+  - name: Grandia PS1
+    category: Rétrogaming
+    all: [[grandia], [ps1, psx, psone, ps one, playstation 1]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, grandia 2, grandia ii, grandia iii, ps2, switch, dreamcast]
+    ref_price: 45
+    max_buy: 16
+  - name: Wild Arms 2 PS1
+    category: Rétrogaming
+    all: [[wild arms 2, wild arms ii], [ps1, psx, psone, ps one, playstation 1, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 30
+    max_buy: 9
+  - name: Alundra PS1
+    category: Rétrogaming
+    all: [[alundra], [ps1, psx, psone, ps one, playstation 1, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 40
+    max_buy: 14
+  - name: Harvest Moon Back to Nature PS1
+    category: Rétrogaming
+    all: [[harvest moon], [ps1, psx, psone, ps one, playstation 1]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, gba, nintendo ds, 3ds, wii, gamecube, switch]
+    ref_price: 60
+    max_buy: 23
+  - name: Tombi PS1
+    category: Rétrogaming
+    all: [[tombi], [ps1, psx, psone, ps one, playstation 1, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 75          # Tombi 1 ~90, Tombi 2 ~75
+    max_buy: 30
+  - name: Vib-Ribbon PS1
+    category: Rétrogaming
+    all: [[vib ribbon, vibribbon], [ps1, psx, psone, ps one, playstation 1, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 55
+    max_buy: 20
+  - name: Klonoa PS1
+    category: Rétrogaming
+    all: [[klonoa], [ps1, psx, psone, ps one, playstation 1]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, wii, switch, gba, ps2, lunatea]
+    ref_price: 50
+    max_buy: 18
+  - name: Mega Man PS1
+    category: Rétrogaming
+    all: [[mega man, megaman], [ps1, psx, psone, ps one, playstation 1]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, collection, anniversary, ps2, gamecube, nintendo nes]
+    ref_price: 50          # Legends, 8, X4, X6, Battle & Chase
+    max_buy: 18
+  - name: Chocobo Racing PS1
+    category: Rétrogaming
+    all: [[chocobo racing], [ps1, psx, psone, ps one, playstation 1, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 70
+    max_buy: 27
+  - name: Clock Tower PS1
+    category: Rétrogaming
+    all: [[clock tower], [ps1, psx, psone, ps one, playstation 1]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, clock tower 3, ps2]
+    ref_price: 80
+    max_buy: 32
+  - name: Tron Bonne PS1
+    category: Rétrogaming
+    all: [[tron bonne], [ps1, psx, psone, ps one, playstation 1, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 90
+    max_buy: 36
+  - name: Dragon Ball GT Final Bout PS1
+    category: Rétrogaming
+    all: [[final bout], [ps1, psx, psone, ps one, playstation 1, playstation, dragon ball]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 60
+    max_buy: 23
+  - name: Dragon Ball Z Ultimate Battle 22 PS1
+    category: Rétrogaming
+    all: [[ultimate battle 22], [ps1, psx, psone, ps one, playstation 1, playstation, dragon ball]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 35
+    max_buy: 11
+  - name: Digimon World PS1
+    category: Rétrogaming
+    all: [[digimon world], [ps1, psx, psone, ps one, playstation 1]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, nintendo ds, wonderswan, next order, ps4, switch, gamecube, xbox]
+    ref_price: 35
+    max_buy: 11
+  - name: Yu-Gi-Oh Forbidden Memories PS1
+    category: Rétrogaming
+    all: [[forbidden memories], [ps1, psx, psone, ps one, playstation 1, playstation, yu gi oh]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 30
+    max_buy: 9
+  - name: Ape Escape PS1
+    category: Rétrogaming
+    all: [[ape escape], [ps1, psx, psone, ps one, playstation 1]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, ape escape 2, ape escape 3, psp, ps2]
+    ref_price: 25
+    max_buy: 7
+  - name: Spyro PS1
+    category: Rétrogaming
+    all: [[spyro], [ps1, psx, psone, ps one, playstation 1]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, reignited, ps4, switch, xbox, ps2, gba, skylanders]
+    ref_price: 20
+    max_buy: 5
+  - name: Crash Team Racing PS1
+    category: Rétrogaming
+    all: [[crash team racing], [ps1, psx, psone, ps one, playstation 1]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, nitro, ps4, switch, xbox]
+    ref_price: 20
+    max_buy: 5
+  - name: Metal Gear Solid PS1
+    category: Rétrogaming
+    all: [[metal gear solid], [ps1, psx, psone, ps one, playstation 1]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, metal gear solid 2, metal gear solid 3, metal gear solid 4, master collection, integral]
+    ref_price: 20
+    max_buy: 5
+  - name: MediEvil PS1
+    category: Rétrogaming
+    all: [[medievil], [ps1, psx, psone, ps one, playstation 1]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, ps4, psp, resurrection]
+    ref_price: 22
+    max_buy: 6
+  - name: Console PlayStation 2
+    category: Rétrogaming
+    all: [[playstation 2, ps2], [console, pack, slim, fat]]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, puce, ps3, ps4, ps5, carte memoire seule]
+    none_unless: {words: [jeu, jeux], unless: [console, pack, coffret, avec]}
+    ref_price: 45          # fat ou slim + 1 manette
+    max_buy: 16
+  - name: Kuon PS2
+    category: Rétrogaming
+    all: [[kuon], [ps2, playstation 2, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 300          # FromSoftware, PAL rare
+    max_buy: 132
+  - name: Rule of Rose PS2
+    category: Rétrogaming
+    all: [[rule of rose], [ps2, playstation 2, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 200
+    max_buy: 86
+  - name: Michigan Report from Hell PS2
+    category: Rétrogaming
+    all: [[michigan report, michigan], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, etats unis, usa]
+    ref_price: 200
+    max_buy: 86
+  - name: Haunting Ground PS2
+    category: Rétrogaming
+    all: [[haunting ground], [ps2, playstation 2, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 150
+    max_buy: 64
+  - name: Silent Hill Collection PS2
+    category: Rétrogaming
+    all: [[silent hill collection], [ps2, playstation 2, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 220
+    max_buy: 95
+  - name: Silent Hill 2 PS2
+    category: Rétrogaming
+    all: [[silent hill 2], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, xbox, version pc, ps5, remake, collection, directors cut, director s cut]
+    ref_price: 85          # original, avec boite
+    max_buy: 34
+  - name: Silent Hill 2 Platinum PS2
+    category: Rétrogaming
+    all: [[silent hill 2], [ps2, playstation 2], [platinum, platinium, directors cut, director s cut]]
+    none: [boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, xbox, ps5, remake, collection]
+    ref_price: 55
+    max_buy: 20
+  - name: Silent Hill 3 PS2
+    category: Rétrogaming
+    all: [[silent hill 3], [ps2, playstation 2]]
+    none: [boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, version pc, hd collection, collection]
+    ref_price: 95
+    max_buy: 39
+  - name: Silent Hill 4 The Room PS2
+    category: Rétrogaming
+    all: [[silent hill 4, the room], [ps2, playstation 2, silent hill]]
+    none: [boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, xbox, version pc, collection]
+    ref_price: 65
+    max_buy: 25
+  - name: Silent Hill Origins PS2
+    category: Rétrogaming
+    all: [[silent hill origins, silent hill 0], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, psp]
+    ref_price: 90
+    max_buy: 36
+  - name: Silent Hill Shattered Memories PS2
+    category: Rétrogaming
+    all: [[shattered memories], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, psp, wii]
+    ref_price: 130
+    max_buy: 55
+  - name: Project Zero PS2
+    category: Rétrogaming
+    all: [[project zero], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, project zero 2, project zero 3, crimson, tormented, wii, xbox, ps5, switch]
+    ref_price: 65
+    max_buy: 25
+  - name: Project Zero 2 Crimson Butterfly PS2
+    category: Rétrogaming
+    all: [[project zero 2, crimson butterfly], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, wii, xbox]
+    ref_price: 90
+    max_buy: 36
+  - name: Project Zero 3 The Tormented PS2
+    category: Rétrogaming
+    all: [[project zero 3, tormented], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 130
+    max_buy: 55
+  - name: Forbidden Siren 2 PS2
+    category: Rétrogaming
+    all: [[siren 2], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 130
+    max_buy: 55
+  - name: Forbidden Siren PS2
+    category: Rétrogaming
+    all: [[forbidden siren, siren], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, siren 2, blood curse, ps3]
+    ref_price: 35
+    max_buy: 11
+  - name: Persona 3 FES PS2
+    category: Rétrogaming
+    all: [[persona 3 fes, persona 3 : fes], [ps2, playstation 2, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 110
+    max_buy: 45
+  - name: Persona 3 PS2
+    category: Rétrogaming
+    all: [[persona 3], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, fes, portable, psp, reload, ps4, xbox, switch]
+    ref_price: 70
+    max_buy: 27
+  - name: Persona 4 PS2
+    category: Rétrogaming
+    all: [[persona 4], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, golden, arena, dancing, vita, ps4, switch, version pc]
+    ref_price: 50
+    max_buy: 18
+  - name: Shin Megami Tensei Lucifer's Call PS2
+    category: Rétrogaming
+    all: [[lucifer s call, lucifers call, nocturne], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, hd remaster, ps4, switch]
+    ref_price: 55
+    max_buy: 20
+  - name: Digital Devil Saga PS2
+    category: Rétrogaming
+    all: [[digital devil saga], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 45
+    max_buy: 16
+  - name: Devil Summoner Raidou PS2
+    category: Rétrogaming
+    all: [[raidou], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, remastered, ps4, ps5, switch]
+    ref_price: 90
+    max_buy: 36
+  - name: Okami PS2
+    category: Rétrogaming
+    all: [[okami], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, okami hd, wii, ps3, ps4, switch, okamiden]
+    ref_price: 28
+    max_buy: 8
+  - name: Shadow of the Colossus PS2
+    category: Rétrogaming
+    all: [[shadow of the colossus], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, ps3, ps4, ico & shadow, collection]
+    ref_price: 35
+    max_buy: 11
+  - name: Ico PS2
+    category: Rétrogaming
+    all: [[ico], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, ps3, collection, shadow of the colossus]
+    ref_price: 28          # mot court: verifier titre exact
+    max_buy: 8
+  - name: Dragon Quest VIII PS2
+    category: Rétrogaming
+    all: [[dragon quest viii, dragon quest 8, odyssee du roi maudit, l odyssee du roi maudit], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, 3ds]
+    ref_price: 30
+    max_buy: 9
+  - name: Black PS2
+    category: Rétrogaming
+    all: [[black criterion, jeu black, black ps2, black playstation 2], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, console black, ps2 black, noire]
+    ref_price: 20          # titre ambigu (couleur): mots composes
+    max_buy: 5
+  - name: Kingdom Hearts PS2
+    category: Rétrogaming
+    all: [[kingdom hearts], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, kingdom hearts 2, kingdom hearts ii, hd remix, ps3, ps4, psp, nintendo ds]
+    ref_price: 20
+    max_buy: 5
+  - name: Dark Chronicle PS2
+    category: Rétrogaming
+    all: [[dark chronicle, dark cloud], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, ps4]
+    ref_price: 35
+    max_buy: 11
+  - name: Rogue Galaxy PS2
+    category: Rétrogaming
+    all: [[rogue galaxy], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, ps4]
+    ref_price: 30
+    max_buy: 9
+  - name: Suikoden V PS2
+    category: Rétrogaming
+    all: [[suikoden v, suikoden 5], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 60
+    max_buy: 23
+  - name: Suikoden IV PS2
+    category: Rétrogaming
+    all: [[suikoden iv, suikoden 4], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 35
+    max_buy: 11
+  - name: Valkyrie Profile 2 PS2
+    category: Rétrogaming
+    all: [[valkyrie profile 2, valkyrie profile : silmeria, silmeria], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 50
+    max_buy: 18
+  - name: .hack Quarantine PS2
+    category: Rétrogaming
+    all: [[hack quarantine, hack//quarantine, hack quarantaine], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 110
+    max_buy: 45
+  - name: .hack PS2
+    category: Rétrogaming
+    all: [[hack infection, hack mutation, hack outbreak, hack g u, hack//], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, quarantine, ps4, switch]
+    ref_price: 35
+    max_buy: 11
+  - name: Baroque PS2
+    category: Rétrogaming
+    all: [[baroque], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, wii, saturn]
+    ref_price: 140
+    max_buy: 59
+  - name: King's Field IV PS2
+    category: Rétrogaming
+    all: [[king s field, kings field], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 110
+    max_buy: 45
+  - name: Armored Core PS2
+    category: Rétrogaming
+    all: [[armored core], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, ps3, ps4, ps5, xbox, psp]
+    ref_price: 55          # Last Raven ~100, Nine Breaker ~70, AC3 ~50
+    max_buy: 20
+  - name: Blood Will Tell PS2
+    category: Rétrogaming
+    all: [[blood will tell], [ps2, playstation 2, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 150
+    max_buy: 64
+  - name: God Hand PS2
+    category: Rétrogaming
+    all: [[god hand], [ps2, playstation 2, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 110
+    max_buy: 45
+  - name: Clock Tower 3 PS2
+    category: Rétrogaming
+    all: [[clock tower 3], [ps2, playstation 2, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 65
+    max_buy: 25
+  - name: Castlevania Curse of Darkness PS2
+    category: Rétrogaming
+    all: [[curse of darkness], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 70
+    max_buy: 27
+  - name: Raw Danger PS2
+    category: Rétrogaming
+    all: [[raw danger], [ps2, playstation 2, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 90
+    max_buy: 36
+  - name: Echo Night Beyond PS2
+    category: Rétrogaming
+    all: [[echo night], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 90
+    max_buy: 36
+  - name: Gregory Horror Show PS2
+    category: Rétrogaming
+    all: [[gregory horror show], [ps2, playstation 2, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 90
+    max_buy: 36
+  - name: Drakengard 2 PS2
+    category: Rétrogaming
+    all: [[drakengard 2], [ps2, playstation 2, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 70
+    max_buy: 27
+  - name: Ar Tonelico PS2
+    category: Rétrogaming
+    all: [[ar tonelico], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 70
+    max_buy: 27
+  - name: Growlanser PS2
+    category: Rétrogaming
+    all: [[growlanser], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, psp]
+    ref_price: 70
+    max_buy: 27
+  - name: Wild Arms 4/5 PS2
+    category: Rétrogaming
+    all: [[wild arms 4, wild arms 5], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 50
+    max_buy: 18
+  - name: Obscure II PS2
+    category: Rétrogaming
+    all: [[obscure 2, obscure ii, obscure : the aftermath, the aftermath], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, wii, psp, version pc]
+    ref_price: 50
+    max_buy: 18
+  - name: Manhunt 2 PS2
+    category: Rétrogaming
+    all: [[manhunt 2], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, psp, wii, version pc]
+    ref_price: 100
+    max_buy: 41
+  - name: Resident Evil Outbreak PS2
+    category: Rétrogaming
+    all: [[resident evil outbreak], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 30
+    max_buy: 9
+  - name: Gitaroo Man PS2
+    category: Rétrogaming
+    all: [[gitaroo man], [ps2, playstation 2, playstation]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, psp]
+    ref_price: 50
+    max_buy: 18
+  - name: Odin Sphere PS2
+    category: Rétrogaming
+    all: [[odin sphere], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, leifthrasir, ps4, ps3, vita]
+    ref_price: 40
+    max_buy: 14
+  - name: Dragon Ball Budokai Tenkaichi 3 PS2
+    category: Rétrogaming
+    all: [[budokai tenkaichi 3, tenkaichi 3], [ps2, playstation 2]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, wii]
+    ref_price: 35
+    max_buy: 11
+  - name: Console PS3 fat retrocompatible
+    category: Rétrogaming
+    all: [[ps3, playstation 3], [retrocompatible, retro compatible, 60 go, 60gb, 60 gb, cechc]]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, puce, slim]
+    none_unless: {words: [jeu, jeux], unless: [console, pack, coffret, avec]}
+    ref_price: 150          # PAL CECHC 60 Go (retro PS2 logicielle)
+    max_buy: 64
+  - name: Console PS3 slim / super slim
+    category: Rétrogaming
+    all: [[ps3, playstation 3], [slim, super slim]]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, puce, ps2 slim, ps4, jeu seul]
+    none_unless: {words: [jeu, jeux], unless: [console, pack, coffret, avec]}
+    ref_price: 80
+    max_buy: 32
+  - name: Demon's Souls PS3
+    category: Rétrogaming
+    all: [[demon s souls, demons souls], [ps3, playstation 3]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, ps5, remake]
+    ref_price: 25
+    max_buy: 7
+  - name: Dragon's Crown PS3
+    category: Rétrogaming
+    all: [[dragon s crown, dragons crown], [ps3, playstation 3]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, vita, dragon s crown pro, ps4]
+    ref_price: 35
+    max_buy: 11
+  - name: Valkyria Chronicles PS3
+    category: Rétrogaming
+    all: [[valkyria chronicles], [ps3, playstation 3]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, remastered, ps4, switch, psp, valkyria chronicles 4]
+    ref_price: 22
+    max_buy: 6
+  - name: Console PSP Go
+    category: Rétrogaming
+    all: [[psp go, pspgo, psp n1004, psp-n1004], [console, pack, coffret, chargeur, alimentation, fonctionne, fonctionnelle, complete]]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, puce]
+    none_unless: {words: [jeu, jeux], unless: [console, pack, coffret, avec]}
+    ref_price: 100
+    max_buy: 41
+  - name: Console PSP 1000/2000/3000
+    category: Rétrogaming
+    all: [[psp], [console, 1004, 2004, 3004, slim, street, e1004, pack]]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, puce, psp go, pspgo, vita, coque, housse seule, etui seul, batterie seule, chargeur seul]
+    none_unless: {words: [jeu, jeux], unless: [console, pack, coffret, avec]}
+    ref_price: 60          # street E1004 ~50, 3004 ~70
+    max_buy: 23
+  - name: Console PS Vita
+    category: Rétrogaming
+    all: [[ps vita, playstation vita, psvita], [console, pack, coffret, chargeur, alimentation, fonctionne, fonctionnelle, complete]]
+    none: [hs, pour pieces, coque seule, boite vide, manette seule, puce, vita tv, pstv, housse seule, etui seul, carte memoire seule]
+    none_unless: {words: [jeu, jeux], unless: [console, pack, coffret, avec]}
+    ref_price: 130          # 1000 OLED ~150, 2000 slim ~130
+    max_buy: 55
+  - name: Persona 3 Portable PSP
+    category: Rétrogaming
+    all: [[persona 3 portable, persona 3], [psp]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, ps2, fes, reload, switch, ps4]
+    ref_price: 55
+    max_buy: 20
+  - name: Persona 2 Innocent Sin PSP
+    category: Rétrogaming
+    all: [[persona 2, innocent sin], [psp]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 80
+    max_buy: 32
+  - name: Persona PSP
+    category: Rétrogaming
+    all: [[shin megami tensei persona, revelations persona], [psp]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, persona 2, persona 3, persona 4]
+    ref_price: 30
+    max_buy: 9
+  - name: Trails in the Sky PSP
+    category: Rétrogaming
+    all: [[trails in the sky, legend of heroes], [psp]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 65
+    max_buy: 25
+  - name: Silent Hill Shattered Memories PSP
+    category: Rétrogaming
+    all: [[shattered memories], [psp]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, ps2, wii]
+    ref_price: 55
+    max_buy: 20
+  - name: Silent Hill Origins PSP
+    category: Rétrogaming
+    all: [[silent hill origins, silent hill 0], [psp]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, ps2]
+    ref_price: 35
+    max_buy: 11
+  - name: The 3rd Birthday PSP
+    category: Rétrogaming
+    all: [[3rd birthday], [psp]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 35
+    max_buy: 11
+  - name: Castlevania Dracula X Chronicles PSP
+    category: Rétrogaming
+    all: [[dracula x chronicles, dracula x], [psp]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 40
+    max_buy: 14
+  - name: Metal Slug XX PSP
+    category: Rétrogaming
+    all: [[metal slug xx, metal slug], [psp]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, anthology]
+    ref_price: 45
+    max_buy: 16
+  - name: Wild Arms XF PSP
+    category: Rétrogaming
+    all: [[wild arms xf, wild arms], [psp]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 40
+    max_buy: 14
+  - name: Ys Ark of Napishtim PSP
+    category: Rétrogaming
+    all: [[napishtim], [psp]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, ys seven, ys 7]
+    ref_price: 40
+    max_buy: 14
+  - name: Final Fantasy IV Complete Collection PSP
+    category: Rétrogaming
+    all: [[final fantasy iv, final fantasy 4], [psp]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, nintendo ds, gba]
+    ref_price: 35
+    max_buy: 11
+  - name: Tactics Ogre PSP
+    category: Rétrogaming
+    all: [[tactics ogre], [psp]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 35
+    max_buy: 11
+  - name: Fullmetal Alchemist Brotherhood PSP
+    category: Rétrogaming
+    all: [[fullmetal alchemist], [psp]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 30
+    max_buy: 9
+  - name: Yu-Gi-Oh Tag Force PSP
+    category: Rétrogaming
+    all: [[tag force], [psp]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 25
+    max_buy: 7
+  - name: Manhunt 2 PSP
+    category: Rétrogaming
+    all: [[manhunt 2], [psp]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, ps2, wii]
+    ref_price: 35
+    max_buy: 11
+  - name: Patapon 3 PSP
+    category: Rétrogaming
+    all: [[patapon 3], [psp]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made]
+    ref_price: 25
+    max_buy: 7
+  - name: Persona 4 Golden Vita
+    category: Rétrogaming
+    all: [[persona 4 golden], [vita]]
+    none: [platinum, platinium, essentials, best of, boite seule, boite vide, notice seule, jaquette seule, copie, grave, repro, fan made, switch, version pc, ps4]
+    ref_price: 28
+    max_buy: 8
 
   # ============ Cartes Pokémon (revente aussi sur Cardmarket) ============
   - name: Classeur cartes Pokémon WOTC 1999-2002   # 10-20 % de faux dans les lots
@@ -508,7 +2799,7 @@ rules:
     max_buy: 18
   - name: Pokémon Colosseum / XD GameCube
     category: Pokémon (objets)
-    all: [pokemon, [colosseum, souffle des tenebres]]
+    all: [pokemon, [colosseum, souffle des tenebres, xd, gale of darkness]]
     any: [gamecube, game cube, ngc]
     none: [boite seule, boite vide, notice seule, copie, repro]
     ref_price: 55
