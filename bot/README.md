@@ -10,7 +10,18 @@ Alertes Leboncoin (email) ──► lecture IMAP ──► règles + cote ──
 
 ![Aperçu de la page des résultats](docs/apercu-page.png)
 
-## Installation
+## Version Windows (.exe) : le plus simple
+
+1. Téléchargez **ChasseurAffaires.exe** : https://github.com/DexscreenerAI/vinted.github.io/releases/latest/download/ChasseurAffaires.exe
+2. Mettez-le dans un dossier à vous (ex. `Documents\Chasseur`), puis double-cliquez dessus.
+   - Si Windows affiche « Windows a protégé votre ordinateur », cliquez sur **Informations complémentaires**, puis **Exécuter quand même** (le programme n'est pas signé).
+3. La page s'ouvre toute seule dans le navigateur. Entrez votre boîte mail dans **Réglages** et cliquez sur **Tester la connexion**.
+4. Le bouton **Mes niches & prix** ouvre `config.yaml` dans le Bloc-notes. Vos modifications sont prises en compte sans redémarrer.
+5. Laissez la fenêtre noire ouverte : la fermer arrête le bot.
+
+Le .exe est reconstruit automatiquement par GitHub (onglet *Actions*) à chaque modification du dossier `bot/`.
+
+## Installation (avec Python)
 
 ```bash
 cd bot
@@ -39,7 +50,8 @@ Sans Telegram, les résultats sont seulement sur la page web.
 ## La page des résultats
 
 ```bash
-python -m finder web                    # http://localhost:8000
+python -m finder                        # comme le .exe : ouvre la page sur http://localhost:8000
+python -m finder web                    # version serveur (VPS, Railway…), page accessible depuis l'extérieur
 ```
 
 Cette commande fait deux choses en même temps : elle lit les alertes email toutes les 2 minutes (`--loop 120`) et elle sert la page.
@@ -51,7 +63,9 @@ Sur la page, vous pouvez :
 - l'onglet « Toutes » montre aussi les annonces qui correspondent à une règle mais ne sont pas assez rentables ;
 - **tester une annonce à la main** : collez un titre et un prix.
 
-La page se met à jour toute seule chaque minute. Si vous la mettez en ligne (VPS, Railway…), protégez-la avec `WEB_PASSWORD=...` dans `.env` : le navigateur demandera alors le mot de passe.
+La page se met à jour toute seule chaque minute.
+
+**Page publique** : avec `python -m finder web`, la page est consultable par tout le monde, mais les **réglages** (boîte mail, Telegram) ne sont modifiables que depuis la machine du bot, ou avec `ADMIN_PASSWORD`. Pour cacher toute la page, définissez `WEB_PASSWORD`.
 
 ## Autres commandes
 

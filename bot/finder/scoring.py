@@ -61,6 +61,24 @@ class Config:
         )
 
 
+def reload_if_changed(cfg: Config, path: str) -> bool:
+    """Relit config.yaml s'il a été modifié depuis le dernier chargement (sans redémarrer)."""
+    import os
+    import yaml
+
+    try:
+        mtime = os.path.getmtime(path)
+    except OSError:
+        return False
+    if getattr(cfg, "_mtime", None) == mtime:
+        return False
+    with open(path, encoding="utf-8") as f:
+        fresh = Config.from_dict(yaml.safe_load(f))
+    cfg.__dict__.update(fresh.__dict__)
+    cfg._mtime = mtime
+    return True
+
+
 def evaluate(listing: Listing, rule: Rule, cfg: Config, hand_delivery: Optional[bool] = None) -> Deal:
     c = cfg.costs
     hand = cfg.hand_delivery if hand_delivery is None else hand_delivery

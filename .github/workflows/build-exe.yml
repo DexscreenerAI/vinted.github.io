@@ -1,0 +1,60 @@
+name: Construire le .exe Windows
+
+on:
+  push:
+    paths:
+      - "bot/**"
+      - ".github/workflows/build-exe.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: bot
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installer les dépendances
+        run: pip install -r requirements.txt pyinstaller
+
+      - name: Tests
+        run: python -m unittest discover -s tests
+
+      - name: Construire ChasseurAffaires.exe
+        run: >
+          pyinstaller --onefile --noconfirm --name ChasseurAffaires
+          --add-data "finder/page.html;finder"
+          --add-data "config.example.yaml;."
+          lancer.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ChasseurAffaires
+          path: bot/dist/ChasseurAffaires.exe
+
+      - name: Publier la version
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: chasseur-v${{ github.run_number }}
+          name: Chasseur d'affaires v${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          make_latest: true
+          files: bot/dist/ChasseurAffaires.exe
+          body: |
+            **Télécharger :** `ChasseurAffaires.exe` ci-dessous.
+
+            1. Créez un dossier (ex. `Chasseur`) et mettez-y le .exe.
+            2. Double-cliquez dessus. Si Windows affiche « Windows a protégé votre ordinateur », cliquez sur **Informations complémentaires** puis **Exécuter quand même** (le programme n'est pas signé).
+            3. La page s'ouvre dans votre navigateur : renseignez votre boîte mail dans **Réglages**.
+            4. Laissez la fenêtre noire ouverte pendant que le bot tourne.
+
+            Vos fichiers (`config.yaml`, `.env`, `finder.db`) sont créés dans le même dossier que le .exe.

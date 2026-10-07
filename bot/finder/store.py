@@ -15,6 +15,7 @@ class Seen:
         self.db = sqlite3.connect(path, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
         self.lock = threading.Lock()
+        self.status = {"last_check": None, "error": None}  # état de la lecture des emails, affiché sur la page
         self.db.executescript(
             """
             CREATE TABLE IF NOT EXISTS seen (key TEXT PRIMARY KEY, title TEXT, price REAL,

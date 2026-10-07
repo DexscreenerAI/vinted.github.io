@@ -64,6 +64,27 @@
 
   .empty { text-align: center; color: var(--muted); padding: 50px 10px; border: 1px dashed var(--line); border-radius: 14px; }
 
+  .hbtns { display: flex; gap: 6px; }
+  .btn { font: inherit; font-size: 14px; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--line);
+         background: var(--card); color: var(--text); cursor: pointer; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .banner { margin-top: 14px; padding: 10px 14px; border-radius: 10px; font-size: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .banner.warn { background: color-mix(in srgb, var(--warn) 14%, var(--card)); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); }
+  .banner.ok { color: var(--muted); padding: 4px 0 0; }
+  .banner .grow { flex: 1; }
+  dialog { border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--text); padding: 0;
+           width: min(520px, calc(100vw - 32px)); }
+  dialog::backdrop { background: rgba(0,0,0,.4); }
+  dialog form { padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+  dialog h2 { margin: 0 0 4px; font-size: 18px; }
+  dialog label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+  dialog input { width: 100%; }
+  dialog .help { font-size: 13px; color: var(--muted); margin: 0; }
+  dialog .help a { color: var(--accent); }
+  dialog .row2 { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 6px; }
+  #testResult { font-size: 14px; min-height: 1.2em; }
+  .vinted { font-size: 13px; color: var(--accent); text-decoration: none; }
+  .vinted:hover { text-decoration: underline; }
   details.check { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; }
   details.check summary { cursor: pointer; font-weight: 600; }
   .check form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
@@ -83,8 +104,13 @@
 <div class="wrap">
   <header>
     <h1>Bonnes affaires Leboncoin → Vinted</h1>
-    <span class="updated" id="updated"></span>
+    <div class="hbtns">
+      <button class="btn" id="openConfig" hidden title="Ouvre config.yaml dans le Bloc-notes">Mes niches &amp; prix</button>
+      <button class="btn" id="openSettings">Réglages</button>
+    </div>
   </header>
+  <div class="updated" id="updated"></div>
+  <div id="banner"></div>
 
   <section class="stats">
     <div class="stat"><b id="sBonnes">–</b><span>affaires à voir</span></div>
@@ -122,6 +148,33 @@
   <div class="grid" id="grid"></div>
 </div>
 
+<dialog id="settings">
+  <form id="settingsForm" method="dialog">
+    <h2>Réglages</h2>
+    <p class="help">Le bot lit les <b>alertes Leboncoin</b> reçues dans cette boîte mail. Utilisez de préférence une adresse
+      Gmail dédiée et un <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">mot de passe d'application</a>
+      (pas votre mot de passe habituel).</p>
+    <label>Adresse email<input name="IMAP_USER" type="email" placeholder="mes.alertes@gmail.com" autocomplete="off"></label>
+    <label>Mot de passe d'application<input name="IMAP_PASSWORD" type="password" autocomplete="new-password"></label>
+    <label>Serveur IMAP<input name="IMAP_HOST" placeholder="imap.gmail.com" list="hosts"></label>
+    <datalist id="hosts">
+      <option value="imap.gmail.com"><option value="imap.mail.yahoo.com"><option value="imap.orange.fr">
+      <option value="imap.free.fr"><option value="imap.sfr.fr"><option value="imap.laposte.net"><option value="imap.gmx.com">
+    </datalist>
+    <details>
+      <summary class="help">Telegram (facultatif)</summary>
+      <label>Token du bot<input name="TELEGRAM_BOT_TOKEN" type="password" autocomplete="off"></label>
+      <label>Chat ID<input name="TELEGRAM_CHAT_ID" autocomplete="off"></label>
+    </details>
+    <div id="testResult"></div>
+    <div class="row2">
+      <button class="btn" value="cancel" formnovalidate>Fermer</button>
+      <button class="btn" type="button" id="testEmail">Tester la connexion</button>
+      <button class="btn primary" type="button" id="saveSettings">Enregistrer</button>
+    </div>
+  </form>
+</dialog>
+
 <script>
 const euro = n => (n ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' €';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -132,6 +185,7 @@ async function load() {
     const r = await fetch('/api/deals?view=' + view);
     const data = await r.json();
     deals = data.deals;
+    renderStatus(data.status);
     const s = data.stats;
     sBonnes.textContent = s.bonnes;
     sToday.textContent = s.aujourdhui;
@@ -185,6 +239,7 @@ function render() {
           <div class="profit"><small>Bénéfice net</small><b>${euro(d.net_profit)}</b></div>
         </div>
         ${d.notes.map(n => `<div class="note">⚠ ${esc(n)}</div>`).join('')}
+        <a class="vinted" href="https://www.vinted.fr/catalog?search_text=${encodeURIComponent(d.title)}" target="_blank" rel="noopener">Vérifier les prix sur Vinted →</a>
       </div>
       <div class="actions">
         ${d.url ? `<a class="primary" href="${esc(d.url)}" target="_blank" rel="noopener">Voir l'annonce</a>` : ''}
@@ -224,6 +279,60 @@ checkForm.addEventListener('submit', async e => {
         coût ${euro(d.buy_cost)}, revente ${euro(d.est_resale)}${d.pieces > 1 ? ' (' + d.pieces + ' pièces)' : ''},
         <b>x${d.ratio.toFixed(1)}</b>, bénéfice net ≈ <b>${euro(d.net_profit)}</b>
         ${d.notes.map(n => '<span class="note"> · ' + esc(n) + '</span>').join('')}</div>`).join('');
+});
+
+const HOSTS = { 'gmail.com': 'imap.gmail.com', 'googlemail.com': 'imap.gmail.com', 'yahoo.fr': 'imap.mail.yahoo.com',
+  'yahoo.com': 'imap.mail.yahoo.com', 'orange.fr': 'imap.orange.fr', 'wanadoo.fr': 'imap.orange.fr', 'free.fr': 'imap.free.fr',
+  'sfr.fr': 'imap.sfr.fr', 'neuf.fr': 'imap.sfr.fr', 'laposte.net': 'imap.laposte.net', 'gmx.fr': 'imap.gmx.com', 'gmx.com': 'imap.gmx.com' };
+const sf = settingsForm.elements;
+sf.IMAP_USER.addEventListener('change', () => {
+  const host = HOSTS[(sf.IMAP_USER.value.split('@')[1] || '').toLowerCase()];
+  if (host && !sf.IMAP_HOST.value) sf.IMAP_HOST.value = host;
+});
+
+async function openSettingsDialog() {
+  const r = await fetch('/api/settings');
+  const data = await r.json();
+  if (!r.ok) { alert(data.error || 'Réglages indisponibles'); return; }
+  for (const k of ['IMAP_USER', 'IMAP_HOST', 'TELEGRAM_CHAT_ID']) sf[k].value = data[k] || '';
+  sf.IMAP_PASSWORD.value = ''; sf.TELEGRAM_BOT_TOKEN.value = '';
+  sf.IMAP_PASSWORD.placeholder = data.IMAP_PASSWORD_set ? 'déjà enregistré (laisser vide pour garder)' : '';
+  sf.TELEGRAM_BOT_TOKEN.placeholder = data.TELEGRAM_BOT_TOKEN_set ? 'déjà enregistré' : '';
+  testResult.textContent = '';
+  settings.showModal();
+}
+const formValues = () => Object.fromEntries(['IMAP_USER', 'IMAP_PASSWORD', 'IMAP_HOST', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID'].map(k => [k, sf[k].value.trim()]));
+const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }).then(r => r.json());
+
+testEmail.addEventListener('click', async () => {
+  testResult.textContent = 'Connexion en cours…';
+  const res = await post('/api/test-email', formValues());
+  testResult.innerHTML = res.ok
+    ? `✅ Connexion réussie : ${res.count} email(s) Leboncoin trouvé(s) dans la boîte.`
+    : `❌ Connexion impossible : ${esc(res.error)}`;
+});
+saveSettings.addEventListener('click', async () => {
+  if (!sf.IMAP_HOST.value) sf.IMAP_USER.dispatchEvent(new Event('change'));
+  const res = await post('/api/settings', formValues());
+  if (res.ok) { settings.close(); load(); } else testResult.textContent = res.error || 'Erreur';
+});
+openSettings.addEventListener('click', openSettingsDialog);
+openConfig.addEventListener('click', () => post('/api/open-config'));
+
+function renderStatus(st) {
+  if (st && (st.error || st.config_error)) {
+    banner.innerHTML = `<div class="banner warn"><span class="grow">⚠ ${esc(st.config_error || st.error)}</span>
+      ${st.error && !st.config_error ? '<button class="btn" onclick="openSettingsDialog()">Ouvrir les réglages</button>' : ''}</div>`;
+  } else if (st && st.last_check) {
+    banner.innerHTML = `<div class="banner ok">✓ Alertes email vérifiées à ${esc(st.last_check)} (toutes les 2 min)</div>`;
+  } else banner.innerHTML = '';
+}
+
+// Au premier lancement (sur le PC du bot) : ouvrir les réglages si la boîte mail n'est pas configurée
+fetch('/api/settings').then(r => r.ok ? r.json() : null).then(d => {
+  if (!d) { openSettings.hidden = true; return; }
+  openConfig.hidden = !d.can_open_config;
+  if (!d.IMAP_HOST) openSettingsDialog();
 });
 
 load();

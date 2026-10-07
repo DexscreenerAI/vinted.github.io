@@ -97,6 +97,16 @@ def html_part(msg: Message) -> str:
     return ""
 
 
+def test_login(host: str, user: str, password: str) -> int:
+    """Vérifie l'accès IMAP ; renvoie le nombre d'emails Leboncoin trouvés dans la boîte."""
+    sender = os.environ.get("IMAP_FROM", "leboncoin")
+    with imaplib.IMAP4_SSL(host, timeout=20) as imap:
+        imap.login(user, password)
+        imap.select(os.environ.get("IMAP_FOLDER", "INBOX"), readonly=True)
+        _, data = imap.search(None, "FROM", f'"{sender}"')
+        return len(data[0].split())
+
+
 def fetch_alerts(mark_seen: bool = True) -> Iterator[Tuple[str, List[Listing]]]:
     """Récupère les emails Leboncoin non lus via IMAP (variables d'environnement IMAP_*)."""
     host = os.environ["IMAP_HOST"]
@@ -105,7 +115,7 @@ def fetch_alerts(mark_seen: bool = True) -> Iterator[Tuple[str, List[Listing]]]:
     folder = os.environ.get("IMAP_FOLDER", "INBOX")
     sender = os.environ.get("IMAP_FROM", "leboncoin")
 
-    with imaplib.IMAP4_SSL(host) as imap:
+    with imaplib.IMAP4_SSL(host, timeout=30) as imap:
         imap.login(user, password)
         imap.select(folder)
         _, data = imap.search(None, "UNSEEN", "FROM", f'"{sender}"')
