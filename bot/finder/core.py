@@ -158,6 +158,26 @@ def run_once(cfg: Config, seen: Seen) -> int:
     return found
 
 
+def rescore(cfg: Config, seen: Seen) -> tuple:
+    """Réévalue les affaires en attente avec les règles actuelles : celles qui ne correspondent plus
+    (ex. un jeu coté comme une console) disparaissent. Renvoie (réévaluées, retirées)."""
+    updated = removed = 0
+    for d in seen.pending_deals():
+        listing = Listing(title=d["title"], price=d["price"] or 0, url=d["url"] or "", image=d["image"] or "",
+                          location=d["location"] or "", source=d.get("source") or "leboncoin",
+                          ends_at=d.get("ends_at") or "")
+        if listing.source != "leboncoin":  # coût d'achat calculé par la source (port, frais) : on le garde
+            listing.buy_cost = d["buy_cost"]
+        best = best_deal(listing, cfg) if listing.price > 0 else None
+        if best is None:
+            seen.delete_deal(d["key"])
+            removed += 1
+        else:
+            seen.update_score(d["key"], *best)
+            updated += 1
+    return updated, removed
+
+
 def best_deal(listing: Listing, cfg: Config):
     """Meilleure règle correspondante : (affaire, est_bonne), ou None si aucune règle."""
     rules = {r.name: r for r in cfg.rules}
@@ -181,7 +201,8 @@ def loop(cfg: Config, seen: Seen, every: Optional[int], config_path: Optional[st
         if config_path:
             try:
                 if reload_if_changed(cfg, config_path):
-                    print("[config] config.yaml rechargé")
+                    n, gone = rescore(cfg, seen)
+                    print(f"[config] config.yaml rechargé : {n} affaire(s) réévaluée(s), {gone} retirée(s)")
                 status.update(config_error=None)
             except Exception as e:
                 status.update(config_error=f"Erreur dans config.yaml : {e}")

@@ -111,6 +111,34 @@ class TourneeTest(unittest.TestCase):
         self.assertFalse(web.tour_step(1)["ok"])  # plus de tournée en cours
 
 
+class MiseAJourReglesTest(unittest.TestCase):
+    def test_upgrade_garde_les_choix(self):
+        import tempfile
+        from finder.sales import set_ref_price, upgrade_config
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "config.yaml"
+            old = (ROOT / "config.example.yaml").read_text(encoding="utf-8").replace("config_version: 3", "config_version: 2")
+            p.write_text(old.replace("min_profit: 10", "min_profit: 15"), encoding="utf-8")
+            set_ref_price(str(p), "Olympus mju II", 205)
+            self.assertTrue(upgrade_config(str(p), str(ROOT / "config.example.yaml")))
+            new = yaml.safe_load(p.read_text(encoding="utf-8"))
+            rules = {r["name"]: r for r in new["rules"]}
+            self.assertEqual((new["config_version"], new["min_profit"], rules["Olympus mju II"]["ref_price"]), (3, 15, 205))
+            self.assertTrue((Path(d) / "config.ancien-2.yaml").exists())
+            self.assertFalse(upgrade_config(str(p), str(ROOT / "config.example.yaml")))  # déjà à jour
+
+    def test_rescore_retire_les_jeux_cotes_comme_console(self):
+        from finder.core import rescore
+        seen = Seen(":memory:")
+        old = Config.from_dict({"rules": [{"name": "Game Boy Color console", "all": ["game boy color"], "ref_price": 70}]})
+        for i, t in enumerate(["Jeu Oui-Oui au Pays des Jouets - Game Boy Color", "Game Boy Color violette"]):
+            l = Listing(t, 5 if i == 0 else 25, f"https://www.leboncoin.fr/ad/x/32840016{i:02d}")
+            seen.add(l.key, t, l.price)
+            seen.save_deal(*best_deal(l, old))
+        self.assertEqual(rescore(CFG, seen), (1, 1))
+        self.assertEqual([d["title"] for d in seen.deals("toutes")], ["Game Boy Color violette"])
+
+
 class SyntaxeJsTest(unittest.TestCase):
     """Le JavaScript de la page et de l'extension doit au moins être syntaxiquement valide (si node est installé)."""
 

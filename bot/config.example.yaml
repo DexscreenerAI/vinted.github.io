@@ -11,6 +11,8 @@
 #   pour les fautes de frappe courantes (annonces moins vues, donc moins chères). Chaque requête coûte du quota.
 # Règle d'or : jamais une marque seule, toujours un modèle précis (une marque seule se vend 20-30 €).
 
+config_version: 3     # mis à jour automatiquement par le logiciel (vos prix et réglages sont conservés)
+
 min_ratio: 2.2        # multiplicateur minimum, frais d'achat et port INCLUS (≈ x2,5 sur le prix affiché)
 min_profit: 10        # bénéfice net minimum en euros (après cotisations, impôt, emballage)
 hand_delivery: false  # false = on compte les frais d'achat sécurisé + port Leboncoin (prudent)

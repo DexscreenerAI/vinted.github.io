@@ -87,6 +87,8 @@ class Config:
 
     @classmethod
     def from_dict(cls, data: dict) -> "Config":
+        data = dict(data or {})
+        data.pop("config_version", None)
         return cls(
             rules=[Rule(**r) for r in data.get("rules", [])],
             costs=Costs(**data.get("costs", {})),

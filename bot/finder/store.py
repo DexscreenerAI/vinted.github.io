@@ -122,6 +122,25 @@ class Seen:
         d["emails_recus"], d["emails_illisibles"], d["sites_illisibles"] = em[0] or 0, em[1] or 0, em[2] or ""
         return d
 
+    def pending_deals(self) -> List[dict]:
+        with self.lock:
+            return [dict(r) for r in self.db.execute("SELECT * FROM deals WHERE status = 'nouveau'")]
+
+    def update_score(self, key: str, deal: Deal, good: bool) -> None:
+        """Nouvelle évaluation d'une affaire (règles modifiées), sans toucher à son statut ni à l'avis IA."""
+        with self.lock:
+            self.db.execute(
+                "UPDATE deals SET rule = ?, category = ?, pieces = ?, buy_cost = ?, est_resale = ?, net_profit = ?,"
+                " ratio = ?, good = ?, notes = ? WHERE key = ?",
+                (deal.rule_name, deal.category, deal.pieces, deal.buy_cost, deal.est_resale, deal.net_profit,
+                 deal.ratio, int(good), json.dumps(deal.notes, ensure_ascii=False), key))
+            self.db.commit()
+
+    def delete_deal(self, key: str) -> None:
+        with self.lock:
+            self.db.execute("DELETE FROM deals WHERE key = ?", (key,))
+            self.db.commit()
+
     def get_deal(self, key: str) -> Optional[dict]:
         with self.lock:
             r = self.db.execute("SELECT * FROM deals WHERE key = ?", (key,)).fetchone()

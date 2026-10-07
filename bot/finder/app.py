@@ -89,10 +89,18 @@ def launch() -> int:
         if not Path("config.yaml").exists():
             shutil.copy(_bundled("config.example.yaml"), "config.yaml")
             print("config.yaml créé (vos niches et prix de revente).")
+        else:
+            from .sales import upgrade_config
+            if upgrade_config("config.yaml", str(_bundled("config.example.yaml"))):
+                print("Règles mises à jour (vos prix et réglages sont gardés, ancien fichier sauvegardé).")
         _install_extension_folder()
         load_env(".env")
         cfg = load_config("config.yaml")
         seen = Seen("finder.db")
+        from .core import rescore
+        n, gone = rescore(cfg, seen)  # affaires en attente réévaluées avec les règles actuelles
+        if gone:
+            print(f"{gone} affaire(s) retirée(s) : elles ne correspondent plus aux règles.")
 
         server = None
         for port in range(8000, 8020):
