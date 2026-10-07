@@ -15,7 +15,8 @@ class Seen:
         self.db = sqlite3.connect(path, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
         self.lock = threading.Lock()
-        self.status = {"last_check": None, "error": None}  # état de la lecture des emails, affiché sur la page
+        # état des sources (emails, eBay…), affiché sur la page
+        self.status = {"last_check": None, "error": None, "sources": {}}
         self.db.executescript(
             """
             CREATE TABLE IF NOT EXISTS seen (key TEXT PRIMARY KEY, title TEXT, price REAL,
@@ -28,9 +29,11 @@ class Seen:
             """
         )
         cols = {r[1] for r in self.db.execute("PRAGMA table_info(deals)")}
-        if "category" not in cols:  # base créée par une version précédente
-            self.db.execute("ALTER TABLE deals ADD COLUMN category TEXT DEFAULT 'Autre'")
-            self.db.commit()
+        for col, decl in (("category", "TEXT DEFAULT 'Autre'"), ("source", "TEXT DEFAULT 'leboncoin'"),
+                          ("ends_at", "TEXT DEFAULT ''")):
+            if col not in cols:  # base créée par une version précédente
+                self.db.execute(f"ALTER TABLE deals ADD COLUMN {col} {decl}")
+        self.db.commit()
 
     def add(self, key: str, title: str, price) -> bool:
         """True si l'annonce est nouvelle."""
@@ -46,11 +49,11 @@ class Seen:
         with self.lock:
             self.db.execute(
                 "INSERT OR REPLACE INTO deals (key, title, price, url, image, location, rule, pieces,"
-                " buy_cost, est_resale, net_profit, ratio, good, notes, category)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                " buy_cost, est_resale, net_profit, ratio, good, notes, category, source, ends_at)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (l.key, l.title, l.price, l.url, l.image, l.location, deal.rule_name, deal.pieces,
                  deal.buy_cost, deal.est_resale, deal.net_profit, deal.ratio, int(good),
-                 json.dumps(deal.notes, ensure_ascii=False), deal.category),
+                 json.dumps(deal.notes, ensure_ascii=False), deal.category, l.source, l.ends_at),
             )
             self.db.commit()
 

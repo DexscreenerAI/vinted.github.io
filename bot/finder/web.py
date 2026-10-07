@@ -19,8 +19,9 @@ from .store import Seen
 PAGE = Path(__file__).with_name("page.html")
 
 # Réglages modifiables depuis la page (enregistrés dans .env)
-SETTINGS = ("IMAP_HOST", "IMAP_USER", "IMAP_PASSWORD", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID")
-SECRETS = ("IMAP_PASSWORD", "TELEGRAM_BOT_TOKEN")
+SETTINGS = ("IMAP_HOST", "IMAP_USER", "IMAP_PASSWORD", "EBAY_CLIENT_ID", "EBAY_CLIENT_SECRET",
+            "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID")
+SECRETS = ("IMAP_PASSWORD", "EBAY_CLIENT_SECRET", "TELEGRAM_BOT_TOKEN")
 
 
 def save_env(path: str, values: dict) -> None:

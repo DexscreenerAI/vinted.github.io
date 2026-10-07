@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from .email_source import fetch_alerts
+from . import ebay_source, email_source
 from .models import Listing
 from .notify import send
 from .scoring import Config, find_deals, is_good, reload_if_changed
@@ -32,21 +32,49 @@ def load_config(path: str) -> Config:
     return cfg
 
 
-def run_once(cfg: Config, seen: Seen) -> int:
+# Sources d'annonces : (nom affiché, configurée ?, récupération des annonces)
+SOURCES = [
+    ("Emails d'alerte", email_source.configured, email_source.fetch_listings),
+    ("eBay", ebay_source.configured, ebay_source.fetch_listings),
+]
+
+
+def process(listings, cfg: Config, seen: Seen) -> int:
+    """Évalue et enregistre les annonces jamais vues ; renvoie le nombre de bonnes affaires."""
     found = 0
-    for subject, listings in fetch_alerts():
-        print(f"[alerte] {subject} : {len(listings)} annonce(s)")
-        for listing in listings:
-            if not seen.add(listing.key, listing.title, listing.price):
-                continue
-            best = best_deal(listing, cfg)
-            if best is None:
-                continue
-            deal, good = best
-            seen.save_deal(deal, good)
-            if good:
-                send(deal)
-                found += 1
+    for listing in listings:
+        if not seen.add(listing.key, listing.title, listing.price):
+            continue
+        best = best_deal(listing, cfg)
+        if best is None:
+            continue
+        deal, good = best
+        seen.save_deal(deal, good)
+        if good:
+            send(deal)
+            found += 1
+    return found
+
+
+def run_once(cfg: Config, seen: Seen) -> int:
+    """Interroge chaque source configurée. Une source en erreur n'empêche pas les autres."""
+    found = 0
+    sources = seen.status.setdefault("sources", {})
+    active = [(name, fetch) for name, is_configured, fetch in SOURCES if is_configured()]
+    if not active:
+        seen.status.update(error="Aucune source configurée : cliquez sur « Réglages » (boîte mail ou eBay)")
+        return 0
+    errors = []
+    for name, fetch in active:
+        state = sources.setdefault(name, {})
+        try:
+            found += process(fetch(cfg), cfg, seen)
+            state.update(last_check=time.strftime("%H:%M"), error=None)
+        except Exception as e:  # on ne veut pas que le bot s'arrête sur une erreur réseau
+            state.update(error=str(e) or e.__class__.__name__)
+            errors.append(f"{name} : {state['error']}")
+            print(f"[erreur] {name} : {e}", file=sys.stderr)
+    seen.status.update(last_check=time.strftime("%H:%M"), error="Source en erreur — " + " · ".join(errors) if errors else None)
     return found
 
 
@@ -69,21 +97,9 @@ def loop(cfg: Config, seen: Seen, every: Optional[int], config_path: Optional[st
                 status.update(config_error=None)
             except Exception as e:
                 status.update(config_error=f"Erreur dans config.yaml : {e}")
-        if not os.environ.get("IMAP_HOST"):
-            status.update(error="Boîte mail non configurée : cliquez sur « Réglages »")
-            if not every:
-                print(status["error"], file=sys.stderr)
-                return 1
-        else:
-            try:
-                n = run_once(cfg, seen)
-                status.update(last_check=time.strftime("%H:%M"), error=None)
-                print(f"[{time.strftime('%H:%M:%S')}] {n} bonne(s) affaire(s) trouvée(s)")
-            except Exception as e:  # on ne veut pas que le bot s'arrête sur une erreur réseau
-                status.update(error=f"Lecture des emails impossible : {e}")
-                print(f"[erreur] {e}", file=sys.stderr)
-                if not every:
-                    return 1
+        n = run_once(cfg, seen)
+        if n:
+            print(f"[{time.strftime('%H:%M:%S')}] {n} bonne(s) affaire(s) trouvée(s)")
         if not every:
-            return 0
+            return 1 if status.get("error") else 0
         time.sleep(every)

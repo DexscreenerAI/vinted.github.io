@@ -11,13 +11,17 @@ class Listing:
     url: str = ""
     image: str = ""
     location: str = ""
+    source: str = "leboncoin"   # leboncoin, ebay, interencheres, kleinanzeigen…
+    ends_at: str = ""           # fin d'enchère (ISO 8601, UTC) si c'est une enchère
 
     @property
     def key(self) -> str:
         """Identifiant stable pour ne pas notifier deux fois la même annonce."""
         from .text import ad_id
 
-        return ad_id(self.url) or f"{self.title.lower()}|{self.price}"
+        if self.source == "leboncoin":
+            return ad_id(self.url) or f"{self.title.lower()}|{self.price}"
+        return f"{self.source}:{self.url or self.title.lower() + '|' + str(self.price)}"
 
 
 @dataclass

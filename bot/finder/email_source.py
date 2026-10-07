@@ -97,6 +97,17 @@ def html_part(msg: Message) -> str:
     return ""
 
 
+def configured() -> bool:
+    return bool(os.environ.get("IMAP_HOST"))
+
+
+def fetch_listings(cfg=None) -> Iterator[Listing]:
+    """Interface commune des sources : toutes les annonces des nouveaux emails d'alerte."""
+    for subject, listings in fetch_alerts():
+        print(f"[alerte] {subject} : {len(listings)} annonce(s)")
+        yield from listings
+
+
 def test_login(host: str, user: str, password: str) -> int:
     """Vérifie l'accès IMAP ; renvoie le nombre d'emails Leboncoin trouvés dans la boîte."""
     sender = os.environ.get("IMAP_FROM", "leboncoin")

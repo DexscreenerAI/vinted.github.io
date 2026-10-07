@@ -43,6 +43,8 @@
   .chips small { opacity: .75; margin-left: 3px; }
   .cathead { grid-column: 1 / -1; margin: 10px 0 0; font-size: 15px; display: flex; gap: 8px; align-items: baseline; }
   .cathead span { color: var(--muted); font-weight: normal; font-size: 13px; }
+  .tag.src { background: var(--line); color: var(--text); }
+  .ends { color: var(--warn); font-weight: 600; }
   .tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
   @keyframes arrive { from { box-shadow: 0 0 0 3px var(--accent); } to { box-shadow: var(--shadow); } }
   .deal.arrived { animation: arrive 2.5s ease-out; }
@@ -182,6 +184,11 @@
       <option value="imap.free.fr"><option value="imap.sfr.fr"><option value="imap.laposte.net"><option value="imap.gmx.com">
     </datalist>
     <details>
+      <summary class="help">eBay (facultatif) — clés gratuites sur developer.ebay.com</summary>
+      <label>App ID (Client ID)<input name="EBAY_CLIENT_ID" autocomplete="off"></label>
+      <label>Cert ID (Client Secret)<input name="EBAY_CLIENT_SECRET" type="password" autocomplete="off"></label>
+    </details>
+    <details>
       <summary class="help">Telegram (facultatif)</summary>
       <label>Token du bot<input name="TELEGRAM_BOT_TOKEN" type="password" autocomplete="off"></label>
       <label>Chat ID<input name="TELEGRAM_CHAT_ID" autocomplete="off"></label>
@@ -196,6 +203,13 @@
 </dialog>
 
 <script>
+const SOURCES = { leboncoin: 'Leboncoin', ebay: 'eBay', interencheres: 'Interenchères', kleinanzeigen: 'Kleinanzeigen' };
+function endsIn(iso) {
+  if (!iso) return '';
+  const min = Math.round((new Date(iso) - Date.now()) / 60000);
+  if (min <= 0) return 'enchère terminée';
+  return 'fin dans ' + (min < 60 ? min + ' min' : Math.floor(min / 60) + ' h ' + String(min % 60).padStart(2, '0'));
+}
 const euro = n => (n ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' €';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let view = 'bonnes', deals = [], category = '', known = null, arrived = new Set();
@@ -276,9 +290,9 @@ function render() {
       </div>
       <div class="body">
         <a class="title" href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.title)}</a>
-        <div class="meta"><span class="tag">${esc(d.category || 'Autre')}</span> ${esc(d.rule)}${d.location ? ' · ' + esc(d.location) : ''} · ${ago(d.found_at)}</div>
+        <div class="meta"><span class="tag src">${esc(SOURCES[d.source] || d.source || 'Leboncoin')}</span> <span class="tag">${esc(d.category || 'Autre')}</span> ${esc(d.rule)}${d.ends_at ? ' · <b class="ends">' + endsIn(d.ends_at) + '</b>' : ''}${d.location ? ' · ' + esc(d.location) : ''} · ${ago(d.found_at)}</div>
         <div class="nums">
-          <div><small>Prix LBC</small><b>${euro(d.price)}</b></div>
+          <div><small>Prix ${esc(SOURCES[d.source] || 'Leboncoin')}</small><b>${euro(d.price)}</b></div>
           <div><small>Revente estimée${d.pieces > 1 ? ' (' + d.pieces + ' p.)' : ''}</small><b>${euro(d.est_resale)}</b></div>
           <div class="profit"><small>Bénéfice net</small><b>${euro(d.net_profit)}</b></div>
         </div>
@@ -344,14 +358,15 @@ async function openSettingsDialog() {
   const r = await fetch('/api/settings');
   const data = await r.json();
   if (!r.ok) { alert(data.error || 'Réglages indisponibles'); return; }
-  for (const k of ['IMAP_USER', 'IMAP_HOST', 'TELEGRAM_CHAT_ID']) sf[k].value = data[k] || '';
-  sf.IMAP_PASSWORD.value = ''; sf.TELEGRAM_BOT_TOKEN.value = '';
+  for (const k of ['IMAP_USER', 'IMAP_HOST', 'EBAY_CLIENT_ID', 'TELEGRAM_CHAT_ID']) sf[k].value = data[k] || '';
+  sf.IMAP_PASSWORD.value = ''; sf.TELEGRAM_BOT_TOKEN.value = ''; sf.EBAY_CLIENT_SECRET.value = '';
+  sf.EBAY_CLIENT_SECRET.placeholder = data.EBAY_CLIENT_SECRET_set ? 'déjà enregistré' : '';
   sf.IMAP_PASSWORD.placeholder = data.IMAP_PASSWORD_set ? 'déjà enregistré (laisser vide pour garder)' : '';
   sf.TELEGRAM_BOT_TOKEN.placeholder = data.TELEGRAM_BOT_TOKEN_set ? 'déjà enregistré' : '';
   testResult.textContent = '';
   settings.showModal();
 }
-const formValues = () => Object.fromEntries(['IMAP_USER', 'IMAP_PASSWORD', 'IMAP_HOST', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID'].map(k => [k, sf[k].value.trim()]));
+const formValues = () => Object.fromEntries(['IMAP_USER', 'IMAP_PASSWORD', 'IMAP_HOST', 'EBAY_CLIENT_ID', 'EBAY_CLIENT_SECRET', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID'].map(k => [k, sf[k].value.trim()]));
 const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }).then(r => r.json());
 
 testEmail.addEventListener('click', async () => {
@@ -382,7 +397,7 @@ function renderStatus(st) {
 fetch('/api/settings').then(r => r.ok ? r.json() : null).then(d => {
   if (!d) { openSettings.hidden = true; return; }
   openConfig.hidden = !d.can_open_config;
-  if (!d.IMAP_HOST) openSettingsDialog();
+  if (!d.IMAP_HOST && !d.EBAY_CLIENT_ID) openSettingsDialog();
 });
 
 // ---- Alertes : notification Windows + son + compteur dans l'onglet (page ouverte, même en arrière-plan) ----
@@ -420,7 +435,7 @@ function announce(d) {
   if (!alertsOn) return;
   if ('Notification' in window && Notification.permission === 'granted') {
     const n = new Notification(`🔥 x${d.ratio.toFixed(1)} · bénéfice ≈ ${euro(d.net_profit)}`, {
-      body: `${d.title}\n${euro(d.price)} sur Leboncoin · ${d.category || ''}`,
+      body: `${d.title}\n${euro(d.price)} sur ${SOURCES[d.source] || 'Leboncoin'} · ${d.category || ''}`,
       icon: d.image || undefined, tag: d.key });
     n.onclick = () => { window.focus(); if (d.url) window.open(d.url, '_blank'); n.close(); };
   }
