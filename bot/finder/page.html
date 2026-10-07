@@ -160,7 +160,7 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>Bonnes affaires Leboncoin → Vinted</h1>
+    <h1>Bonnes affaires à revendre sur Vinted</h1>
     <div class="hbtns">
       <button class="btn" id="openConfig" hidden title="Ouvre config.yaml dans le Bloc-notes">Mes niches &amp; prix</button>
       <button class="btn" id="notifBtn" title="Notification Windows + son à chaque nouvelle bonne affaire">🔔 Activer les alertes</button>
@@ -440,6 +440,7 @@ tabs.addEventListener('click', e => {
   if (!b) return;
   tabs.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
   view = b.dataset.view;
+  known = null;  // changer d'onglet ne doit pas faire clignoter les cartes comme « nouvelles »
   const salesView = view === 'ventes';
   ventes.hidden = !salesView;
   [grid, chips, search, sort].forEach(el => { el.hidden = salesView; });

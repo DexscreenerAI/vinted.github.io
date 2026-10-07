@@ -88,7 +88,7 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
             if admin_password:
                 self.send_header("WWW-Authenticate", 'Basic realm="reglages"')
             self.send_header("Content-Type", "application/json; charset=utf-8")
-            body = json.dumps({"ok": False, "error": "Réglages modifiables seulement depuis le PC où tourne le bot."},
+            body = json.dumps({"ok": False, "error": "Action réservée au PC où tourne le bot (ou avec le mot de passe)."},
                               ensure_ascii=False).encode()
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
