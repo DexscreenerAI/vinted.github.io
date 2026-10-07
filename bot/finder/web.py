@@ -224,6 +224,10 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
             if self.path == "/api/status":
                 ok = seen.set_status(str(data.get("key", "")), str(data.get("status", "")))
                 self._json({"ok": ok}, 200 if ok else 400)
+            elif self.path == "/api/check-now":
+                from .core import WAKE
+                WAKE.set()
+                self._json({"ok": True})
             elif self.path == "/api/check":
                 try:
                     listing = Listing(title=str(data["title"]), price=float(data["price"]))

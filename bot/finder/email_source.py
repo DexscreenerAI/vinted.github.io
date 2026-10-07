@@ -406,9 +406,26 @@ def configured() -> bool:
     return bool(os.environ.get("IMAP_HOST"))
 
 
-def fetch_listings(cfg=None) -> Iterator[Listing]:
-    """Interface commune des sources : toutes les annonces des nouveaux emails d'alerte."""
-    for subject, listings in fetch_alerts():
+def fetch_listings(cfg=None, seen=None) -> Iterator[Listing]:
+    """Interface commune des sources : les annonces des emails d'alerte pas encore traités.
+
+    Avec `seen` (la base du bot), chaque email n'est traité qu'une fois, qu'il ait été ouvert
+    ou non dans la messagerie. Un email d'un site connu dont aucune annonce n'a pu être lue
+    est enregistré dans « email_illisible_<site>.html » (dossier du bot) pour diagnostic.
+    """
+    done = seen.email_done if seen is not None else None
+
+    def record(msgid, site, subject, listings, html):
+        if seen is not None:
+            seen.add_email(msgid, site, subject, len(listings))
+        if not listings and html:
+            try:
+                with open(f"email_illisible_{site}.html", "w", encoding="utf-8") as f:
+                    f.write(html)
+            except OSError:
+                pass
+
+    for subject, listings in fetch_alerts(done=done, record=record):
         site = listings[0].source if listings else "?"
         print(f"[alerte {site}] {subject} : {len(listings)} annonce(s)")
         yield from listings
@@ -463,12 +480,14 @@ def _since_days() -> int:
         return 7
 
 
-def fetch_alerts(mark_seen: bool = True) -> Iterator[Tuple[str, List[Listing]]]:
-    """Récupère les emails d'alerte non lus via IMAP (variables d'environnement IMAP_*).
+def fetch_alerts(mark_seen: bool = False, done=None, record=None) -> Iterator[Tuple[str, List[Listing]]]:
+    """Récupère les emails d'alerte via IMAP (variables d'environnement IMAP_*).
 
-    On cherche les non lus des IMAP_SINCE_DAYS derniers jours (7 par défaut, 0 = sans limite),
-    on lit d'abord l'expéditeur seul, et seuls les emails d'un site connu sont téléchargés,
-    analysés puis marqués lus. Les autres restent non lus. IMAP_FROM (facultatif) :
+    On cherche les emails des sites connus des IMAP_SINCE_DAYS derniers jours (7 par défaut,
+    0 = sans limite), LUS OU NON : un email ouvert sur le téléphone n'est pas perdu. On lit
+    d'abord l'en-tête seul ; `done(msgid)` permet de sauter les emails déjà traités et
+    `record(msgid, site, sujet, annonces, html)` de mémoriser ceux qu'on vient de lire.
+    Les emails ne sont plus marqués lus (sauf mark_seen=True). IMAP_FROM (facultatif) :
     expéditeur supplémentaire (ex. vos transferts), dont le site est deviné d'après les liens.
     """
     host = os.environ["IMAP_HOST"]
@@ -477,27 +496,34 @@ def fetch_alerts(mark_seen: bool = True) -> Iterator[Tuple[str, List[Listing]]]:
     folder = os.environ.get("IMAP_FOLDER", "INBOX")
     extra = os.environ.get("IMAP_FROM", "").strip().lower()
 
-    criteria = ["UNSEEN"]
+    criteria = []
     days = _since_days()
     if days:
         since = dt.date.today() - dt.timedelta(days=days)
         criteria += ["SINCE", f"{since.day}-{since.strftime('%b')}-{since.year}"]
+    criteria.append(_senders_query())
 
     with imaplib.IMAP4_SSL(host, timeout=30) as imap:
         _login(imap, host, user, password)
-        imap.select(folder)
+        imap.select(folder, readonly=not mark_seen)
         _, data = imap.search(None, *criteria)
         for num in data[0].split():
-            _, head = imap.fetch(num, "(BODY.PEEK[HEADER.FIELDS (FROM)])")
-            sender = email.message_from_bytes(head[0][1]).get("From", "")
+            _, head = imap.fetch(num, "(BODY.PEEK[HEADER.FIELDS (FROM SUBJECT DATE MESSAGE-ID)])")
+            hdr = email.message_from_bytes(head[0][1])
+            sender = hdr.get("From", "")
+            msgid = (hdr.get("Message-ID") or f"{sender}|{hdr.get('Subject', '')}|{hdr.get('Date', '')}").strip()
+            if done is not None and done(msgid):
+                continue
             known = site_from_sender(sender)
             if known is None and not (extra and extra in sender.lower()):
-                continue  # expéditeur inconnu : on n'y touche pas (reste non lu)
+                continue  # expéditeur inconnu : on n'y touche pas
             _, msg_data = imap.fetch(num, "(BODY.PEEK[])")
             msg = email.message_from_bytes(msg_data[0][1])
             site, listings = parse_message(msg)
             if site is None:
                 continue
+            if record is not None:
+                record(msgid, site, msg.get("Subject", ""), listings, html_part(msg))
             yield msg.get("Subject", ""), listings
             if mark_seen:
                 imap.store(num, "+FLAGS", "\\Seen")

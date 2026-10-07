@@ -242,7 +242,7 @@ def interval_s(n_tasks: int) -> float:
     return max(minutes * 60, 86400 * n_tasks / DAILY_LIMIT)
 
 
-def fetch_listings(cfg: Config) -> List[Listing]:
+def fetch_listings(cfg: Config, seen=None) -> List[Listing]:
     st = _state
     today = time.strftime("%Y-%m-%d", time.gmtime(_now()))
     if st.day != today:  # nouveau jour UTC : compteur remis à zéro

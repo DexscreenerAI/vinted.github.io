@@ -396,14 +396,25 @@ function diagnostic() {
     ${step(conf.length, conf.length ? `Source(s) active(s) : ${conf.map(esc).join(', ')}` : 'Aucune source branchée',
       'Le bot ne cherche pas tout seul sur Leboncoin : il lit vos <b>alertes email</b> (Leboncoin, eBay, Interenchères…) ou interroge <b>eBay</b> avec vos clés. Ouvrez <a href="#" onclick="openSettingsDialog();return false">Réglages</a>.')}
     ${conf.length ? step(!srcErr, srcErr ? 'Erreur de source' : `Dernière vérification : ${esc(st.last_check || 'en cours…')}`, srcErr) : ''}
+    ${conf.some(c => c.startsWith('Emails')) ? step(s.emails_recus > 0, `${s.emails_recus || 0} email(s) d'alerte reçu(s) (7 derniers jours)`,
+      'Aucun email d\'alerte dans la boîte. Vérifiez : 1) alertes créées avec <b>la même adresse</b> que dans Réglages (<a href="#" onclick="openAlerts.click();return false">Créer mes alertes</a>) ; 2) option <b>email</b> activée sur chaque alerte (pas seulement les notifications de l\'appli) ; 3) dossier <b>Spam</b> de Gmail (marquez « non spam ») ; 4) patience : Leboncoin n\'envoie que pour les <b>nouvelles</b> annonces.') : ''}
+    ${s.emails_illisibles > 0 ? step(false, `${s.emails_illisibles} email(s) reçu(s) mais illisible(s) (${esc(s.sites_illisibles)})`,
+      'Le format de ces emails n\'est pas encore reconnu. Le dernier a été enregistré dans le dossier du bot : <b>email_illisible_' + esc((s.sites_illisibles || '').split(',')[0]) + '.html</b>. Envoyez ce fichier pour que le lecteur soit corrigé.') : ''}
     ${step(s.annonces_lues > 0, `${s.annonces_lues || 0} annonce(s) reçue(s) et analysée(s)`,
-      'Rien reçu pour l\'instant. Cliquez sur <a href="#" onclick="openAlerts.click();return false"><b>Créer mes alertes</b></a> : chaque article a un lien Leboncoin prêt, il suffit de cliquer sur « Sauvegarder la recherche » et d\'activer l\'alerte email (même adresse que dans Réglages). Les alertes arrivent quand de nouvelles annonces sont publiées.')}
+      s.emails_recus > 0 ? '' : 'Les annonces apparaîtront dès le premier email d\'alerte.')}
     ${step(s.correspondances > 0, `${s.correspondances || 0} annonce(s) correspondent à un article surveillé`,
       s.annonces_lues > 0 ? 'Les annonces reçues ne correspondent à aucun des 64 articles surveillés. Faites des alertes sur ces modèles précis (voir « Mes niches & prix »).' : '')}
     ${s.correspondances > 0 ? step(false, `${s.a_voir_toutes || 0} en attente, mais aucune assez rentable (x2,2 et +10 € minimum)`,
       'Normal : les vraies bonnes affaires sont rares. Regardez l\'onglet « Toutes » pour voir les annonces proches du seuil.') : ''}
   </ol>
-  <p class="help">Astuce : « Tester une annonce à la main » (au-dessus) évalue n'importe quelle annonce tout de suite.</p>`;
+  <p class="help"><button class="btn" onclick="checkNow(this)">Vérifier maintenant</button>
+    · Astuce : « Tester une annonce à la main » (au-dessus) évalue n'importe quelle annonce tout de suite.</p>`;
+}
+
+async function checkNow(btn) {
+  btn.disabled = true; btn.textContent = 'Vérification…';
+  await post('/api/check-now');
+  setTimeout(() => { load(); btn.disabled = false; btn.textContent = 'Vérifier maintenant'; }, 6000);
 }
 
 function renderChips() {
@@ -709,7 +720,7 @@ function renderStatus(st) {
     banner.innerHTML = `<div class="banner warn"><span class="grow">⚠ ${esc(st.config_error || st.error)}</span>
       ${st.error && !st.config_error ? '<button class="btn" onclick="openSettingsDialog()">Ouvrir les réglages</button>' : ''}</div>`;
   } else if (st && st.last_check) {
-    banner.innerHTML = `<div class="banner ok">✓ Alertes email vérifiées à ${esc(st.last_check)} (nouvelles affaires affichées automatiquement)</div>`;
+    banner.innerHTML = `<div class="banner ok">✓ Sources vérifiées à ${esc(st.last_check)} (toutes les 2 min) · <a href="#" onclick="checkNow(this);return false">Vérifier maintenant</a></div>`;
   } else banner.innerHTML = '';
 }
 

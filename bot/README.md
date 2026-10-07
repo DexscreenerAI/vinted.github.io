@@ -92,6 +92,7 @@ Sur la page, vous pouvez :
 - marquer une affaire **Achetée** ou **Ignorée**, ce qui alimente le compteur de bénéfice, puis **Vendue** (voir « Mes ventes ») ;
 - l'onglet « Toutes » montre aussi les annonces qui correspondent à une règle mais ne sont pas assez rentables ;
 - **tester une annonce à la main** : collez un titre et un prix ;
+- **Vérifier maintenant** : relance la lecture des emails sans attendre les 2 minutes. Les emails d'alerte sont lus même s'ils ont déjà été ouverts (7 derniers jours), sans être traités deux fois. Un email qui n'a pas pu être lu est enregistré dans `email_illisible_<site>.html` (dossier du bot) pour diagnostic ;
 - **🔔 Activer les alertes** : une notification Windows et un son à chaque nouvelle bonne affaire, plus un compteur dans le titre de l'onglet. Il suffit que la page reste ouverte, même en arrière-plan. Telegram n'est plus nécessaire.
 
 La page se met à jour toute seule chaque minute.

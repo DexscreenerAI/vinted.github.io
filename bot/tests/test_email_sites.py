@@ -196,7 +196,7 @@ class FakeIMAP:
         msg = self.messages[int(num)]
         raw = msg.as_bytes()
         if "HEADER" in what:
-            raw = f"From: {msg['From']}\r\n\r\n".encode()
+            raw = f"From: {msg['From']}\r\nSubject: {msg['Subject']}\r\nMessage-ID: <{num}@test>\r\n\r\n".encode()
         return "OK", [(b"", raw)]
 
     def store(self, num, flags, value):
@@ -215,9 +215,32 @@ class ImapTest(unittest.TestCase):
         with mock.patch.dict(os.environ, env), mock.patch.object(es.imaplib, "IMAP4_SSL", imap):
             alerts = list(es.fetch_alerts())
         self.assertEqual([s for s, _ in alerts], ["lbc", "ebay", "ka"])
-        self.assertEqual(imap.flagged, [1, 3, 4])  # la newsletter reste non lue
+        self.assertEqual(imap.flagged, [])  # plus aucun email marqué lu
         criteria = imap.searches[0]
-        self.assertEqual(criteria[:2], ("UNSEEN", "SINCE"))
+        self.assertEqual(criteria[0], "SINCE")  # lus ou non lus
+        self.assertIn('FROM "leboncoin"', criteria[-1])
+
+    def test_emails_deja_traites_sautes(self):
+        from finder.store import Seen
+        imap = FakeIMAP({1: make_email("leboncoin <no-reply@leboncoin.fr>", fixture("alerte_lbc.html"), "lbc"),
+                         2: make_email("leboncoin <no-reply@leboncoin.fr>", "<p>format inconnu</p>", "vide")})
+        env = {"IMAP_HOST": "h", "IMAP_USER": "u", "IMAP_PASSWORD": "p", "IMAP_SINCE_DAYS": "3", "IMAP_FROM": ""}
+        seen = Seen(":memory:")
+        with tempfile.TemporaryDirectory() as d, mock.patch.dict(os.environ, env), \
+                mock.patch.object(es.imaplib, "IMAP4_SSL", imap):
+            old = os.getcwd()
+            os.chdir(d)
+            try:
+                first = list(es.fetch_listings(None, seen))
+                second = list(es.fetch_listings(None, seen))
+                illisible = Path("email_illisible_leboncoin.html").exists()
+            finally:
+                os.chdir(old)
+        self.assertEqual(len(first), 3)
+        self.assertEqual(second, [])  # déjà traités
+        self.assertTrue(illisible)
+        st = seen.stats()
+        self.assertEqual((st["emails_recus"], st["emails_illisibles"], st["sites_illisibles"]), (2, 1, "leboncoin"))
 
     def test_senders_query(self):
         with mock.patch.dict(os.environ, {"IMAP_FROM": "moi@example.fr"}):

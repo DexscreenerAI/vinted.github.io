@@ -27,6 +27,8 @@ class Seen:
                 rule TEXT, pieces INTEGER, buy_cost REAL, est_resale REAL, net_profit REAL,
                 ratio REAL, good INTEGER, notes TEXT, status TEXT DEFAULT 'nouveau',
                 found_at TEXT DEFAULT (datetime('now', 'localtime')));
+            CREATE TABLE IF NOT EXISTS emails (msgid TEXT PRIMARY KEY, site TEXT, subject TEXT,
+                listings INTEGER, received_at TEXT DEFAULT (datetime('now', 'localtime')));
             CREATE TABLE IF NOT EXISTS sales (
                 id INTEGER PRIMARY KEY AUTOINCREMENT, deal_key TEXT, rule TEXT, category TEXT, title TEXT,
                 buy_price REAL, sale_price REAL, fees REAL DEFAULT 0, pieces INTEGER DEFAULT 1,
@@ -39,6 +41,16 @@ class Seen:
             if col not in cols:  # base créée par une version précédente
                 self.db.execute(f"ALTER TABLE deals ADD COLUMN {col} {decl}")
         self.db.commit()
+
+    def email_done(self, msgid: str) -> bool:
+        with self.lock:
+            return self.db.execute("SELECT 1 FROM emails WHERE msgid = ?", (msgid,)).fetchone() is not None
+
+    def add_email(self, msgid: str, site: str, subject: str, listings: int) -> None:
+        with self.lock:
+            self.db.execute("INSERT OR REPLACE INTO emails (msgid, site, subject, listings) VALUES (?, ?, ?, ?)",
+                            (msgid, site, subject, listings))
+            self.db.commit()
 
     def add(self, key: str, title: str, price) -> bool:
         """True si l'annonce est nouvelle."""
@@ -97,8 +109,11 @@ class Seen:
                 " FROM deals"
             ).fetchone()
             seen = self.db.execute("SELECT COUNT(*) FROM seen").fetchone()[0]
+            em = self.db.execute("SELECT COUNT(*), SUM(listings = 0), GROUP_CONCAT(DISTINCT CASE WHEN listings = 0"
+                                 " THEN site END) FROM emails").fetchone()
         d = {k: (r[k] or 0) for k in r.keys()}
         d["annonces_lues"] = seen
+        d["emails_recus"], d["emails_illisibles"], d["sites_illisibles"] = em[0] or 0, em[1] or 0, em[2] or ""
         return d
 
     def set_status(self, key: str, status: str) -> bool:

@@ -2,6 +2,7 @@
 
 import os
 import sys
+import threading
 import time
 from pathlib import Path
 from typing import Optional
@@ -30,6 +31,9 @@ def load_config(path: str) -> Config:
     if not getattr(cfg, "_mtime", None):
         raise SystemExit(f"Fichier de configuration introuvable : {path}")
     return cfg
+
+
+WAKE = threading.Event()  # « Vérifier maintenant » : réveille la boucle sans attendre
 
 
 # Sources d'annonces : (nom affiché, configurée ?, récupération des annonces)
@@ -68,7 +72,7 @@ def run_once(cfg: Config, seen: Seen) -> int:
     for name, fetch in active:
         state = sources.setdefault(name, {})
         try:
-            found += process(fetch(cfg), cfg, seen)
+            found += process(fetch(cfg, seen), cfg, seen)
             state.update(last_check=time.strftime("%H:%M"), error=None)
         except Exception as e:  # on ne veut pas que le bot s'arrête sur une erreur réseau
             state.update(error=str(e) or e.__class__.__name__)
@@ -102,4 +106,5 @@ def loop(cfg: Config, seen: Seen, every: Optional[int], config_path: Optional[st
             print(f"[{time.strftime('%H:%M:%S')}] {n} bonne(s) affaire(s) trouvée(s)")
         if not every:
             return 1 if status.get("error") else 0
-        time.sleep(every)
+        WAKE.wait(every)
+        WAKE.clear()
