@@ -37,7 +37,7 @@ class Seen:
         )
         cols = {r[1] for r in self.db.execute("PRAGMA table_info(deals)")}
         for col, decl in (("category", "TEXT DEFAULT 'Autre'"), ("source", "TEXT DEFAULT 'leboncoin'"),
-                          ("ends_at", "TEXT DEFAULT ''"), ("bought_at", "TEXT")):
+                          ("ends_at", "TEXT DEFAULT ''"), ("bought_at", "TEXT"), ("ai", "TEXT")):
             if col not in cols:  # base créée par une version précédente
                 self.db.execute(f"ALTER TABLE deals ADD COLUMN {col} {decl}")
         self.db.commit()
@@ -94,6 +94,7 @@ class Seen:
         for r in rows:
             d = dict(r)
             d["notes"] = json.loads(d["notes"] or "[]")
+            d["ai"] = json.loads(d["ai"]) if d.get("ai") else None
             out.append(d)
         return out
 
@@ -115,6 +116,17 @@ class Seen:
         d["annonces_lues"] = seen
         d["emails_recus"], d["emails_illisibles"], d["sites_illisibles"] = em[0] or 0, em[1] or 0, em[2] or ""
         return d
+
+    def get_deal(self, key: str) -> Optional[dict]:
+        with self.lock:
+            r = self.db.execute("SELECT * FROM deals WHERE key = ?", (key,)).fetchone()
+        return dict(r) if r else None
+
+    def set_ai(self, key: str, result: dict) -> None:
+        """Mémorise l'avis de Claude sur une affaire (évite de repayer une analyse)."""
+        with self.lock:
+            self.db.execute("UPDATE deals SET ai = ? WHERE key = ?", (json.dumps(result, ensure_ascii=False), key))
+            self.db.commit()
 
     def set_status(self, key: str, status: str) -> bool:
         if status not in STATUSES:

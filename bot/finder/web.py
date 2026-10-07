@@ -35,8 +35,8 @@ MIN_SALES_FOR_REF = 3  # ventes nécessaires avant de proposer « Mettre à jour
 
 # Réglages modifiables depuis la page (enregistrés dans .env)
 SETTINGS = ("IMAP_HOST", "IMAP_USER", "IMAP_PASSWORD", "EBAY_CLIENT_ID", "EBAY_CLIENT_SECRET",
-            "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID")
-SECRETS = ("IMAP_PASSWORD", "EBAY_CLIENT_SECRET", "TELEGRAM_BOT_TOKEN")
+            "ANTHROPIC_API_KEY", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID")
+SECRETS = ("IMAP_PASSWORD", "EBAY_CLIENT_SECRET", "ANTHROPIC_API_KEY", "TELEGRAM_BOT_TOKEN")
 
 
 def save_env(path: str, values: dict) -> None:
@@ -63,8 +63,43 @@ def open_file(path: str) -> None:
         subprocess.Popen(["open" if sys.platform == "darwin" else "xdg-open", path])
 
 
+def ai_check(key: str, force: bool = False):
+    """(réponse, code HTTP) de l'avis de Claude sur l'affaire `key` (mis en cache en base)."""
+    from . import ai
+    deal = SEEN.get_deal(key) if SEEN else None
+    if deal is None:
+        return {"error": "Affaire introuvable"}, 404
+    if deal.get("ai") and not force:
+        return {"ok": True, "ai": json.loads(deal["ai"]), "cached": True}, 200
+    if not ai.configured():
+        return {"error": "Ajoutez votre clé API Claude dans Réglages → Claude (IA)."}, 400
+    try:
+        import anthropic
+        result = ai.analyze(deal)
+    except anthropic.AuthenticationError:
+        return {"error": "Clé API Claude refusée : vérifiez-la dans Réglages."}, 400
+    except anthropic.PermissionDeniedError:
+        return {"error": "La clé API Claude n'a pas accès à ce modèle."}, 400
+    except anthropic.RateLimitError:
+        return {"error": "Trop de demandes à Claude : réessayez dans une minute."}, 429
+    except anthropic.APIStatusError as e:
+        msg = "crédit insuffisant sur le compte Anthropic" if "credit" in str(e).lower() else str(e)
+        return {"error": f"Erreur de l'API Claude : {msg}"}, 502
+    except anthropic.APIConnectionError:
+        return {"error": "Impossible de joindre l'API Claude (connexion internet ?)."}, 502
+    except Exception as e:
+        return {"error": str(e) or e.__class__.__name__}, 500
+    SEEN.set_ai(key, result)
+    return {"ok": True, "ai": result}, 200
+
+
+SEEN = None  # base du bot, fixée par make_server (utilisée par ai_check)
+
+
 def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
                 config_path: Optional[str] = None, host: str = "0.0.0.0") -> ThreadingHTTPServer:
+    global SEEN
+    SEEN = seen
     password = os.environ.get("WEB_PASSWORD", "")          # protège toute la page (facultatif)
     admin_password = os.environ.get("ADMIN_PASSWORD", "")  # protège seulement les réglages si la page est publique
 
@@ -247,6 +282,10 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
             if self.path == "/api/status":
                 ok = seen.set_status(str(data.get("key", "")), str(data.get("status", "")))
                 self._json({"ok": ok}, 200 if ok else 400)
+            elif self.path == "/api/ai-check":
+                if not self._admin_guard():
+                    return
+                self._json(*ai_check(str(data.get("key", "")), bool(data.get("force"))))
             elif self.path == "/api/import":
                 if not self._admin_guard():
                     return

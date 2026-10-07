@@ -44,6 +44,14 @@
   .chips small { opacity: .75; margin-left: 3px; }
   .cathead { grid-column: 1 / -1; margin: 10px 0 0; font-size: 15px; display: flex; gap: 8px; align-items: baseline; }
   .cathead span { color: var(--muted); font-weight: normal; font-size: 13px; }
+  .ai:empty { display: none; }
+  .ai { border-radius: 10px; padding: 8px 10px; font-size: 13px; background: var(--bg); border-left: 4px solid var(--muted); }
+  .ai.v-acheter { border-left-color: var(--accent); }
+  .ai.v-passer { border-left-color: #c0392b; }
+  .ai.v-a_verifier { border-left-color: var(--warn); }
+  .ai b.v { display: block; margin-bottom: 2px; }
+  .ai ul { margin: 4px 0 0; padding-left: 18px; }
+  .ai small { color: var(--muted); }
   .tag.src { background: var(--line); color: var(--text); }
   .ends { color: var(--warn); font-weight: 600; }
   .tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
@@ -373,6 +381,12 @@
       <button class="btn" type="button" id="testEbay" style="align-self:flex-start">Tester eBay</button>
     </details>
     <details>
+      <summary class="help">Claude (IA) — avis sur les photos (facultatif, payant à l'usage)</summary>
+      <p class="help">Clé API à créer sur <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>
+        (ajoutez quelques euros de crédit). Chaque avis coûte environ 2 à 5 centimes et n'est lancé que quand vous cliquez sur « 🤖 Avis IA ».</p>
+      <label>Clé API Claude<input name="ANTHROPIC_API_KEY" type="password" autocomplete="off" placeholder="sk-ant-..."></label>
+    </details>
+    <details>
       <summary class="help">Telegram (facultatif)</summary>
       <label>Token du bot<input name="TELEGRAM_BOT_TOKEN" type="password" autocomplete="off"></label>
       <label>Chat ID<input name="TELEGRAM_CHAT_ID" autocomplete="off"></label>
@@ -502,7 +516,7 @@ function render() {
     const fresh = (Date.now() - new Date(d.found_at.replace(' ', 'T'))) < 3600000;
     const k = esc(d.key);
     const btns = d.status === 'nouveau'
-      ? `<button data-key="${k}" data-status="achete">Acheté</button><button data-key="${k}" data-status="ignore">Ignorer</button>`
+      ? `<button data-aicheck="${k}" title="Claude analyse la photo et l'annonce">🤖 Avis IA</button><button data-key="${k}" data-status="achete">Acheté</button><button data-key="${k}" data-status="ignore">Ignorer</button>`
       : d.status === 'achete'
       ? `<button class="sell" data-sell="${k}">Vendu</button><button data-key="${k}" data-status="nouveau">Remettre</button>`
       : d.status === 'vendu'
@@ -529,6 +543,7 @@ function render() {
         </div>${sold ? `<div class="meta">Estimation de départ : revente ${euro(d.est_resale)}, bénéfice ${euro(d.net_profit)}</div>` : ''}
         ${d.notes.map(n => `<div class="note">⚠ ${esc(n)}</div>`).join('')}
         <a class="vinted" href="https://www.vinted.fr/catalog?search_text=${encodeURIComponent(d.title)}" target="_blank" rel="noopener">Vérifier les prix sur Vinted →</a>
+        <div class="ai ${d.ai ? 'v-' + d.ai.verdict : ''}" data-ai="${k}">${aiBlock(d.ai)}</div>
       </div>
       <div class="actions">
         ${d.url ? `<a class="primary" href="${esc(d.url)}" target="_blank" rel="noopener">Voir l'annonce</a>` : ''}
@@ -605,13 +620,15 @@ async function openSettingsDialog() {
   if (!r.ok) { alert(data.error || 'Réglages indisponibles'); return; }
   for (const k of ['IMAP_USER', 'IMAP_HOST', 'EBAY_CLIENT_ID', 'TELEGRAM_CHAT_ID']) sf[k].value = data[k] || '';
   sf.IMAP_PASSWORD.value = ''; sf.TELEGRAM_BOT_TOKEN.value = ''; sf.EBAY_CLIENT_SECRET.value = '';
+  sf.ANTHROPIC_API_KEY.value = '';
+  sf.ANTHROPIC_API_KEY.placeholder = data.ANTHROPIC_API_KEY_set ? 'déjà enregistrée' : 'sk-ant-...';
   sf.EBAY_CLIENT_SECRET.placeholder = data.EBAY_CLIENT_SECRET_set ? 'déjà enregistré' : '';
   sf.IMAP_PASSWORD.placeholder = data.IMAP_PASSWORD_set ? 'déjà enregistré (laisser vide pour garder)' : '';
   sf.TELEGRAM_BOT_TOKEN.placeholder = data.TELEGRAM_BOT_TOKEN_set ? 'déjà enregistré' : '';
   testResult.textContent = '';
   settings.showModal();
 }
-const formValues = () => Object.fromEntries(['IMAP_USER', 'IMAP_PASSWORD', 'IMAP_HOST', 'EBAY_CLIENT_ID', 'EBAY_CLIENT_SECRET', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID'].map(k => [k, sf[k].value.trim()]));
+const formValues = () => Object.fromEntries(['IMAP_USER', 'IMAP_PASSWORD', 'IMAP_HOST', 'EBAY_CLIENT_ID', 'EBAY_CLIENT_SECRET', 'ANTHROPIC_API_KEY', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID'].map(k => [k, sf[k].value.trim()]));
 const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }).then(r => r.json());
 
 testEmail.addEventListener('click', async () => {
@@ -970,6 +987,32 @@ async function handleImport() {
 }
 handleImport();
 window.addEventListener('hashchange', handleImport);
+
+// ---- Avis de Claude (IA) sur une affaire ----
+const VERDICTS = { acheter: '✅ À acheter', a_verifier: '🔎 À vérifier', passer: '❌ À éviter' };
+function aiBlock(a) {
+  if (!a) return '';
+  const list = (title, items) => items && items.length ? `<small>${title}</small><ul>${items.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
+  return `<b class="v">🤖 ${VERDICTS[a.verdict] || esc(a.verdict)} <small>(confiance ${esc(a.confiance)})</small></b>
+    ${esc(a.resume)}
+    <br><small>Modèle : ${a.correspond_au_modele ? 'conforme' : '<b>douteux</b>'} · Authenticité : ${esc(a.authenticite)} · État : ${esc(a.etat)}
+    · Revente estimée par l'IA : ${euro(a.revente_estimee)}${a.photo_analysee ? '' : ' · <b>sans photo</b>'}</small>
+    ${list('Signaux d\'alerte', a.signaux_alerte)}${list('À demander au vendeur', a.questions_vendeur)}`;
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('button[data-aicheck]');
+  if (!b) return;
+  const key = b.dataset.aicheck;
+  const box = [...document.querySelectorAll('.ai[data-ai]')].find(x => x.dataset.ai === key);
+  b.disabled = true; b.textContent = '🤖 Analyse…';
+  const res = await post('/api/ai-check', { key });
+  b.disabled = false; b.textContent = '🤖 Avis IA';
+  if (!box) return;
+  if (res.error) { box.className = 'ai'; box.innerHTML = '⚠️ ' + esc(res.error); return; }
+  box.className = 'ai v-' + res.ai.verdict;
+  box.innerHTML = aiBlock(res.ai);
+  const d = deals.find(x => x.key === key); if (d) d.ai = res.ai;
+});
 
 load();
 setInterval(load, 15000);
