@@ -20,6 +20,13 @@ class TextTest(unittest.TestCase):
         self.assertEqual(parse_price("35,50 €"), 35.5)
         self.assertIsNone(parse_price("Lyon 69003"))
 
+    def test_normalize_spellings(self):
+        from finder.text import contains, normalize
+        self.assertTrue(contains(normalize("Casio G-Shock DW5600"), "dw-5600"))
+        self.assertTrue(contains(normalize("Veste ARC'TERYX Beta"), "arcteryx"))
+        self.assertTrue(contains(normalize("Doc Martens 1460"), "dr martens"))
+        self.assertTrue(contains(normalize("Console N64"), ["nintendo 64", "n64"]))
+
     def test_lot_size(self):
         self.assertEqual(lot_size("Lot de 12 polos Ralph Lauren"), 12)
         self.assertEqual(lot_size("15 pulls homme"), 15)
@@ -42,7 +49,7 @@ class ParseTest(unittest.TestCase):
 class ScoringTest(unittest.TestCase):
     def test_good_deal(self):
         deals = find_deals(Listing("Veste Carhartt Detroit vintage", 20), CFG)
-        self.assertEqual(deals[0].rule_name, "Carhartt Detroit / Active jacket")
+        self.assertEqual(deals[0].rule_name, "Carhartt Detroit jacket")
         self.assertGreaterEqual(deals[0].ratio, 2.5)
 
     def test_too_expensive(self):
@@ -54,7 +61,7 @@ class ScoringTest(unittest.TestCase):
     def test_lot_uses_piece_count(self):
         deal = find_deals(Listing("Lot de 12 polos Ralph Lauren homme", 40), CFG)[0]
         self.assertEqual(deal.pieces, 8)  # 12 x 65 % vendables
-        self.assertGreater(deal.net_profit, 90)
+        self.assertGreater(deal.net_profit, 40)
 
     def test_hand_delivery_has_no_fees(self):
         CFG.hand_delivery = True

@@ -96,9 +96,18 @@ Multiplicateur : x2.8 · bénéfice net ≈ 61 €
 | Bénéfice net | revente − 13,4 % (URSSAF + formation + versement libératoire) − emballage − coût d'achat |
 | Alerte si | multiplicateur ≥ `min_ratio` (2,5) **et** bénéfice net ≥ `min_profit` (15 €) **et** prix ≤ `max_buy` |
 
+## Les articles surveillés
+`config.example.yaml` contient **64 articles précis**, classés par catégorie : vêtements de travail et streetwear vintage, chaussures, lots, rétrogaming, cartes Pokémon, Lego, lunettes, montres, photo argentique.
+
+Leurs prix de revente sont **prudents**. Les seuls vrais prix de vente trouvés (environ 3 000 ventes d'un revendeur) sont 1,5 à 3 fois plus bas que les cotes des blogs.
+
+Règle d'or : on ne surveille jamais une marque seule (elle se vend 20-30 €), toujours un modèle précis.
+
+Les lignes marquées « données minces » sont à vérifier sur Vinted avant de leur faire confiance. Chaque affaire affichée sur la page a un lien **« Vérifier les prix sur Vinted »** pour contrôler en un clic.
+
 ## Régler `config.yaml`
 - `ref_price` est **le chiffre le plus important**. Au début, c'est une estimation (voir `docs/etude-niches-arbitrage.md`). Ensuite, mettez-y le prix médian de **vos ventes réelles**.
-- `all`, `any` et `none` sont les mots-clés de la règle : tous doivent être présents, au moins un doit l'être, aucun ne doit l'être. Les accents et les majuscules sont ignorés.
+- `all`, `any` et `none` sont les mots-clés de la règle : tous doivent être présents, au moins un doit l'être, aucun ne doit l'être. Dans `all`, une liste `[n64, nintendo 64]` veut dire « l'un ou l'autre ». Les accents, les majuscules et la ponctuation sont ignorés : `xt-6`, `XT6` et `xt 6` sont reconnus pareil.
 - `exclude` élimine les annonces douteuses (« style carhartt », « replica », etc.).
 
 ## Lancer en continu

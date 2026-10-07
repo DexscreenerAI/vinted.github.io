@@ -7,11 +7,25 @@ _AD_ID_RE = re.compile(r"leboncoin\.fr/(?:ad/[\w-]+/|vi/|[\w-]+/)(\d{8,12})")
 _LOT_RE = re.compile(r"\blot\s+(?:de\s+)?(\d{1,3})\b|\b(\d{1,3})\s+(?:pieces|articles|vetements|pulls|t-?shirts|jeans|vestes|polos|chemises|jeux|cartes)\b")
 
 
+# Variantes d'écriture ramenées à une seule forme (après normalisation)
+_ALIASES = {
+    "doc martens": "dr martens", "doc marten": "dr martens", "dr marten s": "dr martens",
+    "rayban": "ray ban", "gameboy": "game boy", "g shock": "gshock", "levis s": "levis",
+    "the north face": "north face", "tnf": "north face", "arc teryx": "arcteryx",
+}
+
+
 def normalize(text: str) -> str:
-    """Minuscules, sans accents, espaces simplifiés : pour comparer des mots-clés."""
+    """Minuscules, sans accents ni ponctuation : « Ray-Ban », « ray ban » et « RAYBAN » se comparent pareil."""
     text = unicodedata.normalize("NFKD", text)
-    text = "".join(c for c in text if not unicodedata.combining(c))
-    return re.sub(r"\s+", " ", text.lower()).strip()
+    text = "".join(c for c in text if not unicodedata.combining(c)).lower()
+    text = re.sub(r"[\'’`´]", "", text)          # arc'teryx -> arcteryx, levi's -> levis
+    text = re.sub(r"[-_.,;:!?()\[\]/+*\"]", " ", text)  # xt-6 -> xt 6, dr. martens -> dr martens
+    text = re.sub(r"(?<=[a-z])(?=\d)|(?<=\d)(?=[a-z])", " ", text)  # dw5600 = dw-5600 = dw 5600
+    text = re.sub(r"\s+", " ", text).strip()
+    for src, dst in _ALIASES.items():
+        text = re.sub(rf"(?<![a-z0-9]){src}(?![a-z0-9])", dst, text)
+    return text
 
 
 def parse_price(text: str) -> Optional[float]:
@@ -38,7 +52,11 @@ def lot_size(title: str) -> Optional[int]:
     return n if 1 < n <= 500 else None
 
 
-def contains(haystack_norm: str, word: str) -> bool:
-    """Mot-clé présent en tant que mot (ou expression) entier."""
-    w = normalize(word)
+def contains(haystack_norm: str, word) -> bool:
+    """Mot-clé présent en tant que mot (ou expression) entier. Une liste = au moins un des mots."""
+    if isinstance(word, (list, tuple)):
+        return any(contains(haystack_norm, w) for w in word)
+    w = normalize(str(word))
+    if not w:
+        return False
     return re.search(rf"(?<![a-z0-9]){re.escape(w)}(?![a-z0-9])", haystack_norm) is not None

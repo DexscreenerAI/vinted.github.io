@@ -1,11 +1,16 @@
-# Copiez ce fichier en config.yaml puis ajustez les prix avec VOS ventes réelles.
+# Articles surveillés et prix de revente. Modifiable dans le Bloc-notes (bouton « Mes niches & prix »),
+# pris en compte sans redémarrer.
 #
-# ref_price = prix auquel l'article se vend habituellement sur Vinted (par pièce pour un lot).
-# Les valeurs ci-dessous sont des ordres de grandeur issus de l'étude (docs/etude-niches-arbitrage.md),
-# volontairement prudents : remplacez-les dès que vous avez vos propres chiffres.
+# ref_price = prix auquel l'article SE VEND réellement sur Vinted (par pièce pour un lot).
+#   Valeurs issues de la recherche d'octobre 2026, volontairement prudentes (bas de fourchette) :
+#   les blogs de revente annoncent souvent 1,5 à 3 fois plus que les ventes réelles.
+#   Remplacez-les par la médiane de VOS ventes dès que possible.
+# max_buy  = prix Leboncoin maximum pour viser au moins x2,5.
+# Mots-clés : sans accents ni majuscules. all = tous requis ([a, b] = a ou b), any = au moins un, none = aucun.
+# Règle d'or : jamais une marque seule, toujours un modèle précis (une marque seule se vend 20-30 €).
 
-min_ratio: 2.5        # multiplicateur minimum : revente estimée / coût d'achat
-min_profit: 15        # bénéfice net minimum en euros (après cotisations, impôt, emballage)
+min_ratio: 2.2        # multiplicateur minimum, frais d'achat et port INCLUS (≈ x2,5 sur le prix affiché)
+min_profit: 10        # bénéfice net minimum en euros (après cotisations, impôt, emballage)
 hand_delivery: false  # false = on compte les frais d'achat sécurisé + port Leboncoin (prudent)
 
 costs:
@@ -13,76 +18,419 @@ costs:
   buy_fee_rate: 0.05
   buy_shipping: 3.50
   packaging: 0.50
-  resale_discount: 0.85   # les prix affichés sur Vinted sont plus hauts que les prix réellement vendus
+  resale_discount: 1.0    # ref_price est déjà un prix de vente réaliste
   tax_rate: 0.134         # micro-entreprise : URSSAF 12,3 % + 0,1 % + versement libératoire 1 %
 
-# Mots qui excluent une annonce, quelle que soit la règle.
-exclude: [replica, copie, contrefacon, imitation, inspire, "style carhartt", "type carhartt", "facon", "recherche", "echange", "cherche"]
+# Mots qui excluent une annonce, quelle que soit la règle (contrefaçons, recherches, échanges).
+exclude: [replica, replique, copie, contrefacon, imitation, inspire, "style carhartt", "type carhartt",
+          facon, recherche, cherche, echange, "pour pieces", "hors service", "ne fonctionne pas", proxy]
 
 rules:
-  # --- Niche 1 : workwear / streetwear vintage homme ---
-  - name: Carhartt Detroit / Active jacket
+  # ============ Vêtements de travail / streetwear vintage ============
+  - name: Carhartt Detroit jacket
     all: [carhartt]
-    any: [detroit, active, chore, santa fe, "michigan"]
+    any: [detroit]
+    none: [enfant, junior, kids, style]
     ref_price: 85
-    max_buy: 45
-
-  - name: Carhartt (autres pièces)
+    max_buy: 34
+  - name: Carhartt Active jacket
     all: [carhartt]
-    none: [detroit, active, chore, "t-shirt", tshirt, bonnet, lot]
+    any: [active jacket, veste active, j130, j131, j140]
+    none: [enfant, junior, kids, style]
+    ref_price: 90
+    max_buy: 36
+  - name: Carhartt Chore coat / Michigan
+    all: [carhartt]
+    any: [chore, michigan, c001]
+    none: [enfant, junior, kids, style]
+    ref_price: 95
+    max_buy: 38
+  - name: Carhartt Santa Fe jacket      # données minces
+    all: [carhartt]
+    any: [santa fe, santafe]
+    none: [enfant, junior, style]
+    ref_price: 75
+    max_buy: 30
+  - name: Carhartt Double Knee
+    all: [carhartt]
+    any: [double knee, b01, b136]
+    none: [enfant, junior, style]
+    ref_price: 55
+    max_buy: 22
+  - name: Levi's 501 Made in USA
+    all: [501]
+    any: [made in usa, usa, fabrique aux usa]
+    none: [enfant, junior, femme, ct, 501s]
+    ref_price: 45
+    max_buy: 18
+  - name: Levi's Big E / redline selvedge
+    all: [levis]
+    any: [big e, bige, selvedge, redline]
+    none: [lvc, reedition, enfant]
+    ref_price: 200
+    max_buy: 80
+  - name: Levi's trucker vintage
+    all: [levis]
+    any: [trucker, 70505, 70506, 70507, type 3]
+    none: [enfant, junior]
+    ref_price: 50
+    max_buy: 20
+  - name: Ralph Lauren pull torsadé
+    all: [ralph lauren]
+    any: [torsade, cable knit, cable]
+    none: [enfant, fille, garcon, bebe]
     ref_price: 40
-    max_buy: 15
-
-  - name: The North Face Nuptse / doudoune 700
-    all: ["north face"]
-    any: [nuptse, "700", doudoune, himalayan]
+    max_buy: 16
+  - name: Ralph Lauren Harrington       # données minces
+    all: [ralph lauren]
+    any: [harrington]
+    none: [enfant, garcon]
+    ref_price: 50
+    max_buy: 20
+  - name: Ralph Lauren demi-zip
+    all: [ralph lauren]
+    any: [demi zip, half zip, quarter zip, 1/4 zip, col zippe]
+    none: [enfant, fille, garcon]
+    ref_price: 35
+    max_buy: 14
+  - name: Ralph Lauren Polo Bear        # beaucoup de faux
+    all: [ralph lauren]
+    any: [polo bear, ours]
+    none: [enfant, bebe, peluche, doudou]
     ref_price: 110
+    max_buy: 45
+  - name: RRL Double RL                 # données minces
+    any: [rrl, double rl]
+    none: [enfant]
+    ref_price: 110
+    max_buy: 45
+  - name: Lacoste vintage
+    all: [lacoste]
+    any: [chemise lacoste, made in france, vintage, izod]
+    none: [enfant, junior, chaussure, basket]
+    ref_price: 35
+    max_buy: 14
+  - name: Tommy Hilfiger 90s
+    all: [tommy hilfiger]
+    any: [vintage, 90s, annees 90, big flag, grand logo]
+    none: [enfant, junior, fille]
+    ref_price: 32
+    max_buy: 12
+  - name: Nike veste survêtement vintage
+    all: [nike]
+    any: [vintage, 90s, annees 90]
+    none: [enfant, junior, chaussure, basket]
+    ref_price: 35
+    max_buy: 14
+  - name: Adidas veste survêtement vintage
+    all: [adidas]
+    any: [vintage, ventex, 80s, 90s, trefoil, annees 80, annees 90]
+    none: [enfant, junior, chaussure, basket, samba, gazelle]
+    ref_price: 35
+    max_buy: 14
+  - name: The North Face Nuptse         # beaucoup de faux : poids ~775 g, zip VISLON
+    all: [north face]
+    any: [nuptse]
+    none: [enfant, junior, gilet, sans manche]
+    ref_price: 110
+    max_buy: 44
+  - name: The North Face Denali
+    all: [north face]
+    any: [denali]
+    none: [enfant, junior, fille]
+    ref_price: 42
+    max_buy: 16
+  - name: The North Face Mountain Jacket   # données minces
+    all: [north face]
+    any: [mountain jacket, mountain light, gore tex, goretex]
+    none: [enfant, junior]
+    ref_price: 85
+    max_buy: 35
+  - name: Patagonia Synchilla / Snap-T
+    all: [patagonia]
+    any: [synchilla, snap t, snapt]
+    none: [enfant, kids, bebe]
+    ref_price: 50
+    max_buy: 20
+  - name: Patagonia Retro-X             # données minces
+    all: [patagonia]
+    any: [retro x, retrox, retro pile]
+    none: [enfant, kids, bebe]
+    ref_price: 85
+    max_buy: 35
+  - name: Arc'teryx veste               # beaucoup de faux
+    all: [arcteryx]
+    any: [beta, alpha, atom, zeta, gamma, theta]
+    none: [enfant, sac, casquette, bonnet]
+    ref_price: 170
+    max_buy: 70
+  - name: Stone Island badge            # beaucoup de faux : vérifier Certilogo
+    all: [stone island]
+    any: [veste, overshirt, sweat, badge, soft shell, crinkle]
+    none: [enfant, junior, badge seul]
+    ref_price: 130
     max_buy: 50
+  - name: Barbour Beaufort / Bedale     # surtout septembre → février
+    all: [barbour]
+    any: [beaufort, bedale, border, cire, wax]
+    none: [enfant, international, matelassee, quilted]
+    ref_price: 110
+    max_buy: 44
 
-  - name: Levi's 501 (pièce)
-    any: ["levis 501", "levi's 501", "501 levis", "501 levi's"]
-    none: [lot]
-    ref_price: 35
-    max_buy: 12
+  # ============ Chaussures ============
+  - name: Dr Martens 1460
+    all: [dr martens]
+    any: [1460, 8 trous, 8 oeillets]
+    none: [enfant, junior, made in england, jadon]
+    ref_price: 50
+    max_buy: 18
+  - name: Dr Martens Made in England
+    all: [dr martens]
+    any: [made in england, vintage made, england]
+    none: [enfant, junior]
+    ref_price: 110
+    max_buy: 44
+  - name: Salomon XT-6                  # beaucoup de faux
+    all: [salomon]
+    any: [xt-6]
+    none: [enfant, junior]
+    ref_price: 105
+    max_buy: 42
+  - name: New Balance 990 Made in USA
+    all: [new balance]
+    any: [990]
+    none: [enfant, junior, 9060]
+    ref_price: 120
+    max_buy: 48
+  - name: New Balance 2002R
+    all: [new balance]
+    any: [2002r]
+    none: [enfant, junior, protection pack]
+    ref_price: 80
+    max_buy: 30
+  - name: Timberland 6-inch             # lourd à expédier
+    all: [timberland]
+    any: [6 inch, premium, 10061, 10361]
+    none: [enfant, junior, bebe]
+    ref_price: 48
+    max_buy: 18
 
-  - name: Ralph Lauren (pièce)
-    any: ["ralph lauren", "polo ralph", "rrl"]
-    none: [lot, enfant, bebe, fille, garcon]
-    ref_price: 35
-    max_buy: 12
-
-  # --- Lots à séparer (prix ref = par pièce, nombre de pièces lu dans le titre) ---
+  # ============ Lots à séparer (ref_price = par pièce) ============
   - name: Lot vêtements marque homme
     all: [lot]
-    any: ["ralph lauren", carhartt, "levis", "levi's", "tommy hilfiger", lacoste, "north face", patagonia, "stone island"]
+    any: [ralph lauren, carhartt, levis, tommy hilfiger, lacoste, north face, patagonia, stone island]
     none: [enfant, bebe, fille, garcon, femme]
     lot: true
-    ref_price: 25
+    ref_price: 15
     default_pieces: 5
     sellable_rate: 0.65
-
-  # --- Niche 2 : lots vêtements enfant de marque ---
-  - name: Lot enfant de marque
-    all: [lot]
-    any: ["petit bateau", jacadi, bonpoint, "tartine et chocolat", "cyrillus", "bonton"]
+  - name: Lot Petit Bateau
+    all: [petit bateau]
+    any: [lot]
+    none: [body seul, couches]
     lot: true
-    ref_price: 7
-    default_pieces: 8
-    sellable_rate: 0.75
-    min_profit: 10
+    ref_price: 5
+    default_pieces: 15
+    sellable_rate: 0.6
+    max_buy: 18
+  - name: Lot Jacadi
+    all: [jacadi]
+    any: [lot]
+    lot: true
+    ref_price: 8
+    default_pieces: 12
+    sellable_rate: 0.6
+    max_buy: 23
+  - name: Lot Bonpoint                  # données minces
+    all: [bonpoint]
+    any: [lot]
+    lot: true
+    ref_price: 15
+    default_pieces: 10
+    sellable_rate: 0.6
+    max_buy: 36
 
-  # --- Niche 3 : rétro gaming ---
-  - name: Pack console rétro + jeux
-    any: [snes, "super nintendo", "nes", "game boy", gameboy, n64, "nintendo 64", gamecube, "megadrive", "mega drive", "dreamcast", "ps1", "playstation 1"]
-    none: [mini, classic, "jeu seul", reproduction, repro]
-    ref_price: 180
-    max_buy: 150
-    min_profit: 40
-
-  # --- Niche 4 : Pokémon anciens ---
-  - name: Classeur / lot Pokémon ancien
+  # ============ Rétrogaming ============
+  - name: Game Boy Color console
+    all: [game boy color]
+    none: [coque seule, boite vide, boite seule, ecran seul, cable seul]
+    ref_price: 70
+    max_buy: 28
+  - name: Game Boy Advance SP
+    any: [game boy advance sp, gba sp]
+    none: [coque seule, chargeur seul, boite vide, housse]
+    ref_price: 75
+    max_buy: 30
+  - name: Game Boy classique DMG
+    all: [game boy]
+    any: [dmg, classique, premiere]
+    none: [color, advance, pocket, coque seule, boite vide]
+    ref_price: 55
+    max_buy: 22
+  - name: Nintendo GameCube console
+    all: [gamecube]
+    any: [console, pack]
+    none: [manette seule, jeu seul, carte memoire, boite vide]
+    ref_price: 100
+    max_buy: 40
+  - name: Nintendo 64 console
+    all: [[nintendo 64, n64]]
+    any: [console, pack]
+    none: [manette seule, jeu seul, boite vide, expansion seul]
+    ref_price: 85
+    max_buy: 34
+  - name: Pokémon Rouge/Bleu/Jaune (Game Boy)   # pile morte = -30 à -50 %
     all: [pokemon]
-    any: [classeur, "1ere edition", "premiere edition", wizards, "set de base", "1999", "2000"]
-    ref_price: 120
+    any: [version rouge, version bleue, version jaune, pokemon rouge, pokemon bleu, pokemon jaune]
+    none: [carte, peluche, boite vide, notice seule, gba, 3ds, switch, feu]
+    ref_price: 30
+    max_buy: 12
+  - name: Pokémon Or/Argent/Cristal (GBC)
+    all: [pokemon]
+    any: [version or, version argent, cristal, pokemon or, pokemon argent]
+    none: [carte, boite vide, notice seule, heartgold, soulsilver, ds]
+    ref_price: 40
+    max_buy: 16
+  - name: Pokémon Émeraude (GBA)        # beaucoup de faux
+    all: [pokemon]
+    any: [emeraude]
+    none: [carte, boite vide, notice seule, ds]
+    ref_price: 85
+    max_buy: 32
+  - name: Pokémon Rubis/Saphir/Rouge Feu/Vert Feuille
+    all: [pokemon]
+    any: [rubis, saphir, rouge feu, vert feuille]
+    none: [carte, boite vide, notice seule, ds, alpha, omega]
+    ref_price: 50
+    max_buy: 20
+  - name: Jeux N64 phares
+    all: [[nintendo 64, n64]]
+    any: [goldeneye, mario 64, ocarina, mario kart 64, majora, smash bros, banjo]
+    none: [boite vide, notice seule, ds, switch, 3ds]
+    ref_price: 25
+    max_buy: 10
+  - name: Jeux GameCube phares
+    all: [gamecube]
+    any: [colosseum, pokemon xd, melee, wind waker, eternal darkness, skies of arcadia, pokemon box, metroid prime]
+    none: [boite vide, notice seule, wii u, switch]
+    ref_price: 45
+    max_buy: 18
+
+  # ============ Cartes Pokémon (revente aussi sur Cardmarket) ============
+  - name: Classeur cartes Pokémon WOTC 1999-2002   # 10-20 % de faux dans les lots
+    all: [pokemon]
+    any: [wizards, wotc, set de base, 1ere edition, edition 1, jungle, fossile, 1999, classeur ancien]
+    none: [reproduction, gx, vmax, ecarlate]
+    lot: true
+    ref_price: 1.5
+    default_pieces: 100
+    sellable_rate: 0.6
+    max_buy: 36
+  - name: Dracaufeu set de base         # beaucoup de faux
+    all: [dracaufeu]
+    any: [set de base, wizards, 1999, holo, 4/102]
+    none: [reproduction, gx, vmax, ex, celebration, 2016, evolution]
+    ref_price: 150
     max_buy: 60
-    min_profit: 30
+
+  # ============ Lego ============
+  - name: Lot minifigurines Lego
+    all: [lego]
+    any: [minifig, minifigurine, figurines, personnages]
+    none: [compatible, lepin, duplo, custom, non officiel]
+    lot: true
+    ref_price: 4
+    default_pieces: 20
+    sellable_rate: 0.8
+    max_buy: 25
+  - name: Lego Modular / Creator Expert
+    all: [lego]
+    any: [modulaire, modular, creator expert, 10182, 10185, 10197, 10243, 10255, 10264]
+    none: [compatible, lepin, notice seule, boite vide]
+    ref_price: 180
+    max_buy: 70
+
+  # ============ Petits objets à forte valeur ============
+  - name: Longchamp Pliage              # beaucoup de faux
+    all: [longchamp]
+    any: [pliage]
+    none: [pochette, porte monnaie, trousse]
+    ref_price: 45
+    max_buy: 18
+  - name: Ray-Ban B&L vintage           # gravure « B&L » obligatoire
+    all: [ray ban]
+    any: [b&l, bausch, lomb, usa vintage]
+    none: [enfant, junior, etui seul]
+    ref_price: 110
+    max_buy: 44
+  - name: Persol 649 / 714
+    all: [persol]
+    any: [649, 714, meflecto, steve mcqueen]
+    none: [etui seul]
+    ref_price: 110
+    max_buy: 44
+  - name: Seiko 5 automatique vintage
+    all: [seiko]
+    any: [seiko 5, automatique, automatic, 6119, 7009, 7s26]
+    none: [quartz, kinetic, bracelet seul, 6309]
+    ref_price: 70
+    max_buy: 28
+  - name: Seiko 6309 Turtle
+    all: [seiko]
+    any: [6309, turtle, tortue]
+    none: [prospex, srp, reissue, bracelet seul]
+    ref_price: 250
+    max_buy: 100
+  - name: Casio G-Shock DW-5600 / 6900
+    all: [g-shock]
+    any: [dw-5600, dw-6900, dw-5000]
+    none: [bracelet seul, enfant]
+    ref_price: 55
+    max_buy: 22
+
+  # ============ Photo argentique ============
+  - name: Olympus mju II
+    all: [olympus]
+    any: [mju ii, mju 2, stylus epic]
+    none: [zoom, 80, 105, 115, 120, 130, 140, numerique, digital]
+    ref_price: 180
+    max_buy: 70
+  - name: Olympus Trip 35
+    all: [olympus]
+    any: [trip 35]
+    none: [numerique]
+    ref_price: 70
+    max_buy: 28
+  - name: Compact argentique divers
+    all: [argentique]
+    any: [compact, pellicule, 35mm, point and shoot]
+    none: [jetable, numerique, reflex, objectif seul]
+    ref_price: 45
+    max_buy: 18
+  - name: Canon AE-1 / AE-1 Program
+    all: [canon]
+    any: [ae-1, a-1]
+    none: [boitier hs, objectif seul]
+    ref_price: 150
+    max_buy: 55
+  - name: Pentax K1000 / Nikon FM2
+    any: [k1000, fm2]
+    none: [objectif seul]
+    ref_price: 160
+    max_buy: 60
+  - name: Minolta X-700
+    all: [minolta]
+    any: [x-700]
+    none: [objectif seul]
+    ref_price: 100
+    max_buy: 40
+  - name: Yashica T4 / T5               # données minces
+    all: [yashica]
+    any: [t4, t5]
+    ref_price: 230
+    max_buy: 90
+  - name: Contax T2 / T3
+    all: [contax]
+    any: [t2, t3]
+    ref_price: 420
+    max_buy: 160

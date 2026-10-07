@@ -21,7 +21,7 @@ class Costs:
 class Rule:
     name: str
     ref_price: float                # prix de revente Vinted habituel (par pièce si lot)
-    all: List[str] = field(default_factory=list)   # tous ces mots doivent être présents
+    all: List = field(default_factory=list)        # tous ces mots doivent être présents ([a, b] = a ou b)
     any: List[str] = field(default_factory=list)   # au moins un de ces mots
     none: List[str] = field(default_factory=list)  # aucun de ces mots
     max_buy: Optional[float] = None
