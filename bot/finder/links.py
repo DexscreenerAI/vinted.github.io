@@ -1,25 +1,21 @@
-"""Liens de recherche prêts à l'emploi pour créer ses alertes (Leboncoin, eBay) en un clic."""
+"""Liens de recherche pour créer ses alertes (Leboncoin, eBay) en un clic.
 
-from urllib.parse import urlencode
+Volontairement minimaux (seulement les mots-clés) : les paramètres de prix et de tri dans
+l'adresse ont été refusés par les sites. Le prix max et le tri se règlent sur la page du site.
+"""
+
+from urllib.parse import quote, urlencode
 
 from .ebay_source import rule_queries
 from .scoring import Rule
 
 
 def lbc_url(rule: Rule) -> str:
-    """Recherche Leboncoin triée par plus récentes, plafonnée au prix max de la règle."""
-    params = {"text": rule_queries(rule)[0], "sort": "time", "order": "desc"}
-    if rule.max_buy is not None:
-        params["price"] = f"min-{rule.max_buy:g}"
-    return "https://www.leboncoin.fr/recherche?" + urlencode(params)
+    return "https://www.leboncoin.fr/recherche?" + urlencode({"text": rule_queries(rule)[0]}, quote_via=quote)
 
 
 def ebay_url(rule: Rule) -> str:
-    """Recherche ebay.fr : objets en France, plus récents d'abord, plafonnée au prix max."""
-    params = {"_nkw": rule_queries(rule)[0], "_sop": "10", "LH_PrefLoc": "1"}
-    if rule.max_buy is not None:
-        params["_udhi"] = f"{rule.max_buy:g}"
-    return "https://www.ebay.fr/sch/i.html?" + urlencode(params)
+    return "https://www.ebay.fr/sch/i.html?" + urlencode({"_nkw": rule_queries(rule)[0]})
 
 
 def rules_with_links(rules) -> list:
