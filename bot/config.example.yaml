@@ -294,12 +294,14 @@ rules:
     category: Rétrogaming
     all: [game boy color]
     none: [coque seule, boite vide, boite seule, ecran seul, cable seul, cartouche, version or, version argent, version cristal, version rouge, version bleue, version jaune, jeu seul]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
     ref_price: 70
     max_buy: 28
   - name: Game Boy Advance SP
     category: Rétrogaming
     any: [game boy advance sp, gba sp]
     none: [coque seule, chargeur seul, boite vide, housse, cartouche, version or, version argent, version cristal, version rouge, version bleue, version jaune, jeu seul]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
     ref_price: 75
     max_buy: 30
   - name: Game Boy classique DMG
@@ -307,6 +309,7 @@ rules:
     all: [game boy]
     any: [dmg, classique, premiere]
     none: [color, advance, pocket, coque seule, boite vide, cartouche, version or, version argent, version cristal, version rouge, version bleue, version jaune, jeu seul]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
     ref_price: 55
     max_buy: 22
   - name: Nintendo GameCube console

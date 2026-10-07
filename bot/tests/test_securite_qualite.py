@@ -37,6 +37,13 @@ class AccessoiresTest(unittest.TestCase):
         self.assertEqual(self.rule("Veste Carhartt Detroit vintage", 25), "Carhartt Detroit jacket")
         self.assertEqual(self.rule("Carhart detroit jacket marron", 25), "Carhartt Detroit jacket")  # faute de frappe
 
+    def test_lot_de_jeux_pas_console(self):
+        # annonce réelle signalée : 3 jeux (≈ 12 €) cotés comme une console (70 €)
+        self.assertIsNone(self.rule("3 Jeux Game Boy COLOR ( WAVE RACE F-1 RACE et ROAD CHAMPS )", 5))
+        self.assertIsNone(self.rule("Cartouche Game Boy Color Tetris", 8))
+        self.assertEqual(self.rule("Console Game Boy Color violette + 3 jeux", 25), "Game Boy Color console")
+        self.assertEqual(self.rule("Gameboy color + jeu tetris", 25), "Game Boy Color console")
+
     def test_jeu_pas_console(self):
         self.assertEqual(self.rule("Pokémon version Or Game Boy Color", 12), "Pokémon Or/Argent/Cristal (GBC)")
 

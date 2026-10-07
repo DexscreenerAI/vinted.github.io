@@ -51,6 +51,9 @@ class Rule:
     sellable_rate: float = 0.7      # part des pièces d'un lot réellement vendable
     min_ratio: Optional[float] = None
     min_profit: Optional[float] = None
+    # Exclusion conditionnelle : un de ces mots exclut l'annonce, SAUF si un mot « unless » est aussi présent.
+    # Ex. console : « 3 jeux Game Boy Color » = des jeux, pas la console ; « Game Boy Color + 3 jeux » = la console.
+    none_unless: dict = field(default_factory=dict)
     search: str = ""                # requête eBay ; vide = déduite des mots-clés
     variants: List[str] = field(default_factory=list)  # requêtes eBay en plus (fautes courantes : carhart…)
 
@@ -63,6 +66,13 @@ class Rule:
         if self.any and not any(contains(t, w) for w in self.any):
             return False
         flat = [x for w in self.all for x in (w if isinstance(w, list) else [w])] + list(self.any)
+        nu = self.none_unless or {}
+        if nu and not any(contains(t, w) for w in nu.get("unless", [])):
+            # le mot (« jeux ») placé AVANT l'objet (« 3 jeux Game Boy Color ») = c'est lui qui est vendu ;
+            # placé après (« Game Boy Color + jeu Tetris »), c'est un bonus avec l'objet
+            pos_word, pos_model = find_pos(t, nu.get("words", [])), find_pos(t, flat)
+            if pos_word >= 0 and (pos_model < 0 or pos_word < pos_model):
+                return False
         return not is_accessory(t, flat)
 
 
