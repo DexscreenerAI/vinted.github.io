@@ -122,8 +122,8 @@ def notify_good(deal_row_or_deal) -> None:
 
 
 def register(deal, good: bool, seen: Seen) -> None:
-    """Enregistre une nouvelle affaire. Si l'avis IA automatique est actif, une bonne affaire attend le
-    verdict de Claude avant d'apparaître dans « Bonnes affaires » et d'être notifiée."""
+    """Enregistre une nouvelle affaire. Si l'avis IA automatique est actif, une bonne affaire s'affiche aussitôt
+    (« Claude analyse… ») mais n'est notifiée qu'après le verdict de Claude, qui peut la retirer."""
     from . import ai
     seen.save_deal(deal, good)
     if good and ai.auto_enabled():

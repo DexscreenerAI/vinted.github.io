@@ -27,7 +27,7 @@ class AccessoiresTest(unittest.TestCase):
         for t in ["Étui cuir Contax T2", "Flash pour Contax T2", "Dos dateur Contax T2 data back",
                   "Objectif Canon FD 50mm pour AE-1", "Écusson patch Carhartt Detroit",
                   "Coque de remplacement Game Boy Advance SP", "Pellicule Kodak pour Olympus mju II",
-                  "Manette GameCube officielle pour console", "Doudoune North Face Nuptse fille 12 ans",
+                  "Manette GameCube officielle pour console", "T-shirt Carhartt WIP Panic in Detroit homme taille XL", "Casquette Carhartt Detroit", "Doudoune North Face Nuptse fille 12 ans",
                   "Game Boy Color HS ne s'allume pas", "Levi's 501 selvedge made in Turkey"]:
             self.assertIsNone(self.rule(t), t)
 
@@ -176,7 +176,7 @@ class RetrogamingTest(unittest.TestCase):
 
 
 class AvisIaAutoTest(unittest.TestCase):
-    """Une bonne affaire attend le verdict de Claude ; « à éviter » ou état insuffisant = retirée des bonnes affaires."""
+    """Une bonne affaire est notifiée après le verdict de Claude ; « à éviter » ou état insuffisant = retirée des bonnes affaires."""
 
     def run_case(self, verdict):
         import os
@@ -195,7 +195,6 @@ class AvisIaAutoTest(unittest.TestCase):
             ai.start_worker(seen, CFG, notified.append)
             seen.add(listing.key, listing.title, 20)
             register(deal, good, seen)
-            self.assertEqual(seen.deals("bonnes"), [])  # en attente du verdict
             for _ in range(50):
                 d = seen.get_deal(listing.key)
                 if d and not d["ai_pending"]:
@@ -214,6 +213,25 @@ class AvisIaAutoTest(unittest.TestCase):
     def test_etat_insuffisant(self):
         bonnes, notified = self.run_case(dict(self.BASE, verdict="acheter", etat_note="usage"))
         self.assertEqual((bonnes, notified), ([], []))
+
+    def test_affichee_pendant_analyse_et_reprise_au_redemarrage(self):
+        import os
+        from unittest import mock
+        from finder import ai
+        from finder.core import register
+        seen = Seen(":memory:")
+        listing = Listing("Veste Carhartt Detroit vintage", 20, "https://www.leboncoin.fr/ad/vetements/1234567891")
+        deal, good = best_deal(listing, CFG)
+        seen.add(listing.key, listing.title, 20)
+        q = __import__("queue").Queue()
+        with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "x", "AI_AUTO": "1"}), mock.patch.object(ai, "_queue", q):
+            register(deal, good, seen)  # worker pas lancé : l'analyse attend
+            self.assertEqual([d["ai_pending"] for d in seen.deals("bonnes")], [1])  # visible tout de suite
+            q.get_nowait()  # file perdue (logiciel fermé)
+            with mock.patch.object(ai, "_started", __import__("threading").Event()), \
+                    mock.patch.object(ai, "analyze", lambda d, e="tres_bon": __import__("time").sleep(60)):
+                ai.start_worker(seen, CFG, lambda d: None)
+            self.assertEqual(seen.ai_pending_keys(), [listing.key])
 
     def test_verdict_passer(self):
         bonnes, _ = self.run_case(dict(self.BASE, verdict="passer", etat_note="tres_bon"))

@@ -160,6 +160,11 @@ def start_worker(seen, cfg, on_good) -> None:
         return
     _started.set()
     q = _queue
+    for key in seen.ai_pending_keys():  # reprise des analyses interrompues à la dernière fermeture
+        if auto_enabled():
+            q.put(key)
+        else:
+            seen.set_ai_pending(key, False)
 
     def run():
         while True:
@@ -169,9 +174,12 @@ def start_worker(seen, cfg, on_good) -> None:
                 _day.update(date=today, count=0)
             if not auto_enabled() or _day["count"] >= daily_limit():
                 seen.status["ai_note"] = f"Avis IA automatique en pause : limite de {daily_limit()} avis par jour atteinte."
+                seen.set_ai_pending(key, False)  # l'affaire reste affichée, sans avis
                 continue
             deal = seen.get_deal(key)
             if not deal or deal.get("ai"):
+                if deal:
+                    seen.set_ai_pending(key, False)
                 continue
             try:
                 result = analyze(deal, getattr(cfg, "etat_minimum", "tres_bon"))

@@ -11,7 +11,7 @@
 #   pour les fautes de frappe courantes (annonces moins vues, donc moins chères). Chaque requête coûte du quota.
 # Règle d'or : jamais une marque seule, toujours un modèle précis (une marque seule se vend 20-30 €).
 
-config_version: 6     # mis à jour automatiquement par le logiciel (vos prix et réglages sont conservés)
+config_version: 7     # mis à jour automatiquement par le logiciel (vos prix et réglages sont conservés)
 
 min_ratio: 2.2        # multiplicateur minimum, frais d'achat et port INCLUS (≈ x2,5 sur le prix affiché)
 min_profit: 10        # bénéfice net minimum en euros (après cotisations, impôt, emballage)
@@ -37,7 +37,7 @@ rules:
     category: Vêtements
     all: [carhartt]
     any: [detroit]
-    none: [enfant, junior, kids, style, fille, garcon, bebe, ans, mois]
+    none: [enfant, junior, kids, style, fille, garcon, bebe, ans, mois, t shirt, tshirt, tee, sweat, sweatshirt, hoodie, pull, casquette, bonnet, chapeau, pantalon, short, chemise, polo, sac, porte cles, sticker, poster]
     variants: [carhart detroit]
     ref_price: 85
     max_buy: 34
@@ -45,28 +45,28 @@ rules:
     category: Vêtements
     all: [carhartt]
     any: [active jacket, veste active, j130, j131, j140]
-    none: [enfant, junior, kids, style, fille, garcon, bebe, ans, mois]
+    none: [enfant, junior, kids, style, fille, garcon, bebe, ans, mois, t shirt, tshirt, tee, sweat, sweatshirt, hoodie, pull, casquette, bonnet, chapeau, pantalon, short, chemise, polo, sac, porte cles, sticker, poster]
     ref_price: 90
     max_buy: 36
   - name: Carhartt Chore coat / Michigan
     category: Vêtements
     all: [carhartt]
     any: [chore, michigan, c001]
-    none: [enfant, junior, kids, style, fille, garcon, bebe, ans, mois]
+    none: [enfant, junior, kids, style, fille, garcon, bebe, ans, mois, t shirt, tshirt, tee, sweat, sweatshirt, hoodie, pull, casquette, bonnet, chapeau, pantalon, short, chemise, polo, sac, porte cles, sticker, poster]
     ref_price: 95
     max_buy: 38
   - name: Carhartt Santa Fe jacket      # données minces
     category: Vêtements
     all: [carhartt]
     any: [santa fe, santafe]
-    none: [enfant, junior, style, kids, fille, garcon, bebe, ans, mois]
+    none: [enfant, junior, style, kids, fille, garcon, bebe, ans, mois, t shirt, tshirt, tee, sweat, sweatshirt, hoodie, pull, casquette, bonnet, chapeau, pantalon, short, chemise, polo, sac, porte cles, sticker, poster]
     ref_price: 75
     max_buy: 30
   - name: Carhartt Double Knee
     category: Vêtements
     all: [carhartt]
     any: [double knee, b01, b136]
-    none: [enfant, junior, style, kids, fille, garcon, bebe, ans, mois]
+    none: [enfant, junior, style, kids, fille, garcon, bebe, ans, mois, t shirt, tshirt, tee, sweat, sweatshirt, hoodie, casquette, bonnet, veste, sac, sticker, poster]
     ref_price: 55
     max_buy: 22
   - name: Levi's 501 Made in USA

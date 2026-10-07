@@ -148,14 +148,17 @@ class Seen:
         return dict(r) if r else None
 
     def set_ai_pending(self, key: str, pending: bool) -> None:
-        """En attente de l'avis IA : l'affaire reste hors de « Bonnes affaires » (et sans notification) jusqu'au
-        verdict. pending=False sans verdict (IA indisponible) : on revient au jugement des règles."""
+        """En attente de l'avis IA : l'affaire s'affiche tout de suite (« Claude analyse… ») mais n'est notifiée
+        qu'après le verdict, qui peut la retirer. pending=False sans verdict (IA indisponible) : jugement des règles."""
         with self.lock:
-            if pending:
-                self.db.execute("UPDATE deals SET ai_pending = 1, good = 0 WHERE key = ?", (key,))
-            else:
-                self.db.execute("UPDATE deals SET ai_pending = 0, good = 1 WHERE key = ? AND ai_pending = 1", (key,))
+            self.db.execute("UPDATE deals SET ai_pending = ? WHERE key = ?", (int(pending), key))
             self.db.commit()
+
+    def ai_pending_keys(self) -> List[str]:
+        """Affaires restées en attente d'avis (logiciel fermé avant la fin des analyses)."""
+        with self.lock:
+            return [r[0] for r in self.db.execute(
+                "SELECT key FROM deals WHERE ai_pending = 1 AND status = 'nouveau' ORDER BY found_at")]
 
     def apply_ai(self, key: str, result: dict, cfg) -> bool:
         """Applique le verdict de l'IA : revente revue à la baisse si elle l'estime moins, affaire retirée des
