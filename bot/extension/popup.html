@@ -19,14 +19,17 @@
   <h1>Chasseur d'affaires</h1>
   <div class="row"><span class="muted">Logiciel :</span><span id="bot">vérification…</span></div>
   <div class="row"><span class="muted">Cette page :</span><span id="page">—</span></div>
-  <div class="row"><span class="muted">Recherche :</span><span id="cur">—</span></div>
+  <div class="row"><span class="muted">Tournée :</span><span id="cur">—</span></div>
   <div style="display:flex;gap:6px">
-    <select id="site" style="font:inherit;padding:6px;border-radius:8px;border:1px solid #d0d0ca;margin-top:8px">
-      <option value="leboncoin">Leboncoin</option><option value="vinted">Vinted</option><option value="ebay">eBay</option>
+    <select id="sites" style="font:inherit;padding:6px;border-radius:8px;border:1px solid #d0d0ca;margin-top:8px">
+      <option value="leboncoin">Leboncoin</option><option value="leboncoin,vinted,ebay">Les 3 sites</option>
+      <option value="vinted">Vinted</option><option value="ebay">eBay</option>
     </select>
-    <button class="primary" id="next">Recherche suivante ▶</button>
+    <button class="primary" id="start">▶ Lancer ma tournée</button>
   </div>
-  <label style="display:block;margin-top:6px"><input type="checkbox" id="top"> Seulement les 10 meilleurs articles ⭐</label>
+  <label style="display:block;margin-top:6px"><input type="checkbox" id="top" checked> Seulement les 10 meilleurs articles ⭐</label>
+  <label style="display:block;margin-top:4px"><input type="checkbox" id="reminder" checked> Me rappeler ma tournée à 9 h et 18 h</label>
+  <p class="muted" style="margin:6px 0 0">Raccourcis : Alt+Maj+→ suivante · Alt+Maj+← précédente</p>
   <button id="scan">Analyser cette page maintenant</button>
   <button id="open">Ouvrir le logiciel</button>
   <button id="diag">Copier le diagnostic</button>

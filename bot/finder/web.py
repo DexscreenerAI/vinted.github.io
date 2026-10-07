@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Optional
@@ -97,6 +98,45 @@ def ai_check(key: str, force: bool = False):
 
 
 SEEN = None  # base du bot, fixée par make_server (utilisée par ai_check)
+
+# ---- Tournée : liste de recherches que l'utilisateur ouvre une par une (bouton « Suivante » de l'extension) ----
+TOUR = {"active": False, "steps": [], "i": -1, "since": "", "done": 0}
+SITE_LABELS = {"leboncoin": "Leboncoin", "vinted": "Vinted", "ebay": "eBay"}
+
+
+def tour_start(cfg: Config, sites=None, top_only: bool = True) -> dict:
+    from .links import rules_with_links
+    sites = [x for x in (sites or ["leboncoin"]) if x in SITE_LABELS] or ["leboncoin"]
+    rules = [r for r in rules_with_links(cfg.rules) if r["top"] or not top_only]
+    steps = [{"name": r["name"], "site": site, "url": r[{"leboncoin": "lbc_url", "vinted": "vinted_url",
+                                                          "ebay": "ebay_url"}[site]]}
+             for r in rules for site in sites]  # même article sur chaque site avant de passer au suivant
+    TOUR.update(active=True, steps=steps, i=-1, since=time.strftime("%Y-%m-%d %H:%M:%S"))
+    return tour_step(1)
+
+
+def tour_step(step: int) -> dict:
+    """Recherche suivante (step=1) ou précédente (-1) de la tournée ; à la fin, le bilan."""
+    if not TOUR["active"] or not TOUR["steps"]:
+        return {"ok": False, "error": "Aucune tournée en cours"}
+    i = max(0, TOUR["i"] + step)
+    n = len(TOUR["steps"])
+    if i >= n:
+        TOUR["active"] = False
+        TOUR["done"] += 1
+        good = SEEN.good_since(TOUR["since"]) if SEEN else 0
+        return {"ok": True, "finished": True, "n": n, "good": good}
+    TOUR["i"] = i
+    st = TOUR["steps"][i]
+    return {"ok": True, "finished": False, "i": i + 1, "n": n, "name": st["name"], "site": st["site"],
+            "label": f"Tournée {i + 1}/{n} · {st['name']} ({SITE_LABELS[st['site']]})", "url": st["url"]}
+
+
+def tour_state() -> dict:
+    st = TOUR["steps"][TOUR["i"]] if TOUR["active"] and 0 <= TOUR["i"] < len(TOUR["steps"]) else None
+    return {"active": TOUR["active"], "i": TOUR["i"] + 1, "n": len(TOUR["steps"]), "done": TOUR["done"],
+            "label": f"Tournée {TOUR['i'] + 1}/{len(TOUR['steps'])} · {st['name']} ({SITE_LABELS[st['site']]})" if st else "",
+            "good": SEEN.good_since(TOUR["since"]) if SEEN and TOUR["since"] else 0}
 
 
 def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
@@ -272,6 +312,8 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
             if not self._trusted(post):
                 self._json({"error": "Requête refusée (origine non autorisée)."}, 403)
                 return
+            if (self.headers.get("Origin") or "").startswith(("chrome-extension://", "moz-extension://")):
+                seen.status["extension_seen"] = time.strftime("%Y-%m-%d %H:%M:%S")  # étape « extension » cochée
             try:
                 (self._post if post else self._get)()
             except (BrokenPipeError, ConnectionResetError):
@@ -291,8 +333,11 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
             elif url.path == "/api/deals":
                 view = parse_qs(url.query).get("view", ["bonnes"])[0]
                 from .core import SOURCES
-                status = dict(seen.status, configured=[name for name, ok, _ in SOURCES if ok()])
+                status = dict(seen.status, configured=[name for name, ok, _ in SOURCES if ok()],
+                              tour_done=TOUR["done"], tour_active=TOUR["active"])
                 self._json({"stats": seen.stats(), "deals": seen.deals(view), "status": status})
+            elif url.path == "/api/tour":
+                self._json(tour_state())
             elif url.path == "/api/ping":
                 self._json({"ok": True, "app": "chasseur"})
             elif url.path == "/extension.zip":
@@ -316,6 +361,7 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
                 data = {k: ("" if k in SECRETS else os.environ.get(k, "")) for k in SETTINGS}
                 data.update({f"{k}_set": bool(os.environ.get(k)) for k in SECRETS})
                 data["can_open_config"] = bool(config_path) and self._local()
+                data["extension_dir"] = str(Path("chasseur-extension").resolve()) if Path("chasseur-extension").is_dir() else ""
                 data["has_telegram"] = bool(os.environ.get("TELEGRAM_BOT_TOKEN"))
                 self._json(data)
             else:
@@ -345,6 +391,21 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
                     self._json({"error": "page non reconnue"}, 400)
                     return
                 self._json(import_listings(data["listings"], source, cfg, seen))
+            elif self.path == "/api/tour/start":
+                if config_path:
+                    reload_if_changed(cfg, config_path)
+                self._json(tour_start(cfg, data.get("sites"), data.get("top_only", True) is not False))
+            elif self.path == "/api/tour/next":
+                step = -1 if data.get("step") == -1 else 1
+                if not TOUR["active"]:  # « Suivante » sans tournée : on en démarre une sur le site de la page
+                    if config_path:
+                        reload_if_changed(cfg, config_path)
+                    self._json(tour_start(cfg, [data.get("site") or "leboncoin"]))
+                else:
+                    self._json(tour_step(step))
+            elif self.path == "/api/tour/stop":
+                TOUR["active"] = False
+                self._json({"ok": True})
             elif self.path == "/api/check-now":
                 from .core import WAKE
                 WAKE.set()

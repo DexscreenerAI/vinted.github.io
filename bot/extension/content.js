@@ -104,7 +104,11 @@
         if (act === "next" || act === "prev") go(act === "next" ? 1 : -1);
       });
       document.body.appendChild(panel);
-      chrome.storage.local.get({ current: "" }, st => { panel.querySelector("[data-zone=search]").textContent = st.current; });
+      chrome.runtime.sendMessage({ type: "tour" }, t => {
+        const z = panel.querySelector("[data-zone=search]");
+        if (t && t.ok && t.active) z.textContent = `${t.label} · ${t.good} bonne(s) affaire(s) depuis le début · Alt+Maj+→`;
+        else z.textContent = "Astuce : « Recherche suivante » lance une tournée des 10 meilleures recherches.";
+      });
     }
     let html = "";
     if (stats.error) html += `⚠️ ${esc(stats.error)}`;
@@ -121,13 +125,20 @@
 
   const BTN = "font:inherit;padding:6px 10px;border-radius:8px;border:1px solid #d0d0ca;background:#f6f6f3;color:#1d1d1b;cursor:pointer";
 
-  // Un clic = l'utilisateur ouvre la recherche suivante de sa liste (même site que la page actuelle)
+  // Un clic (ou Alt+Maj+→) = l'utilisateur ouvre la recherche suivante de sa tournée
   function go(step) {
     chrome.runtime.sendMessage({ type: "next", step, site: source }, res => {
       if (!res || !res.ok) { stats.error = (res && res.error) || "Logiciel non lancé"; render(); return; }
-      chrome.storage.local.set({ current: `Recherche ${res.i}/${res.n} : ${res.name}` });
+      if (res.finished) { showTour(`✅ Tournée terminée : <b>${res.good} bonne(s) affaire(s)</b> · `
+        + `<a href="http://127.0.0.1:${res.port || 8000}/" target="_blank" style="color:#0a7f6f">Voir</a>`); return; }
       location.href = res.url;
     });
+  }
+
+  function showTour(html) {
+    if (!panel) render();
+    const z = panel && panel.querySelector("[data-zone=search]");
+    if (z) z.innerHTML = html;
   }
 
   function scan(done) {

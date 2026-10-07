@@ -25,7 +25,7 @@ async function withPort(path, body) {
         if (res.app !== "chasseur") continue;
       } else res = await call(p, path, body);
       port = p;
-      return { ok: true, port: p, ...res };
+      return Array.isArray(res) ? { ok: true, port: p, list: res } : { ok: true, port: p, ...res };
     } catch (e) {
       if (e.answered && path !== "/api/ping") { port = p; return { ok: false, port: p, error: e.message }; }
       /* pas de réponse : port suivant */
@@ -35,31 +35,113 @@ async function withPort(path, body) {
   return { ok: false, error: "Logiciel Chasseur d'affaires non lancé (ouvrez ChasseurAffaires.exe)" };
 }
 
-// « Recherche suivante » : parcourt la liste des articles surveillés (les ⭐ d'abord), un clic = une recherche.
-async function nextSearch(step, site) {
-  const res = await withPort("/api/rules");
-  if (!res.ok) return res;
-  const st = await chrome.storage.local.get({ idx: -1, topOnly: false });
-  const rules = Object.values(res).filter(r => r && r.name && (!st.topOnly || r.top));
-  if (!rules.length) return { ok: false, error: "Aucun article surveillé" };
-  const idx = ((st.idx + step) % rules.length + rules.length) % rules.length;
-  await chrome.storage.local.set({ idx });
-  const r = rules[idx];
-  const url = site === "vinted" ? r.vinted_url : site === "ebay" ? r.ebay_url : r.lbc_url;
-  return { ok: true, url, name: r.name, i: idx + 1, n: rules.length };
+// ---- Tournée : le logiciel tient la liste des recherches ; chaque clic (ou raccourci) ouvre la suivante ----
+async function tourNext(step, site) {
+  return withPort("/api/tour/next", { step, site });
 }
 
-chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
-  if (msg && msg.type === "next") {
-    nextSearch(msg.step || 1, msg.site).then(reply);
-    return true;
+async function tourStart(sites, topOnly) {
+  return withPort("/api/tour/start", { sites, top_only: topOnly });
+}
+
+function siteOf(url) {
+  return /vinted\./.test(url || "") ? "vinted" : /ebay\./.test(url || "") ? "ebay" : "leboncoin";
+}
+
+async function openInTab(url, tab) {
+  const onSite = tab && /leboncoin\.fr|vinted\.fr|ebay\.(fr|de)/.test(tab.url || "");
+  if (onSite) await chrome.tabs.update(tab.id, { url }); else await chrome.tabs.create({ url });
+}
+
+async function finishTour(res) {
+  const url = `http://127.0.0.1:${res.port || port || 8000}/`;
+  chrome.notifications.create("tour-fin", {
+    type: "basic", iconUrl: "icon128.png", title: "Tournée terminée",
+    message: `${res.good} bonne(s) affaire(s) trouvée(s) pendant la tournée. Cliquez pour les voir.`,
+  });
+  await chrome.storage.local.set({ current: `Tournée terminée : ${res.good} bonne(s) affaire(s)`, botUrl: url });
+}
+
+// Raccourcis clavier (Alt+Maj+→ / Alt+Maj+←) : comme le bouton « Suivante » de l'encadré
+chrome.commands.onCommand.addListener(async command => {
+  const step = command === "tour-prev" ? -1 : 1;
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const res = await tourNext(step, siteOf(tab && tab.url));
+  if (!res.ok) return;
+  if (res.finished) return finishTour(res);
+  await chrome.storage.local.set({ current: res.label });
+  openInTab(res.url, tab);
+});
+
+// ---- Rappel de tournée (9 h et 18 h par défaut), désactivable dans la fenêtre de l'extension ----
+const REMINDERS = [[9, 0], [18, 0]];
+
+function nextTime(h, m) {
+  const d = new Date(); d.setHours(h, m, 0, 0);
+  if (d <= new Date()) d.setDate(d.getDate() + 1);
+  return d.getTime();
+}
+
+async function scheduleReminders() {
+  const { reminder = true } = await chrome.storage.local.get("reminder");
+  await chrome.alarms.clearAll();
+  if (!reminder) return;
+  REMINDERS.forEach(([h, m], i) => chrome.alarms.create(`tour-${i}`, { when: nextTime(h, m), periodInMinutes: 24 * 60 }));
+}
+
+chrome.runtime.onInstalled.addListener(scheduleReminders);
+chrome.runtime.onStartup.addListener(scheduleReminders);
+chrome.alarms.onAlarm.addListener(alarm => {
+  if (!alarm.name.startsWith("tour-")) return;
+  chrome.notifications.create("tour-rappel", {
+    type: "basic", iconUrl: "icon128.png", title: "C'est l'heure de votre tournée",
+    message: "5 minutes pour passer en revue les 10 meilleures recherches. Cliquez pour commencer.",
+  });
+});
+
+chrome.notifications.onClicked.addListener(async id => {
+  chrome.notifications.clear(id);
+  if (id === "tour-rappel") {
+    const { sites = ["leboncoin"], topOnly = true } = await chrome.storage.local.get(["sites", "topOnly"]);
+    const res = await tourStart(sites, topOnly);
+    if (res.ok && res.url) { await chrome.storage.local.set({ current: res.label }); chrome.tabs.create({ url: res.url }); }
+  } else if (id === "tour-fin") {
+    const { botUrl } = await chrome.storage.local.get("botUrl");
+    chrome.tabs.create({ url: botUrl || "http://127.0.0.1:8000/" });
   }
-  if (msg && msg.type === "import") {
+});
+
+chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
+  if (!msg) return;
+  if (msg.type === "import") {
     withPort("/api/import", { source: msg.source, listings: msg.listings }).then(reply);
     return true;
   }
-  if (msg && msg.type === "ping") {
+  if (msg.type === "ping") {
     withPort("/api/ping").then(reply);
+    return true;
+  }
+  if (msg.type === "tour") {
+    withPort("/api/tour").then(reply);
+    return true;
+  }
+  if (msg.type === "next") {
+    tourNext(msg.step || 1, msg.site).then(async res => {
+      if (res.ok && res.finished) await finishTour(res);
+      else if (res.ok) await chrome.storage.local.set({ current: res.label });
+      reply(res);
+    });
+    return true;
+  }
+  if (msg.type === "start") {
+    tourStart(msg.sites, msg.topOnly).then(async res => {
+      if (res.ok && res.label) await chrome.storage.local.set({ current: res.label });
+      reply(res);
+    });
+    return true;
+  }
+  if (msg.type === "reminder") {
+    chrome.storage.local.set({ reminder: !!msg.on }).then(scheduleReminders).then(() => reply({ ok: true }));
     return true;
   }
 });

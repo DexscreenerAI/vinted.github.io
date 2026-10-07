@@ -86,6 +86,24 @@ class CsrfTest(unittest.TestCase):
         self.assertNotEqual(self.post(dict(ok, Origin="chrome-extension://abcdef")), 403)
 
 
+class TourneeTest(unittest.TestCase):
+    def test_tournee_complete(self):
+        from finder import web
+        web.SEEN = Seen(":memory:")
+        web.TOUR.update(active=False, done=0)
+        first = web.tour_start(CFG, ["leboncoin", "vinted"])
+        self.assertEqual((first["i"], first["n"]), (1, 20))  # 10 meilleurs × 2 sites
+        self.assertIn("leboncoin.fr/recherche", first["url"])
+        self.assertIn("vinted.fr/catalog", web.tour_step(1)["url"])  # même article sur l'autre site
+        self.assertEqual(web.tour_step(-1)["i"], 1)
+        for _ in range(19):
+            last = web.tour_step(1)
+        end = web.tour_step(1)
+        self.assertTrue(end["finished"])
+        self.assertEqual(web.TOUR["done"], 1)
+        self.assertFalse(web.tour_step(1)["ok"])  # plus de tournée en cours
+
+
 class SyntaxeJsTest(unittest.TestCase):
     """Le JavaScript de la page et de l'extension doit au moins être syntaxiquement valide (si node est installé)."""
 

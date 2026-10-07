@@ -53,6 +53,22 @@ def _disable_quickedit() -> None:
         pass
 
 
+def _install_extension_folder() -> None:
+    """Copie l'extension Chrome, déjà décompressée, dans « chasseur-extension » à côté du .exe (mise à jour
+    à chaque lancement) : il suffit de la charger dans chrome://extensions puis de la recharger."""
+    src = _bundled("extension")
+    if not getattr(sys, "frozen", False) or not src.is_dir():
+        return
+    try:
+        dst = Path("chasseur-extension")
+        dst.mkdir(exist_ok=True)
+        for f in src.iterdir():
+            if f.is_file():
+                shutil.copy2(f, dst / f.name)
+    except OSError as e:
+        print(f"Extension non copiée : {e}")
+
+
 def launch() -> int:
     for stream in (sys.stdout, sys.stderr):
         try:
@@ -73,6 +89,7 @@ def launch() -> int:
         if not Path("config.yaml").exists():
             shutil.copy(_bundled("config.example.yaml"), "config.yaml")
             print("config.yaml créé (vos niches et prix de revente).")
+        _install_extension_folder()
         load_env(".env")
         cfg = load_config("config.yaml")
         seen = Seen("finder.db")

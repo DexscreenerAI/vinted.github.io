@@ -98,6 +98,11 @@ class Seen:
             out.append(d)
         return out
 
+    def good_since(self, since: str) -> int:
+        """Bonnes affaires trouvées depuis `since` (« AAAA-MM-JJ HH:MM:SS », heure locale) : bilan de tournée."""
+        with self.lock:
+            return self.db.execute("SELECT COUNT(*) FROM deals WHERE good = 1 AND found_at >= ?", (since,)).fetchone()[0]
+
     def stats(self) -> dict:
         with self.lock:
             r = self.db.execute(

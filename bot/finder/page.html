@@ -97,6 +97,25 @@
   .empty .help { color: var(--muted); font-size: 13px; }
   .empty { text-align: center; color: var(--muted); padding: 50px 10px; border: 1px dashed var(--line); border-radius: 14px; }
 
+  .tourbox { display: inline-flex; gap: 0; }
+  .tourbox .btn.primary { border-radius: 8px 0 0 8px; }
+  .tourbox select { border-radius: 0 8px 8px 0; border-left: 0; padding: 7px 6px; font-size: 13px; }
+  #onboard { margin-top: 14px; background: var(--card); border: 1px solid var(--accent); border-radius: 14px; padding: 14px 16px; }
+  #onboard h2 { margin: 0 0 8px; font-size: 16px; display: flex; gap: 8px; align-items: center; }
+  #onboard h2 span { flex: 1; }
+  #onboard .ostep { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+  #onboard .ostep:first-of-type { border-top: 0; }
+  #onboard .ostep .n { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-soft); color: var(--accent);
+                       display: flex; align-items: center; justify-content: center; font-weight: 700; flex: none; }
+  #onboard .ostep.done .n { background: var(--accent); color: #fff; }
+  #onboard .ostep.done .txt { color: var(--muted); }
+  #onboard .ostep .txt { flex: 1; min-width: 0; }
+  #onboard .ostep small { display: block; color: var(--muted); }
+  .cta { font: inherit; font-size: 15px; padding: 10px 18px; border-radius: 10px; border: 0; background: var(--accent); color: #fff;
+         font-weight: 600; cursor: pointer; margin: 10px 0; }
+  .gsteps { display: flex; flex-direction: column; gap: 6px; margin: 2px 0 4px; }
+  .gsteps a, .gsteps span { font-size: 13px; }
+  .gsteps a.btn { text-decoration: none; text-align: left; }
   .hbtns { display: flex; gap: 6px; }
   .btn { font: inherit; font-size: 14px; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--line);
          background: var(--card); color: var(--text); cursor: pointer; }
@@ -207,13 +226,21 @@
     <div class="hbtns">
       <button class="btn" id="openConfig" hidden title="Ouvre config.yaml dans le Bloc-notes">Mes niches &amp; prix</button>
       <button class="btn" id="notifBtn" title="Notification Windows + son à chaque nouvelle bonne affaire">🔔 Activer les alertes</button>
-      <button class="btn" id="openScan" title="Analyser automatiquement les pages Leboncoin, Vinted ou eBay que vous ouvrez">Analyser les pages</button>
-      <button class="btn primary" id="openAlerts" title="Liens prêts à l'emploi pour créer vos recherches sauvegardées">Créer mes alertes</button>
+      <button class="btn" id="openScan" title="L'extension Chrome analyse les pages Leboncoin, Vinted ou eBay que vous ouvrez">🧩 Extension</button>
+      <button class="btn" id="openAlerts" title="Liens prêts à l'emploi pour créer vos recherches sauvegardées">Créer mes alertes</button>
       <button class="btn" id="openSettings">Réglages</button>
+      <span class="tourbox">
+        <button class="btn primary" id="tourBtn" title="Ouvre les 10 meilleures recherches une par une : chaque page est analysée par l'extension">▶ Lancer ma tournée</button>
+        <select id="tourSites" title="Sites de la tournée">
+          <option value="leboncoin">Leboncoin</option><option value="leboncoin,vinted,ebay">3 sites</option>
+          <option value="vinted">Vinted</option><option value="ebay">eBay</option>
+        </select>
+      </span>
     </div>
   </header>
   <div class="updated" id="updated"></div>
   <div id="banner"></div>
+  <section id="onboard" hidden></section>
 
   <section class="stats">
     <div class="stat"><b id="sBonnes">–</b><span>affaires à voir</span></div>
@@ -316,9 +343,9 @@
     <h2>Créer mes alertes</h2>
     <p class="help"><b>Comment ça marche :</b> Leboncoin (et eBay) cherchent pour vous et envoient un email dès qu'une
       nouvelle annonce correspond ; le bot lit ces emails toutes les 2 min et ne garde que les bonnes affaires.
-      Pour chaque article : cliquez sur <b>Leboncoin</b> (la recherche s'ouvre avec les bons mots-clés ; si le site
-      affiche une erreur, cliquez sur <b>Copier</b> et collez la recherche sur leboncoin.fr). Réglez le <b>prix max</b>
-      indiqué et le tri « Plus récentes », puis cliquez sur <b>« Sauvegarder la recherche »</b> et activez <b>l'alerte par email</b>.
+      Pour chaque article : cliquez sur <b>Leboncoin</b> (la recherche s'ouvre avec les mots-clés, le prix max et le tri
+      déjà remplis), puis sur <b>« Sauvegarder la recherche »</b> et cochez <b>Email</b>.
+      <br>Connectez-vous à Leboncoin avec : <b id="alertsEmail">l'adresse indiquée dans Réglages</b>.
       Connectez-vous à Leboncoin avec <b>la même adresse</b> que dans Réglages. Leboncoin limite le nombre
       d'alertes : commencez par les articles marqués ⭐.</p>
     <div class="alerts-top"><input id="alertsFilter" placeholder="Filtrer (catégorie, article…)"><span id="alertsCount" class="help"></span></div>
@@ -332,16 +359,20 @@
     <p class="help">Les alertes email n'envoient que les <b>nouvelles</b> annonces. Pour tout ce qui est déjà en ligne,
       le bot analyse les pages Leboncoin, Vinted et eBay que vous ouvrez (il ne fait aucune requête vers ces sites).</p>
     <h3 class="sub">⭐ Extension Chrome — analyse automatique (recommandé)</h3>
-    <p class="help">Chaque page de recherche ouverte est analysée <b>toute seule</b> : un badge « 🔥 x3,1 · +46 € » apparaît
-      sur les annonces rentables et un encadré résume la page. Installation une seule fois :</p>
+    <p class="help">Chaque page de recherche ouverte est analysée <b>toute seule</b> (badge « 🔥 25 € → x2,8 · +43 € » sur les
+      annonces rentables) et l'encadré propose « Recherche suivante ▶ » pour la tournée. Installation une seule fois :</p>
     <ol class="help steps">
-      <li><a class="bm" href="/extension.zip" download>Télécharger l'extension</a> puis faites un clic droit sur le fichier
-        → <b>Extraire tout…</b> (gardez le dossier, par exemple dans Documents).</li>
-      <li>Ouvrez <b>chrome://extensions</b> (copiez-collez dans la barre d'adresse), activez le <b>Mode développeur</b> (en haut à droite).</li>
-      <li>Cliquez sur <b>Charger l'extension non empaquetée</b> et choisissez le dossier <b>chasseur-extension</b>.</li>
-      <li>C'est tout : ouvrez une recherche sur Leboncoin, Vinted ou eBay (VPN coupé) et regardez les badges.
-        Le logiciel doit être lancé. Fonctionne aussi sur Edge (edge://extensions).</li>
+      <li><button type="button" class="btn" id="copyExt">Copier « chrome://extensions »</button> puis collez-le dans la barre d'adresse de Chrome
+        (ou Edge : edge://extensions).</li>
+      <li>Activez le <b>Mode développeur</b> (interrupteur en haut à droite).</li>
+      <li>Cliquez sur <b>Charger l'extension non empaquetée</b> et choisissez le dossier :
+        <b id="extDir">chasseur-extension (à côté de ChasseurAffaires.exe)</b>
+        <button type="button" class="btn" id="copyDir" hidden>Copier le chemin</button>
+        <span id="extZip"> — ou <a href="/extension.zip" download>téléchargez-le ici</a> et extrayez-le.</span></li>
+      <li>Épinglez l'extension (icône 🧩 de Chrome → épingle). Après une mise à jour du logiciel, cliquez sur ↻ dans chrome://extensions.</li>
     </ol>
+    <p class="help" id="extState"></p>
+    <button type="button" class="cta" id="tourAnyway" hidden>▶ Lancer la tournée quand même</button>
     <h3 class="sub">Ou : bouton dans les favoris (un clic par page)</h3>
     <ol class="help steps">
       <li>Affichez la barre de favoris (<b>Ctrl + Maj + B</b>) et <b>glissez</b>-y ce bouton :
@@ -364,16 +395,21 @@
 <dialog id="settings">
   <form id="settingsForm" method="dialog">
     <h2>Réglages</h2>
-    <p class="help">Le bot lit les <b>alertes Leboncoin</b> reçues dans cette boîte mail. Utilisez de préférence une adresse
-      Gmail dédiée et un <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">mot de passe d'application</a>
-      (pas votre mot de passe habituel).</p>
+    <p class="help">Le bot lit les <b>alertes</b> (Leboncoin, eBay…) reçues dans cette boîte mail. Avec Gmail, 3 étapes :</p>
+    <div class="gsteps">
+      <a class="btn" href="https://myaccount.google.com/signinoptions/twosv" target="_blank" rel="noopener">1. Activer la validation en 2 étapes ↗</a>
+      <a class="btn" href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">2. Créer un mot de passe d'application (nommez-le « Chasseur ») ↗</a>
+      <span>3. Collez ci-dessous le code de 16 lettres affiché par Google : la connexion est testée toute seule.</span>
+    </div>
     <label>Adresse email<input name="IMAP_USER" type="email" placeholder="mes.alertes@gmail.com" autocomplete="off"></label>
-    <label>Mot de passe d'application<input name="IMAP_PASSWORD" type="password" autocomplete="new-password"></label>
+    <label>Mot de passe d'application (16 lettres)<input name="IMAP_PASSWORD" type="password" autocomplete="new-password" placeholder="abcd efgh ijkl mnop"></label>
+    <details><summary class="help">Avancé : serveur de messagerie (déduit de l'adresse)</summary>
     <label>Serveur IMAP<input name="IMAP_HOST" placeholder="imap.gmail.com" list="hosts"></label>
     <datalist id="hosts">
       <option value="imap.gmail.com"><option value="imap.mail.yahoo.com"><option value="imap.orange.fr">
       <option value="imap.free.fr"><option value="imap.sfr.fr"><option value="imap.laposte.net"><option value="imap.gmx.com">
     </datalist>
+    </details>
     <details>
       <summary class="help">eBay (facultatif) — clés gratuites sur developer.ebay.com</summary>
       <label>App ID (Client ID)<input name="EBAY_CLIENT_ID" autocomplete="off"></label>
@@ -456,7 +492,11 @@ function diagnostic() {
   const st = lastStatus, s = lastStats, conf = st.configured || [];
   const step = (ok, text, help) => `<li class="${ok ? 'ok' : 'ko'}"><span>${ok ? '✅' : '⏳'}</span><div>${text}${!ok && help ? `<small>${help}</small>` : ''}</div></li>`;
   const srcErr = Object.entries(st.sources || {}).filter(([, v]) => v.error).map(([k, v]) => `${esc(k)} : ${esc(v.error)}`).join('<br>');
-  return `<b>Aucune bonne affaire pour l'instant — voici où en est le bot :</b>
+  return `<b>Aucune bonne affaire pour l'instant.</b>
+  <p class="help">Les alertes email n'envoient que les <b>nouvelles</b> annonces : la première bonne affaire peut prendre
+    quelques heures. Pour voir tout de suite ce qui est déjà en ligne :</p>
+  <button class="cta" onclick="startTour()">▶ Lancer ma tournée (10 recherches · ~5 min)</button>
+  <details><summary class="help">Voir où en est le bot</summary>
   <ol class="diag">
     ${step(conf.length, conf.length ? `Source(s) active(s) : ${conf.map(esc).join(', ')}` : 'Aucune source branchée',
       'Le bot ne cherche pas tout seul sur Leboncoin : il lit vos <b>alertes email</b> (Leboncoin, eBay, Interenchères…) ou interroge <b>eBay</b> avec vos clés. Ouvrez <a href="#" onclick="openSettingsDialog();return false">Réglages</a>.')}
@@ -472,6 +512,7 @@ function diagnostic() {
     ${s.correspondances > 0 ? step(false, `${s.a_voir_toutes || 0} en attente, mais aucune assez rentable (x2,2 et +10 € minimum)`,
       'Normal : les vraies bonnes affaires sont rares. Regardez l\'onglet « Toutes » pour voir les annonces proches du seuil.') : ''}
   </ol>
+  </details>
   <p class="help"><button class="btn" onclick="checkNow(this)">Vérifier maintenant</button>
     · Astuce : « Tester une annonce à la main » (au-dessus) évalue n'importe quelle annonce tout de suite.</p>`;
 }
@@ -784,6 +825,8 @@ saleForm.addEventListener('submit', async e => {
 });
 
 function renderStatus(st) {
+  renderOnboard();
+  if (st && st.error && /^Aucune source/.test(st.error) && !st.config_error) { banner.innerHTML = ''; return; }
   if (st && (st.error || st.config_error)) {
     banner.innerHTML = `<div class="banner warn"><span class="grow">⚠ ${esc(st.config_error || st.error)}</span>
       ${st.error && !st.config_error ? '<button class="btn" onclick="openSettingsDialog()">Ouvrir les réglages</button>' : ''}</div>`;
@@ -796,7 +839,8 @@ function renderStatus(st) {
 fetch('/api/settings').then(r => r.ok ? r.json() : null).then(d => {
   if (!d) { openSettings.hidden = true; return; }
   openConfig.hidden = !d.can_open_config;
-  if (!d.IMAP_HOST && !d.EBAY_CLIENT_ID && !startedWithImport) openSettingsDialog();
+  settingsInfo = d;
+  renderOnboard();
 });
 
 // ---- Alertes : notification Windows + son + compteur dans l'onglet (page ouverte, même en arrière-plan) ----
@@ -889,7 +933,6 @@ function renderAlerts() {
       <div class="grow">${esc(r.name)}<small>« ${esc(r.query)} »${r.max_buy != null ? ' · max ' + euro(r.max_buy) : ''} · revente ≈ ${euro(r.ref_price)}${r.lot ? ' par pièce' : ''}</small></div>
       <button type="button" class="copy" data-copy="${esc(r.query)}" title="Copier la recherche">Copier</button>
       <a class="lbc" href="${esc(r.lbc_url)}" target="_blank" rel="noreferrer">Leboncoin</a>
-      <a href="${esc(r.vinted_url)}" target="_blank" rel="noreferrer">Vinted</a>
       <a href="${esc(r.ebay_url)}" target="_blank" rel="noreferrer">eBay</a></div>`;
   }
   alertsList.innerHTML = html || '<div class="arow">Aucun article.</div>';
@@ -1020,6 +1063,77 @@ document.addEventListener('click', async e => {
   box.className = 'ai v-' + res.ai.verdict;
   box.innerHTML = aiBlock(res.ai);
   const d = deals.find(x => x.key === key); if (d) d.ai = res.ai;
+});
+
+// ---- Démarrer en 3 étapes (se coche toute seule) ----
+let settingsInfo = null;
+const recent = (ts, hours) => ts && (Date.now() - new Date(ts.replace(' ', 'T'))) < hours * 3600e3;
+function renderOnboard() {
+  const st = lastStatus || {}, s = lastStats || {};
+  let hidden = false;
+  try { hidden = localStorage.getItem('onboardHidden') === '1'; } catch (e) {}
+  const ext = !!st.extension_seen, tour = (st.tour_done || 0) > 0;
+  const mailConf = (st.configured || []).some(c => c.startsWith('Emails'));
+  const mail = mailConf && (s.emails_recus || 0) > 0;
+  if (hidden || (ext && tour && mail)) { onboard.hidden = true; return; }
+  const row = (done, n, title, sub, action) => `<div class="ostep ${done ? 'done' : ''}"><span class="n">${done ? '✓' : n}</span>
+    <div class="txt"><b>${title}</b><small>${sub}</small></div>${done ? '' : action}</div>`;
+  onboard.hidden = false;
+  onboard.innerHTML = `<h2><span>Démarrer en 3 étapes</span><button class="btn" onclick="hideOnboard()" title="Masquer">✕</button></h2>`
+    + row(ext, 1, "Installer l'extension Chrome (2 min)", ext ? 'Extension connectée.' : "Elle analyse toute seule les pages Leboncoin, Vinted et eBay que vous ouvrez.",
+      '<button class="btn primary" onclick="openScan.click()">🧩 Installer</button>')
+    + row(tour, 2, 'Faire ma première tournée (5 min)', tour ? 'Tournée faite : relancez-la quand vous voulez.' : "Les 10 meilleures recherches s'ouvrent une par une : vous voyez tout de suite les bonnes affaires déjà en ligne.",
+      '<button class="btn primary" onclick="startTour()">▶ Lancer</button>')
+    + row(mail, 3, 'Recevoir les nouvelles annonces automatiquement (15 min, recommandé)',
+      mail ? 'Emails d\'alerte reçus.' : mailConf ? 'Boîte mail connectée : créez vos alertes Leboncoin, les emails arriveront avec les nouvelles annonces.'
+        : 'Une boîte Gmail + des alertes Leboncoin : le bot lit les nouvelles annonces toutes les 2 minutes, même quand vous ne regardez pas.',
+      mailConf ? '<button class="btn primary" onclick="openAlerts.click()">Créer mes alertes</button>'
+        : '<button class="btn primary" onclick="openSettingsDialog()">Connecter ma boîte</button>');
+}
+function hideOnboard() { try { localStorage.setItem('onboardHidden', '1'); } catch (e) {} onboard.hidden = true; }
+
+// ---- Tournée ----
+try { tourSites.value = localStorage.getItem('tourSites') || 'leboncoin'; } catch (e) {}
+tourSites.addEventListener('change', () => { try { localStorage.setItem('tourSites', tourSites.value); } catch (e) {} });
+async function startTour(force) {
+  if (!force && !(lastStatus && lastStatus.extension_seen)) {  // sans extension, les pages ne seraient pas analysées
+    extState.textContent = "⚠ L'extension n'est pas encore connectée : installez-la pour que chaque page de la tournée soit analysée.";
+    tourAnyway.hidden = false;
+    scanDlg.showModal();
+    return;
+  }
+  const res = await post('/api/tour/start', { sites: tourSites.value.split(','), top_only: true });
+  if (!res.ok) { alert(res.error || 'Tournée impossible'); return; }
+  window.open(safeUrl(res.url), '_blank');
+}
+tourBtn.addEventListener('click', () => startTour());
+tourAnyway.addEventListener('click', () => { scanDlg.close(); startTour(true); });
+openScan.addEventListener('click', () => {
+  const ok = lastStatus && lastStatus.extension_seen;
+  extState.textContent = ok ? `✅ Extension connectée (dernier contact : ${lastStatus.extension_seen}).` : '';
+  if (settingsInfo && settingsInfo.extension_dir) {
+    extDir.textContent = settingsInfo.extension_dir; copyDir.hidden = false; extZip.hidden = true;
+  }
+});
+async function copyText(t, btn) {
+  try { await navigator.clipboard.writeText(t); } catch (e) {
+    const x = document.createElement('textarea'); x.value = t; document.body.appendChild(x); x.select(); document.execCommand('copy'); x.remove();
+  }
+  const old = btn.textContent; btn.textContent = 'Copié ✓'; setTimeout(() => { btn.textContent = old; }, 1500);
+}
+copyExt.addEventListener('click', e => copyText('chrome://extensions', e.target));
+copyDir.addEventListener('click', e => copyText(extDir.textContent, e.target));
+openAlerts.addEventListener('click', () => {
+  alertsEmail.textContent = (settingsInfo && settingsInfo.IMAP_USER) || "l'adresse indiquée dans Réglages";
+});
+
+// ---- Gmail : le code de 16 lettres collé est testé tout seul ----
+sf.IMAP_PASSWORD.addEventListener('input', () => {
+  const code = sf.IMAP_PASSWORD.value.replace(/\s/g, '');
+  if (code.length === 16 && sf.IMAP_USER.value) {
+    if (!sf.IMAP_HOST.value) sf.IMAP_USER.dispatchEvent(new Event('change'));
+    testEmail.click();
+  }
 });
 
 load();
