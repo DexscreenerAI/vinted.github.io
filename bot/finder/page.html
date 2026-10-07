@@ -107,6 +107,20 @@
   dialog .help { font-size: 13px; color: var(--muted); margin: 0; }
   dialog .help a { color: var(--accent); }
   dialog .row2 { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 6px; }
+  dialog.wide { width: min(760px, calc(100vw - 32px)); }
+  .alerts-top { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .alerts-top input { flex: 1; min-width: 180px; }
+  #alertsList { max-height: 55vh; overflow: auto; border: 1px solid var(--line); border-radius: 10px; }
+  #alertsList h4 { margin: 0; padding: 8px 12px; background: var(--bg); font-size: 13px; position: sticky; top: 0; }
+  .arow { display: flex; gap: 8px; align-items: center; padding: 8px 12px; border-top: 1px solid var(--line); font-size: 14px; }
+  .arow .grow { flex: 1; min-width: 0; }
+  dialog .arow input[type=checkbox], dialog .alerts-top input { width: auto; }
+  .arow input[type=checkbox] { flex: none; width: 18px; height: 18px; }
+  .arow small { display: block; color: var(--muted); }
+  .arow a { font-size: 13px; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--line); color: var(--text); text-decoration: none; white-space: nowrap; }
+  .arow a.lbc { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .arow.done { opacity: .55; }
+  @media (max-width: 640px) { .arow { flex-wrap: wrap; } .arow .grow { flex-basis: 100%; } }
   #testResult { font-size: 14px; min-height: 1.2em; }
   .vinted { font-size: 13px; color: var(--accent); text-decoration: none; }
   .vinted:hover { text-decoration: underline; }
@@ -170,6 +184,7 @@
     <div class="hbtns">
       <button class="btn" id="openConfig" hidden title="Ouvre config.yaml dans le Bloc-notes">Mes niches &amp; prix</button>
       <button class="btn" id="notifBtn" title="Notification Windows + son à chaque nouvelle bonne affaire">🔔 Activer les alertes</button>
+      <button class="btn primary" id="openAlerts" title="Liens prêts à l'emploi pour créer vos recherches sauvegardées">Créer mes alertes</button>
       <button class="btn" id="openSettings">Réglages</button>
     </div>
   </header>
@@ -272,6 +287,20 @@
   </form>
 </dialog>
 
+<dialog id="alertsDlg" class="wide">
+  <form method="dialog">
+    <h2>Créer mes alertes</h2>
+    <p class="help"><b>Comment ça marche :</b> Leboncoin (et eBay) cherchent pour vous et envoient un email dès qu'une
+      nouvelle annonce correspond ; le bot lit ces emails toutes les 2 min et ne garde que les bonnes affaires.
+      Pour chaque article : cliquez sur <b>Leboncoin</b> (la recherche s'ouvre déjà remplie, triée par plus récentes,
+      avec le prix max), puis sur <b>« Sauvegarder la recherche »</b> et activez <b>l'alerte par email</b>.
+      Connectez-vous à Leboncoin avec <b>la même adresse</b> que dans Réglages. Leboncoin limite le nombre
+      d'alertes : commencez par les articles marqués ⭐.</p>
+    <div class="alerts-top"><input id="alertsFilter" placeholder="Filtrer (catégorie, article…)"><span id="alertsCount" class="help"></span></div>
+    <div id="alertsList"></div>
+    <div class="row2"><button class="btn" value="cancel">Fermer</button></div>
+  </form>
+</dialog>
 <div id="toasts"></div>
 <dialog id="settings">
   <form id="settingsForm" method="dialog">
@@ -290,6 +319,7 @@
       <summary class="help">eBay (facultatif) — clés gratuites sur developer.ebay.com</summary>
       <label>App ID (Client ID)<input name="EBAY_CLIENT_ID" autocomplete="off"></label>
       <label>Cert ID (Client Secret)<input name="EBAY_CLIENT_SECRET" type="password" autocomplete="off"></label>
+      <button class="btn" type="button" id="testEbay" style="align-self:flex-start">Tester eBay</button>
     </details>
     <details>
       <summary class="help">Telegram (facultatif)</summary>
@@ -364,7 +394,7 @@ function diagnostic() {
       'Le bot ne cherche pas tout seul sur Leboncoin : il lit vos <b>alertes email</b> (Leboncoin, eBay, Interenchères…) ou interroge <b>eBay</b> avec vos clés. Ouvrez <a href="#" onclick="openSettingsDialog();return false">Réglages</a>.')}
     ${conf.length ? step(!srcErr, srcErr ? 'Erreur de source' : `Dernière vérification : ${esc(st.last_check || 'en cours…')}`, srcErr) : ''}
     ${step(s.annonces_lues > 0, `${s.annonces_lues || 0} annonce(s) reçue(s) et analysée(s)`,
-      'Rien reçu pour l\'instant. Sur Leboncoin, avec la même adresse email : faites une recherche (ex. « carhartt detroit »), triez par « Plus récentes », cliquez sur <b>Sauvegarder la recherche</b> et activez les <b>alertes par email</b>. Les alertes arrivent quand de nouvelles annonces sont publiées.')}
+      'Rien reçu pour l\'instant. Cliquez sur <a href="#" onclick="openAlerts.click();return false"><b>Créer mes alertes</b></a> : chaque article a un lien Leboncoin prêt, il suffit de cliquer sur « Sauvegarder la recherche » et d\'activer l\'alerte email (même adresse que dans Réglages). Les alertes arrivent quand de nouvelles annonces sont publiées.')}
     ${step(s.correspondances > 0, `${s.correspondances || 0} annonce(s) correspondent à un article surveillé`,
       s.annonces_lues > 0 ? 'Les annonces reçues ne correspondent à aucun des 64 articles surveillés. Faites des alertes sur ces modèles précis (voir « Mes niches & prix »).' : '')}
     ${s.correspondances > 0 ? step(false, `${s.a_voir_toutes || 0} en attente, mais aucune assez rentable (x2,2 et +10 € minimum)`,
@@ -756,6 +786,54 @@ checkNew();
 setInterval(checkNew, 15000);
 
 loadSales();
+// ---- Créer mes alertes : liens de recherche prêts à l'emploi ----
+const TOP = ['Carhartt Detroit jacket', 'Game Boy Color console', 'Game Boy Advance SP', 'Olympus mju II',
+  'Canon AE-1 / AE-1 Program', "Levi's 501 Made in USA", 'Ray-Ban B&L vintage', 'The North Face Nuptse',
+  'Lot vêtements marque homme', 'Classeur cartes Pokémon WOTC 1999-2002'];
+let alertRules = [], alertsDone = {};
+try { alertsDone = JSON.parse(store.get('alertsDone') || '{}'); } catch (e) {}
+function renderAlerts() {
+  const q = alertsFilter.value.trim().toLowerCase();
+  const list = alertRules.filter(r => !q || (r.name + ' ' + r.category + ' ' + r.query).toLowerCase().includes(q))
+    .sort((a, b) => (TOP.includes(b.name) - TOP.includes(a.name)) || a.category.localeCompare(b.category));
+  let cat = null, html = '';
+  for (const r of list) {
+    const top = TOP.includes(r.name);
+    const group = top ? '⭐ Pour commencer' : r.category;
+    if (group !== cat) { cat = group; html += `<h4>${esc(group)}</h4>`; }
+    const done = !!alertsDone[r.name];
+    html += `<div class="arow ${done ? 'done' : ''}">
+      <input type="checkbox" data-done="${esc(r.name)}" ${done ? 'checked' : ''} title="Alerte créée">
+      <div class="grow">${esc(r.name)}<small>« ${esc(r.query)} »${r.max_buy != null ? ' · max ' + euro(r.max_buy) : ''} · revente ≈ ${euro(r.ref_price)}${r.lot ? ' par pièce' : ''}</small></div>
+      <a class="lbc" href="${esc(r.lbc_url)}" target="_blank" rel="noopener">Leboncoin</a>
+      <a href="${esc(r.ebay_url)}" target="_blank" rel="noopener">eBay</a></div>`;
+  }
+  alertsList.innerHTML = html || '<div class="arow">Aucun article.</div>';
+  const n = alertRules.filter(r => alertsDone[r.name]).length;
+  alertsCount.textContent = `${n} / ${alertRules.length} alertes créées`;
+}
+openAlerts.addEventListener('click', async () => {
+  alertRules = await (await fetch('/api/rules')).json();
+  renderAlerts();
+  alertsDlg.showModal();
+});
+alertsFilter.addEventListener('input', renderAlerts);
+alertsList.addEventListener('change', e => {
+  const name = e.target.dataset.done;
+  if (!name) return;
+  if (e.target.checked) alertsDone[name] = 1; else delete alertsDone[name];
+  store.set('alertsDone', JSON.stringify(alertsDone));
+  renderAlerts();
+});
+testEbay.addEventListener('click', async () => {
+  testResult.textContent = 'Test eBay en cours…';
+  const v = formValues();
+  const res = await post('/api/test-ebay', { EBAY_CLIENT_ID: v.EBAY_CLIENT_ID, EBAY_CLIENT_SECRET: v.EBAY_CLIENT_SECRET });
+  testResult.innerHTML = res.ok
+    ? `✅ eBay répond : ${res.count} annonce(s) en France pour « ${esc(res.query)} ». Cliquez sur Enregistrer.`
+    : `❌ eBay : ${esc(res.error)}`;
+});
+
 load();
 setInterval(load, 15000);
 </script>

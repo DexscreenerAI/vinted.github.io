@@ -199,6 +199,11 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
                 from .core import SOURCES
                 status = dict(seen.status, configured=[name for name, ok, _ in SOURCES if ok()])
                 self._json({"stats": seen.stats(), "deals": seen.deals(view), "status": status})
+            elif url.path == "/api/rules":
+                from .links import rules_with_links
+                if config_path:
+                    reload_if_changed(cfg, config_path)
+                self._json(rules_with_links(cfg.rules))
             elif url.path == "/api/sales":
                 self._json(self._sales_payload())
             elif url.path == "/api/settings":
@@ -235,7 +240,7 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
                      "notes": d.notes, "good": is_good(d, rules[d.rule_name], cfg)}
                     for d in deals
                 ])
-            elif self.path in ("/api/settings", "/api/test-email", "/api/open-config", "/api/sales",
+            elif self.path in ("/api/settings", "/api/test-email", "/api/test-ebay", "/api/open-config", "/api/sales",
                                "/api/sales/delete", "/api/ref-price") and not self._admin_guard():
                 return
             elif self.path == "/api/sales":
@@ -259,6 +264,25 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
                 os.environ.update(values)
                 seen.status.update(error=None)
                 self._json({"ok": True})
+            elif self.path == "/api/test-ebay":
+                from . import ebay_source
+                saved = {k: os.environ.get(k) for k in ("EBAY_CLIENT_ID", "EBAY_CLIENT_SECRET")}
+                for k in saved:  # clés du formulaire si fournies, sinon celles enregistrées
+                    if str(data.get(k) or "").strip():
+                        os.environ[k] = str(data[k]).strip()
+                try:
+                    rule = next((r for r in cfg.rules if r.name.startswith("Carhartt Detroit")), cfg.rules[0])
+                    query = ebay_source.rule_queries(rule)[0]
+                    res = ebay_source._search(ebay_source.build_params(rule, query, "fixed"))
+                    self._json({"ok": True, "query": query, "count": int(res.get("total", 0))})
+                except Exception as e:
+                    self._json({"ok": False, "error": str(e) or e.__class__.__name__})
+                finally:
+                    for k, v in saved.items():
+                        if v is None:
+                            os.environ.pop(k, None)
+                        else:
+                            os.environ[k] = v
             elif self.path == "/api/test-email":
                 host = str(data.get("IMAP_HOST") or os.environ.get("IMAP_HOST", "")).strip()
                 user = str(data.get("IMAP_USER") or os.environ.get("IMAP_USER", "")).strip()
