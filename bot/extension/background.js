@@ -15,8 +15,11 @@ async function withPort(path, body) {
   for (let p = 8000; p < 8020; p++) if (p !== port) ports.push(p);
   for (const p of ports) {
     try {
-      const res = await call(p, path, body);
-      if (path === "/api/ping" && res.app !== "chasseur") continue;
+      let res;
+      if (path === "/api/ping") {  // anciennes versions du logiciel : pas de /api/ping, on teste /api/deals
+        try { res = await call(p, path); } catch (e) { res = await call(p, "/api/deals"); res = res.stats ? { app: "chasseur" } : {}; }
+        if (res.app !== "chasseur") continue;
+      } else res = await call(p, path, body);
       port = p;
       return { ok: true, port: p, ...res };
     } catch (e) { /* port suivant */ }

@@ -11,6 +11,26 @@
   const stats = { links: 0, detected: 0, read: 0, matched: 0, good: 0, error: "", best: null };
   let timer = null, panel = null;
 
+  // Titre de l'annonce. Sur Leboncoin le lien s'appelle « Voir l'annonce » : le vrai titre est sur
+  // <article aria-label>, sur [data-qa-id=aditem_title] ou dans « Voir l'annonce: <titre> ».
+  const GENERIC = /^(voir( l[’']annonce)?|see|ansehen|zur anzeige)\s*$/i;
+  function titleOf(a, box, text) {
+    const clean = t => (t || "").replace(/^voir l[’']annonce\s*:\s*/i, "").split(/,\s*[\d \u00a0.,]+\s?€/)[0].trim();
+    const scope = box || a;
+    const titled = scope.querySelector("[data-qa-id='aditem_title'], [data-test-id='adcard-title'], [data-testid$='--description-title']");
+    const article = a.closest("article");
+    const inner = a.querySelector("[title]");
+    const lines = text.split("\n").map(x => x.trim()).filter(x => x.length > 3 && !/€/.test(x) && !GENERIC.test(x));
+    const candidates = [article && article.getAttribute("aria-label"), titled && titled.innerText,
+      a.getAttribute("title"), inner && inner.getAttribute("title"), a.getAttribute("aria-label"),
+      lines.sort((x, y) => y.length - x.length)[0]];
+    for (const c of candidates) {
+      const t = clean(c);
+      if (t.length > 2 && !GENERIC.test(t)) return t;
+    }
+    return "";
+  }
+
   function extract() {
     const fresh = [];
     let links = 0;
@@ -29,9 +49,7 @@
       const m = all.match(/(\d[\d   .]*(?:,\d{1,2})?)\s?€/);
       if (!m) continue;
       const price = parseFloat(m[1].replace(/[   .]/g, "").replace(",", "."));
-      const lines = text.split("\n").map(x => x.trim()).filter(x => x.length > 3 && !/€/.test(x));
-      let title = a.getAttribute("title") || a.getAttribute("aria-label") || lines.sort((x, y) => y.length - x.length)[0] || "";
-      title = title.split(/,\s*[\d  .,]+\s?€/)[0].trim();
+      const title = titleOf(a, box, text);
       if (!title) continue;
       const img = (box || a).querySelector("img");
       sent.set(url, box || a);
