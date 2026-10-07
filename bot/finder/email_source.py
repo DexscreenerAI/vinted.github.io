@@ -426,10 +426,31 @@ def _senders_query() -> str:
     return query
 
 
+def _login(imap, host: str, user: str, password: str) -> None:
+    """Connexion IMAP avec un message d'erreur compréhensible (cas Gmail surtout)."""
+    if "gmail" in host or "google" in host:
+        password = password.replace(" ", "")  # Google affiche le code par blocs : « abcd efgh ijkl mnop »
+    try:
+        imap.login(user.strip(), password)
+    except imaplib.IMAP4.error as e:
+        msg = e.args[0].decode(errors="replace") if e.args and isinstance(e.args[0], bytes) else str(e)
+        if "AUTHENTICATIONFAILED" in msg.upper() or "invalid credentials" in msg.lower():
+            if "gmail" in host or "google" in host:
+                raise RuntimeError(
+                    "Gmail refuse le mot de passe. Il faut un « mot de passe d'application » de 16 lettres, pas le "
+                    "mot de passe habituel : activez la validation en deux étapes sur myaccount.google.com/security, "
+                    "puis créez le code sur myaccount.google.com/apppasswords. Vérifiez aussi que l'IMAP est activé "
+                    "dans Gmail (Paramètres → Transfert et POP/IMAP).") from None
+            raise RuntimeError("Adresse ou mot de passe refusé par le serveur mail. Beaucoup de messageries exigent un "
+                               "« mot de passe d'application » (ou « mot de passe tiers ») à créer dans les "
+                               "paramètres de sécurité du compte.") from None
+        raise RuntimeError(f"Connexion à la boîte mail refusée : {msg}") from None
+
+
 def test_login(host: str, user: str, password: str) -> int:
     """Vérifie l'accès IMAP ; renvoie le nombre d'emails d'alerte (tous sites) trouvés dans la boîte."""
     with imaplib.IMAP4_SSL(host, timeout=20) as imap:
-        imap.login(user, password)
+        _login(imap, host, user, password)
         imap.select(os.environ.get("IMAP_FOLDER", "INBOX"), readonly=True)
         _, data = imap.search(None, _senders_query())
         return len(data[0].split())
@@ -463,7 +484,7 @@ def fetch_alerts(mark_seen: bool = True) -> Iterator[Tuple[str, List[Listing]]]:
         criteria += ["SINCE", f"{since.day}-{since.strftime('%b')}-{since.year}"]
 
     with imaplib.IMAP4_SSL(host, timeout=30) as imap:
-        imap.login(user, password)
+        _login(imap, host, user, password)
         imap.select(folder)
         _, data = imap.search(None, *criteria)
         for num in data[0].split():
