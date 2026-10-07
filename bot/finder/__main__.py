@@ -1,10 +1,10 @@
-"""Détecteur de bonnes affaires Leboncoin → Vinted.
+"""Détecteur de bonnes affaires (Leboncoin, eBay, Interenchères, Kleinanzeigen) → Vinted.
 
   python -m finder                     # lance l'application (page web ouverte automatiquement)
   python -m finder run                 # lit les nouvelles alertes email une fois (pour cron)
   python -m finder run --loop 300      # tourne en continu, toutes les 5 min
   python -m finder web                 # page web des résultats sur http://localhost:8000
-  python -m finder parse alerte.eml    # teste l'extraction sur un email sauvegardé
+  python -m finder parse alerte.eml    # teste l'extraction sur un email sauvegardé (tous sites)
   python -m finder check "Veste Carhartt Detroit" 30 [--main-propre]
 """
 
@@ -16,7 +16,7 @@ import threading
 from pathlib import Path
 
 from .core import load_config, load_env, loop
-from .email_source import html_part, parse_alert_html
+from .email_source import parse_alert_html, parse_message
 from .models import Listing
 from .notify import send
 from .scoring import find_deals, is_good
@@ -24,10 +24,11 @@ from .store import Seen
 
 
 def read_listings(path: str):
+    """Annonces d'un email sauvegardé ; le site est deviné (expéditeur, puis liens)."""
     raw = Path(path).read_bytes()
     if path.endswith(".eml"):
-        return parse_alert_html(html_part(email.message_from_bytes(raw)))
-    return parse_alert_html(raw.decode("utf-8", errors="replace"))
+        return parse_message(email.message_from_bytes(raw))[1]
+    return parse_alert_html(raw.decode("utf-8", errors="replace"), site=None)
 
 
 def main(argv=None) -> int:
@@ -35,7 +36,7 @@ def main(argv=None) -> int:
     ap.add_argument("--config", default="config.yaml")
     sub = ap.add_subparsers(dest="cmd")
 
-    p_run = sub.add_parser("run", help="traiter les alertes email Leboncoin")
+    p_run = sub.add_parser("run", help="traiter les alertes email")
     p_run.add_argument("--loop", type=int, metavar="SECONDES", help="répéter toutes les N secondes")
     p_run.add_argument("--db", default="finder.db")
 
@@ -63,7 +64,9 @@ def main(argv=None) -> int:
         for listing in read_listings(args.file):
             deals = find_deals(listing, cfg, only_good=False)
             verdict = f"x{deals[0].ratio:.1f} ({deals[0].rule_name})" if deals else "aucune règle"
-            print(f"{listing.price:>7.0f} € | {listing.title[:60]:<60} | {verdict}")
+            extra = f" | coût {listing.buy_cost:.2f} €" if listing.buy_cost is not None else ""
+            extra += f" | fin {listing.ends_at}" if listing.ends_at else ""
+            print(f"{listing.source:<13} | {listing.price:>7.0f} € | {listing.title[:60]:<60} | {verdict}{extra}")
         return 0
 
     if args.cmd == "check":

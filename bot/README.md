@@ -37,6 +37,25 @@ Avec un compte Leboncoin dont l'email est la **boîte dédiée** :
 
 Une alerte par règle de `config.yaml` est un bon début.
 
+### Autres alertes email
+Le bot lit aussi les alertes de trois autres sites, envoyées à la **même boîte dédiée**. Le site est reconnu d'après l'expéditeur. Les autres emails de la boîte ne sont pas touchés et restent non lus.
+
+| Site | Créer l'alerte | Coût d'achat compté |
+|---|---|---|
+| **eBay** (ebay.fr, ebay.de) | Faites la recherche, triez par « Nouvelles annonces », puis cliquez sur **« Enregistrer cette recherche »** (cœur à côté des résultats) et cochez la réception par **email** dans *Mon eBay › Recherches enregistrées*. | prix + port s'il figure dans l'email, sinon le calcul habituel |
+| **Interenchères** | Créez un compte, faites une recherche par mots-clés, puis cliquez sur **« Créer une alerte »** et choisissez la réception par email (*Mon compte › Mes alertes*). | estimation basse (ou mise à prix) + **28 % de frais acheteur**, transport en plus |
+| **Kleinanzeigen.de** | Faites la recherche, cliquez sur **« Suchauftrag speichern »** et activez les **E-Mail-Benachrichtigungen** (*Meins › Suchaufträge*). « 45 € VB » (prix à négocier) est lu comme 45 €. | le calcul habituel |
+
+Pour les ventes Interenchères, la date de la vente est affichée comme fin d'enchère quand l'email la donne. Les frais acheteur changent d'une maison de vente à l'autre : vérifiez-les dans les conditions de la vente avant d'enchérir.
+
+**À vérifier sur un vrai email** : ces trois lecteurs ont été écrits sans exemple réel d'email, en restant tolérants. Dès que vous recevez la première alerte d'un site, enregistrez-la (Gmail : *⋮ › Télécharger le message*, fichier `.eml`) et testez :
+```bash
+python -m finder parse alerte-ebay.eml   # affiche le site, le prix, le titre, le coût et la fin d'enchère
+```
+Si des annonces manquent ou si les prix sont faux, signalez-le avec l'email.
+
+Réglages facultatifs dans `.env` : `IMAP_SINCE_DAYS` (ne lire que les non-lus des N derniers jours, 7 par défaut) et `IMAP_FROM` (expéditeur supplémentaire, par exemple si vous transférez vos alertes depuis une autre adresse : le site est alors deviné d'après les liens).
+
 ### 2. Boîte mail
 Gmail : activez la validation en 2 étapes, puis créez un **mot de passe d'application** et mettez-le dans `IMAP_PASSWORD`.
 
@@ -75,7 +94,7 @@ python -m finder run                    # traite les nouvelles alertes une fois
 python -m finder run --loop 120         # tourne en continu (toutes les 2 min)
 python -m finder check "Lot de 10 polos Ralph Lauren" 40              # évaluer une annonce à la main
 python -m finder check "Doudoune North Face Nuptse" 45 --main-propre
-python -m finder parse alerte.eml       # tester l'extraction sur un email sauvegardé
+python -m finder parse alerte.eml       # tester l'extraction sur un email sauvegardé (tous les sites)
 ```
 
 Exemple d'alerte :
@@ -113,7 +132,7 @@ Les lignes marquées « données minces » sont à vérifier sur Vinted avant de
 
 ## Lancer en continu
 - Sur un petit VPS, un Raspberry Pi ou Railway : `python -m finder web` (la page + la lecture des emails). Le port est lu dans la variable `PORT` si elle existe.
-- Les emails traités sont marqués comme lus, et les annonces déjà vues sont mémorisées dans `finder.db`.
+- Les emails d'alerte traités sont marqués comme lus (les autres restent non lus), et les annonces déjà vues sont mémorisées dans `finder.db`.
 
 ## Tests
 ```bash
