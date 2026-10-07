@@ -98,5 +98,22 @@ class EnvTest(unittest.TestCase):
                              "# commentaire\nWEB_PASSWORD=x\nIMAP_USER=new@a.fr\nIMAP_HOST=imap.a.fr\n")
 
 
+class ImportTest(unittest.TestCase):
+    def test_import_page(self):
+        from finder.core import import_listings
+        seen = Seen(":memory:")
+        items = [{"title": "Veste Carhartt Detroit vintage", "price": 22, "url": "https://www.vinted.fr/items/1"},
+                 {"title": "Tasse à café", "price": 3, "url": "https://www.vinted.fr/items/2"},
+                 {"title": "", "price": 10}, {"title": "x", "price": "abc"}]
+        res = import_listings(items, "vinted", CFG, seen)
+        self.assertEqual((res["received"], res["matched"], res["good"]), (4, 1, 1))
+        d = res["deals"][0]
+        self.assertAlmostEqual(d["buy_cost"], 22 + 0.70 + 1.10 + 3.00)  # frais d'achat Vinted
+        self.assertEqual(len(seen.deals("bonnes")), 1)
+        seen.set_status("vinted:https://www.vinted.fr/items/1", "ignore")
+        import_listings(items, "vinted", CFG, seen)  # réimport : le statut « ignoré » est conservé
+        self.assertEqual(seen.deals("bonnes"), [])
+
+
 if __name__ == "__main__":
     unittest.main()

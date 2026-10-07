@@ -107,6 +107,18 @@
   dialog .help { font-size: 13px; color: var(--muted); margin: 0; }
   dialog .help a { color: var(--accent); }
   dialog .row2 { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 6px; }
+  .bm { display: inline-block; padding: 6px 12px; border-radius: 8px; background: var(--accent); color: #fff !important;
+        text-decoration: none; font-weight: 600; cursor: grab; }
+  .steps { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; margin: 4px 0; }
+  #importList { max-height: 55vh; overflow: auto; border: 1px solid var(--line); border-radius: 10px; }
+  .irow { display: flex; gap: 10px; align-items: center; padding: 8px 12px; border-top: 1px solid var(--line); font-size: 14px; }
+  .irow:first-child { border-top: 0; }
+  .irow img { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; flex: none; background: var(--line); }
+  .irow .grow { flex: 1; min-width: 0; }
+  .irow small { display: block; color: var(--muted); }
+  .irow .r { font-weight: 700; color: var(--accent); white-space: nowrap; text-align: right; }
+  .irow.weak .r { color: var(--muted); }
+  .irow a { color: inherit; }
   dialog.wide { width: min(760px, calc(100vw - 32px)); }
   .alerts-top { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .alerts-top input { flex: 1; min-width: 180px; }
@@ -186,6 +198,7 @@
     <div class="hbtns">
       <button class="btn" id="openConfig" hidden title="Ouvre config.yaml dans le Bloc-notes">Mes niches &amp; prix</button>
       <button class="btn" id="notifBtn" title="Notification Windows + son à chaque nouvelle bonne affaire">🔔 Activer les alertes</button>
+      <button class="btn" id="openScan" title="Analyser les annonces d'une page Leboncoin, Vinted ou eBay ouverte dans votre navigateur">Analyser une page</button>
       <button class="btn primary" id="openAlerts" title="Liens prêts à l'emploi pour créer vos recherches sauvegardées">Créer mes alertes</button>
       <button class="btn" id="openSettings">Réglages</button>
     </div>
@@ -304,6 +317,31 @@
     <div class="row2"><button class="btn" value="cancel">Fermer</button></div>
   </form>
 </dialog>
+<dialog id="scanDlg" class="wide">
+  <form method="dialog">
+    <h2>Analyser une page (annonces déjà en ligne)</h2>
+    <p class="help">Les alertes email n'envoient que les <b>nouvelles</b> annonces. Pour analyser tout ce qui est
+      <b>déjà en ligne</b> : installez ce bouton une fois, puis faites vos recherches normalement sur
+      <b>Leboncoin</b>, <b>Vinted</b> ou <b>eBay</b> et cliquez dessus : le bot évalue toutes les annonces de la page.</p>
+    <ol class="help steps">
+      <li>Affichez la barre de favoris du navigateur (<b>Ctrl + Maj + B</b>).</li>
+      <li><b>Glissez</b> ce bouton dans la barre de favoris : <a id="bookmarklet" class="bm" href="#" onclick="alert('Glissez ce bouton dans la barre de favoris (ne cliquez pas dessus ici).');return false">🔎 Analyser la page</a></li>
+      <li>Sur Leboncoin / Vinted / eBay, lancez une recherche (ex. « game boy color »), triez par prix croissant ou plus récent,
+        puis cliquez sur <b>🔎 Analyser la page</b> dans vos favoris. Faites défiler la page avant pour charger plus d'annonces.</li>
+    </ol>
+    <p class="help">Le bot ne fait aucune requête sur ces sites : il lit seulement la page que vous avez ouverte.
+      Gardez le bot lancé (cette page sur <span id="bmOrigin"></span>).</p>
+    <div class="row2"><button class="btn" value="cancel">Fermer</button></div>
+  </form>
+</dialog>
+<dialog id="importDlg" class="wide">
+  <form method="dialog">
+    <h2 id="importTitle">Analyse de la page</h2>
+    <p class="help" id="importSummary"></p>
+    <div id="importList"></div>
+    <div class="row2"><button class="btn" value="cancel">Fermer</button></div>
+  </form>
+</dialog>
 <div id="toasts"></div>
 <dialog id="settings">
   <form id="settingsForm" method="dialog">
@@ -339,7 +377,8 @@
 </dialog>
 
 <script>
-const SOURCES = { leboncoin: 'Leboncoin', ebay: 'eBay', interencheres: 'Interenchères', kleinanzeigen: 'Kleinanzeigen' };
+const startedWithImport = location.hash.startsWith('#import=');
+const SOURCES = { leboncoin: 'Leboncoin', vinted: 'Vinted', ebay: 'eBay', interencheres: 'Interenchères', kleinanzeigen: 'Kleinanzeigen' };
 function endsIn(iso) {
   if (!iso) return '';
   const min = Math.round((new Date(iso) - Date.now()) / 60000);
@@ -728,7 +767,7 @@ function renderStatus(st) {
 fetch('/api/settings').then(r => r.ok ? r.json() : null).then(d => {
   if (!d) { openSettings.hidden = true; return; }
   openConfig.hidden = !d.can_open_config;
-  if (!d.IMAP_HOST && !d.EBAY_CLIENT_ID) openSettingsDialog();
+  if (!d.IMAP_HOST && !d.EBAY_CLIENT_ID && !startedWithImport) openSettingsDialog();
 });
 
 // ---- Alertes : notification Windows + son + compteur dans l'onglet (page ouverte, même en arrière-plan) ----
@@ -857,6 +896,64 @@ testEbay.addEventListener('click', async () => {
     ? `✅ eBay répond : ${res.count} annonce(s) en France pour « ${esc(res.query)} ». Cliquez sur Enregistrer.`
     : `❌ eBay : ${esc(res.error)}`;
 });
+
+// ---- « Analyser la page » : favori (bookmarklet) qui envoie les annonces de la page ouverte au bot ----
+function scanPage() {
+  const h = location.hostname;
+  const src = h.includes('leboncoin') ? 'leboncoin' : h.includes('vinted') ? 'vinted' : h.includes('ebay') ? 'ebay' : '';
+  if (!src) { alert("Ouvrez d'abord une page de recherche Leboncoin, Vinted ou eBay."); return; }
+  const pat = src === 'leboncoin' ? /leboncoin\.fr\/(ad\/|vi\/|[a-z_]+\/\d{8,})/ : src === 'vinted' ? /\/items\/\d+/ : /\/itm\/\d+/;
+  const done = new Set(), out = [];
+  for (const a of document.querySelectorAll('a[href]')) {
+    const url = a.href.split('?')[0].split('#')[0];
+    if (!pat.test(url) || done.has(url)) continue;
+    let box = a, text = '';
+    for (let i = 0; i < 6 && box; i++) {
+      text = box.innerText || '';
+      if (/\d\s?€/.test(text) || /\d\s?€/.test(a.title || '')) break;
+      box = box.parentElement;
+    }
+    const all = (a.getAttribute('title') || '') + '\n' + text;
+    const m = all.match(/(\d[\d   .]*(?:,\d{1,2})?)\s?€/);
+    if (!m) continue;
+    const price = parseFloat(m[1].replace(/[   .]/g, '').replace(',', '.'));
+    const lines = text.split('\n').map(x => x.trim()).filter(x => x.length > 3 && !/€/.test(x));
+    let title = a.getAttribute('title') || a.getAttribute('aria-label') || lines.sort((x, y) => y.length - x.length)[0] || '';
+    title = title.split(/,\s*[\d  .,]+\s?€/)[0].trim();
+    const img = (box || a).querySelector('img');
+    done.add(url);
+    out.push({ title: title, price: price, url: url, image: img ? (img.currentSrc || img.src) : '' });
+  }
+  if (!out.length) { alert("Aucune annonce trouvée sur cette page. Lancez une recherche, attendez l'affichage, puis réessayez."); return; }
+  window.open('__ORIGIN__/#import=' + encodeURIComponent(JSON.stringify({ source: src, listings: out.slice(0, 250) })), 'chasseur');
+}
+bookmarklet.href = 'javascript:' + encodeURIComponent('(' + scanPage.toString().replace('__ORIGIN__', location.origin) + ')()');
+bmOrigin.textContent = location.origin;
+openScan.addEventListener('click', () => scanDlg.showModal());
+
+async function handleImport() {
+  if (!location.hash.startsWith('#import=')) return;
+  let payload;
+  try { payload = JSON.parse(decodeURIComponent(location.hash.slice(8))); } catch (e) { return; }
+  history.replaceState(null, '', location.pathname);
+  importTitle.textContent = 'Analyse en cours…'; importSummary.textContent = ''; importList.innerHTML = '';
+  importDlg.showModal();
+  const res = await post('/api/import', payload);
+  if (res.error) { importTitle.textContent = 'Analyse impossible'; importSummary.textContent = res.error; return; }
+  const site = SOURCES[res.source] || res.source;
+  importTitle.textContent = res.good ? `🔥 ${res.good} bonne(s) affaire(s) sur cette page ${site}` : `Analyse de la page ${site}`;
+  importSummary.textContent = `${res.received} annonce(s) lue(s) · ${res.matched} correspondent à un article surveillé · ${res.good} assez rentable(s) (x2,2 et +10 € minimum).`
+    + (res.matched ? '' : ' Cherchez un modèle précis de la liste (voir « Créer mes alertes »).');
+  importList.innerHTML = res.deals.map(d => `<div class="irow ${d.good ? '' : 'weak'}">
+      ${d.image ? `<img src="${esc(d.image)}" alt="" referrerpolicy="no-referrer">` : '<img alt="">'}
+      <div class="grow"><a href="${esc(d.url)}" target="_blank" rel="noreferrer">${esc(d.title)}</a>
+        <small>${esc(d.rule)} · ${euro(d.price)} → revente ≈ ${euro(d.est_resale)}</small></div>
+      <div class="r">x${d.ratio.toFixed(1)}<small>${d.net_profit >= 0 ? '+' : ''}${euro(d.net_profit)}</small></div></div>`).join('')
+    || '<div class="irow">Aucune annonce de cette page ne correspond aux articles surveillés.</div>';
+  load();
+}
+handleImport();
+window.addEventListener('hashchange', handleImport);
 
 load();
 setInterval(load, 15000);

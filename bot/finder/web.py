@@ -224,6 +224,17 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
             if self.path == "/api/status":
                 ok = seen.set_status(str(data.get("key", "")), str(data.get("status", "")))
                 self._json({"ok": ok}, 200 if ok else 400)
+            elif self.path == "/api/import":
+                if not self._admin_guard():
+                    return
+                from .core import import_listings
+                if config_path:
+                    reload_if_changed(cfg, config_path)
+                source = str(data.get("source") or "")
+                if source not in ("leboncoin", "vinted", "ebay") or not isinstance(data.get("listings"), list):
+                    self._json({"error": "page non reconnue"}, 400)
+                    return
+                self._json(import_listings(data["listings"], source, cfg, seen))
             elif self.path == "/api/check-now":
                 from .core import WAKE
                 WAKE.set()

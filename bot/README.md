@@ -93,6 +93,7 @@ Sur la page, vous pouvez :
 - l'onglet « Toutes » montre aussi les annonces qui correspondent à une règle mais ne sont pas assez rentables ;
 - **tester une annonce à la main** : collez un titre et un prix ;
 - **Vérifier maintenant** : relance la lecture des emails sans attendre les 2 minutes. Les emails d'alerte sont lus même s'ils ont déjà été ouverts (7 derniers jours), sans être traités deux fois. Un email qui n'a pas pu être lu est enregistré dans `email_illisible_<site>.html` (dossier du bot) pour diagnostic ;
+- **Analyser une page** : les alertes email n'envoient que les *nouvelles* annonces. Pour celles déjà en ligne, glissez le bouton « 🔎 Analyser la page » dans la barre de favoris, faites une recherche sur **Leboncoin, Vinted ou eBay** et cliquez dessus : le bot évalue toutes les annonces de la page (aucune requête vers ces sites, il lit seulement la page ouverte). Sur Vinted, le coût d'achat inclut la protection acheteur (0,70 € + 5 %) et ~3 € d'envoi ;
 - **🔔 Activer les alertes** : une notification Windows et un son à chaque nouvelle bonne affaire, plus un compteur dans le titre de l'onglet. Il suffit que la page reste ouverte, même en arrière-plan. Telegram n'est plus nécessaire.
 
 La page se met à jour toute seule chaque minute.

@@ -43,6 +43,49 @@ SOURCES = [
 ]
 
 
+# Achat sur Vinted (pour revendre sur Vinted) : protection acheteur 0,70 € + 5 % et envoi (~3 € en point relais)
+VINTED_FEE_FIXED = 0.70
+VINTED_FEE_RATE = 0.05
+VINTED_SHIPPING = 3.00
+
+
+def import_listings(items: list, source: str, cfg: Config, seen: Seen) -> dict:
+    """Annonces envoyées par le bouton « Analyser cette page » (page ouverte par l'utilisateur).
+
+    Toutes sont évaluées et renvoyées (même déjà vues) ; seules les nouvelles sont enregistrées,
+    pour ne pas écraser le statut (achetée, ignorée…) d'une affaire déjà connue.
+    """
+    results = []
+    for it in items[:300]:
+        try:
+            price = float(it.get("price"))
+        except (TypeError, ValueError):
+            continue
+        title = str(it.get("title") or "").strip()[:200]
+        if not title or price <= 0:
+            continue
+        listing = Listing(title=title, price=price, url=str(it.get("url") or "")[:500],
+                          image=str(it.get("image") or "")[:500], location=str(it.get("location") or "")[:100],
+                          source=source)
+        if source == "vinted":
+            listing.buy_cost = round(price + VINTED_FEE_FIXED + VINTED_FEE_RATE * price + VINTED_SHIPPING, 2)
+        best = best_deal(listing, cfg)
+        if best is None:
+            continue
+        deal, good = best
+        if seen.add(listing.key, listing.title, listing.price):
+            seen.save_deal(deal, good)
+            if good:
+                send(deal)
+        results.append({"title": title, "price": price, "url": listing.url, "image": listing.image,
+                        "rule": deal.rule_name, "category": deal.category, "ratio": deal.ratio,
+                        "net_profit": deal.net_profit, "buy_cost": deal.buy_cost, "est_resale": deal.est_resale,
+                        "good": good})
+    results.sort(key=lambda r: (r["good"], r["ratio"]), reverse=True)
+    return {"received": len(items), "matched": len(results), "good": sum(r["good"] for r in results),
+            "source": source, "deals": results}
+
+
 def process(listings, cfg: Config, seen: Seen) -> int:
     """Évalue et enregistre les annonces jamais vues ; renvoie le nombre de bonnes affaires."""
     found = 0
