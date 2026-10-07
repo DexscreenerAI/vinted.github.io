@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bonnes affaires</title>
+<style>
+  :root {
+    --bg: #f6f6f3; --card: #ffffff; --text: #1d1d1b; --muted: #6b6b66; --line: #e4e4de;
+    --accent: #0a7f6f; --accent-soft: #e2f3ef; --warn: #b4540a; --bad: #9a9a93;
+    --shadow: 0 1px 2px rgba(0,0,0,.05), 0 2px 8px rgba(0,0,0,.04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141413; --card: #1e1e1c; --text: #ecece8; --muted: #9b9b94; --line: #2e2e2b;
+      --accent: #3cc4ae; --accent-soft: #17332e; --warn: #f0a050; --bad: #6f6f69;
+      --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 20px 16px 60px; }
+  header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  h1 { font-size: 22px; margin: 0; letter-spacing: -.01em; }
+  .updated { color: var(--muted); font-size: 13px; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 18px 0; }
+  .stat { min-width: 0; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; box-shadow: var(--shadow); }
+  .stat b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+  .stat span { color: var(--muted); font-size: 13px; }
+
+  .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+  .tabs { max-width: 100%; overflow-x: auto; display: flex; gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+  .tabs button { white-space: nowrap; border: 0; background: none; color: var(--muted); padding: 7px 12px; border-radius: 7px; font: inherit; cursor: pointer; }
+  .tabs button.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  select, input { font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
+  .grow { flex: 1; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 12px; }
+  .deal { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column; }
+  .deal.weak { opacity: .72; }
+  .photo { aspect-ratio: 4/3; background: var(--line); position: relative; }
+  .photo.none { aspect-ratio: auto; height: 46px; }
+  .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ratio { position: absolute; top: 10px; left: 10px; background: var(--accent); color: #fff; font-weight: 700;
+           padding: 4px 10px; border-radius: 999px; font-size: 15px; }
+  .deal.weak .ratio { background: var(--bad); }
+  .new { position: absolute; top: 10px; right: 10px; background: var(--card); color: var(--text); font-size: 12px; padding: 3px 8px; border-radius: 999px; }
+  .body { padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .title { font-weight: 600; text-decoration: none; color: inherit; }
+  .title:hover { text-decoration: underline; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 4px; }
+  .nums div { background: var(--bg); border-radius: 8px; padding: 6px 8px; }
+  .nums small { display: block; color: var(--muted); font-size: 11px; }
+  .nums b { font-variant-numeric: tabular-nums; }
+  .profit b { color: var(--accent); }
+  .note { color: var(--warn); font-size: 12px; }
+  .actions { display: flex; gap: 6px; padding: 0 14px 14px; }
+  .actions a, .actions button { flex: 1; text-align: center; font: inherit; font-size: 14px; padding: 8px; border-radius: 8px;
+           border: 1px solid var(--line); background: none; color: var(--text); cursor: pointer; text-decoration: none; }
+  .actions a.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+
+  .empty { text-align: center; color: var(--muted); padding: 50px 10px; border: 1px dashed var(--line); border-radius: 14px; }
+
+  details.check { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; }
+  details.check summary { cursor: pointer; font-weight: 600; }
+  .check form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+  .check button { font: inherit; padding: 7px 14px; border-radius: 8px; border: 0; background: var(--accent); color: #fff; font-weight: 600; cursor: pointer; }
+  #checkResult { margin-top: 10px; font-size: 14px; }
+  #checkResult .row { padding: 6px 0; border-top: 1px solid var(--line); }
+
+  @media (max-width: 640px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .grid { grid-template-columns: 1fr; }
+    h1 { font-size: 19px; }
+    #search { flex-basis: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Bonnes affaires Leboncoin → Vinted</h1>
+    <span class="updated" id="updated"></span>
+  </header>
+
+  <section class="stats">
+    <div class="stat"><b id="sBonnes">–</b><span>affaires à voir</span></div>
+    <div class="stat"><b id="sToday">–</b><span>trouvées aujourd'hui</span></div>
+    <div class="stat"><b id="sBought">–</b><span>achetées</span></div>
+    <div class="stat"><b id="sProfit">–</b><span>bénéfice estimé (achetées)</span></div>
+  </section>
+
+  <details class="check">
+    <summary>Tester une annonce à la main</summary>
+    <form id="checkForm">
+      <input class="grow" name="title" placeholder="Titre de l'annonce, ex. Lot de 10 polos Ralph Lauren" required>
+      <input name="price" type="number" step="0.01" min="0" placeholder="Prix €" style="width:100px" required>
+      <label><input type="checkbox" name="hand"> main propre</label>
+      <button>Évaluer</button>
+    </form>
+    <div id="checkResult"></div>
+  </details>
+
+  <div class="bar">
+    <div class="tabs" id="tabs">
+      <button data-view="bonnes" class="on">Bonnes affaires</button>
+      <button data-view="toutes">Toutes</button>
+      <button data-view="achete">Achetées</button>
+      <button data-view="ignore">Ignorées</button>
+    </div>
+    <input class="grow" id="search" placeholder="Filtrer (marque, règle, ville…)">
+    <select id="sort">
+      <option value="date">Plus récentes</option>
+      <option value="ratio">Meilleur multiplicateur</option>
+      <option value="profit">Plus gros bénéfice</option>
+    </select>
+  </div>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+const euro = n => (n ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' €';
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let view = 'bonnes', deals = [];
+
+async function load() {
+  try {
+    const r = await fetch('/api/deals?view=' + view);
+    const data = await r.json();
+    deals = data.deals;
+    const s = data.stats;
+    sBonnes.textContent = s.bonnes;
+    sToday.textContent = s.aujourdhui;
+    sBought.textContent = s.achetes;
+    sProfit.textContent = euro(s.profit_achetes);
+    updated.textContent = s.annonces_lues + ' annonces analysées · mis à jour ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    render();
+  } catch (e) {
+    updated.textContent = 'Connexion au bot perdue…';
+  }
+}
+
+function ago(ts) {
+  const d = new Date(ts.replace(' ', 'T'));
+  const min = Math.round((Date.now() - d) / 60000);
+  if (min < 1) return "à l'instant";
+  if (min < 60) return 'il y a ' + min + ' min';
+  if (min < 1440) return 'il y a ' + Math.round(min / 60) + ' h';
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+
+function render() {
+  const q = search.value.trim().toLowerCase();
+  let list = deals.filter(d => !q || [d.title, d.rule, d.location].join(' ').toLowerCase().includes(q));
+  const key = sort.value;
+  if (key === 'ratio') list.sort((a, b) => b.ratio - a.ratio);
+  if (key === 'profit') list.sort((a, b) => b.net_profit - a.net_profit);
+
+  if (!list.length) {
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1">' +
+      (view === 'bonnes' ? "Aucune bonne affaire pour l'instant. Le bot vérifie les alertes Leboncoin en continu." : 'Rien ici.') + '</div>';
+    return;
+  }
+  grid.innerHTML = list.map(d => {
+    const fresh = (Date.now() - new Date(d.found_at.replace(' ', 'T'))) < 3600000;
+    const btns = d.status === 'nouveau'
+      ? `<button data-key="${esc(d.key)}" data-status="achete">Acheté</button><button data-key="${esc(d.key)}" data-status="ignore">Ignorer</button>`
+      : `<button data-key="${esc(d.key)}" data-status="nouveau">Remettre</button>`;
+    return `<article class="deal ${d.good ? '' : 'weak'}">
+      <div class="photo ${d.image ? '' : 'none'}">
+        ${d.image ? `<img src="${esc(d.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}
+        <span class="ratio">x${d.ratio.toFixed(1)}</span>
+        ${fresh && d.status === 'nouveau' ? '<span class="new">Nouveau</span>' : ''}
+      </div>
+      <div class="body">
+        <a class="title" href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.title)}</a>
+        <div class="meta">${esc(d.rule)}${d.location ? ' · ' + esc(d.location) : ''} · ${ago(d.found_at)}</div>
+        <div class="nums">
+          <div><small>Prix LBC</small><b>${euro(d.price)}</b></div>
+          <div><small>Revente estimée${d.pieces > 1 ? ' (' + d.pieces + ' p.)' : ''}</small><b>${euro(d.est_resale)}</b></div>
+          <div class="profit"><small>Bénéfice net</small><b>${euro(d.net_profit)}</b></div>
+        </div>
+        ${d.notes.map(n => `<div class="note">⚠ ${esc(n)}</div>`).join('')}
+      </div>
+      <div class="actions">
+        ${d.url ? `<a class="primary" href="${esc(d.url)}" target="_blank" rel="noopener">Voir l'annonce</a>` : ''}
+        ${btns}
+      </div>
+    </article>`;
+  }).join('');
+}
+
+grid.addEventListener('click', async e => {
+  const b = e.target.closest('button[data-status]');
+  if (!b) return;
+  await fetch('/api/status', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: b.dataset.key, status: b.dataset.status }) });
+  load();
+});
+
+tabs.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  tabs.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  view = b.dataset.view;
+  load();
+});
+search.addEventListener('input', render);
+sort.addEventListener('change', render);
+
+checkForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = new FormData(checkForm);
+  const r = await fetch('/api/check', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title: f.get('title'), price: f.get('price'), hand: f.get('hand') === 'on' }) });
+  const res = await r.json();
+  checkResult.innerHTML = !Array.isArray(res) || !res.length
+    ? '<div class="row">Aucune règle ne correspond à ce titre (voir config.yaml).</div>'
+    : res.map(d => `<div class="row">${d.good ? '✅ <b>Bonne affaire</b>' : '❌ Pas assez rentable'} — ${esc(d.rule)} :
+        coût ${euro(d.buy_cost)}, revente ${euro(d.est_resale)}${d.pieces > 1 ? ' (' + d.pieces + ' pièces)' : ''},
+        <b>x${d.ratio.toFixed(1)}</b>, bénéfice net ≈ <b>${euro(d.net_profit)}</b>
+        ${d.notes.map(n => '<span class="note"> · ' + esc(n) + '</span>').join('')}</div>`).join('');
+});
+
+load();
+setInterval(load, 60000);
+</script>
+</body>
+</html>

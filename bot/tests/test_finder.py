@@ -6,6 +6,7 @@ import yaml
 from finder.email_source import parse_alert_html
 from finder.models import Listing
 from finder.scoring import Config, find_deals
+from finder.store import Seen
 from finder.text import lot_size, parse_price
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -62,6 +63,20 @@ class ScoringTest(unittest.TestCase):
         finally:
             CFG.hand_delivery = False
         self.assertEqual(deal.buy_cost, 20)
+
+
+class StoreTest(unittest.TestCase):
+    def test_save_and_status(self):
+        seen = Seen(":memory:")
+        deal = find_deals(Listing("Veste Carhartt Detroit", 20, "https://www.leboncoin.fr/ad/vetements/1234567890"), CFG)[0]
+        self.assertTrue(seen.add(deal.listing.key, deal.listing.title, 20))
+        self.assertFalse(seen.add(deal.listing.key, deal.listing.title, 20))
+        seen.save_deal(deal, True)
+        self.assertEqual(len(seen.deals("bonnes")), 1)
+        self.assertTrue(seen.set_status("1234567890", "achete"))
+        self.assertEqual(seen.deals("bonnes"), [])
+        self.assertEqual(seen.stats()["achetes"], 1)
+        self.assertFalse(seen.set_status("1234567890", "nimporte"))
 
 
 if __name__ == "__main__":

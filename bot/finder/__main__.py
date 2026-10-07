@@ -2,6 +2,7 @@
 
   python -m finder run                 # lit les nouvelles alertes email une fois (pour cron)
   python -m finder run --loop 300      # tourne en continu, toutes les 5 min
+  python -m finder web                 # page web des résultats sur http://localhost:8000
   python -m finder parse alerte.eml    # teste l'extraction sur un email sauvegardé
   python -m finder check "Veste Carhartt Detroit" 30 [--main-propre]
 """
@@ -10,8 +11,10 @@ import argparse
 import email
 import os
 import sys
+import threading
 import time
 from pathlib import Path
+from typing import Optional
 
 import yaml
 
@@ -45,11 +48,38 @@ def run_once(cfg: Config, seen: Seen) -> int:
         for listing in listings:
             if not seen.add(listing.key, listing.title, listing.price):
                 continue
-            deals = find_deals(listing, cfg)
-            if deals:
-                send(deals[0])
+            best = best_deal(listing, cfg)
+            if best is None:
+                continue
+            deal, good = best
+            seen.save_deal(deal, good)
+            if good:
+                send(deal)
                 found += 1
     return found
+
+
+def best_deal(listing: Listing, cfg: Config):
+    """Meilleure règle correspondante : (affaire, est_bonne), ou None si aucune règle."""
+    rules = {r.name: r for r in cfg.rules}
+    scored = [(d, is_good(d, rules[d.rule_name], cfg)) for d in find_deals(listing, cfg, only_good=False)]
+    if not scored:
+        return None
+    return max(scored, key=lambda x: (x[1], x[0].ratio))
+
+
+def loop(cfg: Config, seen: Seen, every: Optional[int]) -> int:
+    while True:
+        try:
+            n = run_once(cfg, seen)
+            print(f"[{time.strftime('%H:%M:%S')}] {n} bonne(s) affaire(s) trouvée(s)")
+        except Exception as e:  # on ne veut pas que le bot s'arrête sur une erreur réseau
+            print(f"[erreur] {e}", file=sys.stderr)
+            if not every:
+                return 1
+        if not every:
+            return 0
+        time.sleep(every)
 
 
 def read_listings(path: str):
@@ -67,6 +97,11 @@ def main(argv=None) -> int:
     p_run = sub.add_parser("run", help="traiter les alertes email Leboncoin")
     p_run.add_argument("--loop", type=int, metavar="SECONDES", help="répéter toutes les N secondes")
     p_run.add_argument("--db", default="finder.db")
+
+    p_web = sub.add_parser("web", help="page web des résultats + lecture des alertes en continu")
+    p_web.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8000)))
+    p_web.add_argument("--loop", type=int, default=120, metavar="SECONDES", help="intervalle de lecture des emails")
+    p_web.add_argument("--db", default="finder.db")
 
     p_parse = sub.add_parser("parse", help="tester l'extraction d'un email (.eml ou .html)")
     p_parse.add_argument("file")
@@ -101,17 +136,15 @@ def main(argv=None) -> int:
         return 0
 
     seen = Seen(args.db)
-    while True:
-        try:
-            n = run_once(cfg, seen)
-            print(f"[{time.strftime('%H:%M:%S')}] {n} bonne(s) affaire(s) envoyée(s)")
-        except Exception as e:  # on ne veut pas que le bot s'arrête sur une erreur réseau
-            print(f"[erreur] {e}", file=sys.stderr)
-            if not args.loop:
-                return 1
-        if not args.loop:
-            return 0
-        time.sleep(args.loop)
+    if args.cmd == "web":
+        from .web import serve
+        if os.environ.get("IMAP_HOST"):
+            threading.Thread(target=loop, args=(cfg, seen, args.loop), daemon=True).start()
+        else:
+            print("IMAP_HOST non défini : la page s'affiche mais aucune alerte email n'est lue.")
+        serve(cfg, seen, args.port)
+        return 0
+    return loop(cfg, seen, args.loop)
 
 
 if __name__ == "__main__":

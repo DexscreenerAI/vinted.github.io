@@ -1,12 +1,14 @@
 # Détecteur de bonnes affaires Leboncoin → Vinted
 
-Le bot **trouve** les annonces Leboncoin sous-cotées et vous les envoie sur Telegram, avec le multiplicateur et le bénéfice net estimés. **Il n'achète rien** : c'est vous qui décidez et qui contactez le vendeur.
+Le bot **trouve** les annonces Leboncoin sous-cotées et les affiche sur une **page web**, avec le multiplicateur et le bénéfice net estimés. Telegram reste possible en option. **Il n'achète rien** : c'est vous qui décidez et qui contactez le vendeur.
 
 Il ne fait **aucune requête sur Leboncoin**. Il lit seulement les **emails d'alerte** que Leboncoin vous envoie pour vos recherches sauvegardées. Il ne risque donc ni blocage ni problème de conditions d'utilisation.
 
 ```
-Alertes Leboncoin (email) ──► lecture IMAP ──► règles + cote ──► calcul du multiplicateur ──► Telegram
+Alertes Leboncoin (email) ──► lecture IMAP ──► règles + cote ──► calcul du multiplicateur ──► page web (+ Telegram)
 ```
+
+![Aperçu de la page des résultats](docs/apercu-page.png)
 
 ## Installation
 
@@ -27,14 +29,31 @@ Une alerte par règle de `config.yaml` est un bon début.
 ### 2. Boîte mail
 Gmail : activez la validation en 2 étapes, puis créez un **mot de passe d'application** et mettez-le dans `IMAP_PASSWORD`.
 
-### 3. Telegram
+### 3. Telegram (facultatif)
 1. Créez un bot avec **@BotFather** et récupérez son token.
 2. Envoyez-lui un message.
 3. Récupérez votre identifiant de chat avec **@userinfobot**.
 
-Sans Telegram, les alertes s'affichent simplement dans le terminal.
+Sans Telegram, les résultats sont seulement sur la page web.
 
-## Utilisation
+## La page des résultats
+
+```bash
+python -m finder web                    # http://localhost:8000
+```
+
+Cette commande fait deux choses en même temps : elle lit les alertes email toutes les 2 minutes (`--loop 120`) et elle sert la page.
+
+Sur la page, vous pouvez :
+- **voir les bonnes affaires** avec la photo, le prix Leboncoin, la revente estimée, le bénéfice net et le multiplicateur ;
+- les trier (plus récentes, meilleur multiplicateur, plus gros bénéfice) et les filtrer par marque ou par ville ;
+- marquer une affaire **Achetée** ou **Ignorée**, ce qui alimente le compteur de bénéfice ;
+- l'onglet « Toutes » montre aussi les annonces qui correspondent à une règle mais ne sont pas assez rentables ;
+- **tester une annonce à la main** : collez un titre et un prix.
+
+La page se met à jour toute seule chaque minute. Si vous la mettez en ligne (VPS, Railway…), protégez-la avec `WEB_PASSWORD=...` dans `.env` : le navigateur demandera alors le mot de passe.
+
+## Autres commandes
 
 ```bash
 python -m finder run                    # traite les nouvelles alertes une fois
@@ -69,7 +88,7 @@ Multiplicateur : x2.8 · bénéfice net ≈ 61 €
 - `exclude` élimine les annonces douteuses (« style carhartt », « replica », etc.).
 
 ## Lancer en continu
-- Sur un petit VPS ou un Raspberry Pi : `python -m finder run --loop 120`, ou un cron toutes les 2 minutes.
+- Sur un petit VPS, un Raspberry Pi ou Railway : `python -m finder web` (la page + la lecture des emails). Le port est lu dans la variable `PORT` si elle existe.
 - Les emails traités sont marqués comme lus, et les annonces déjà vues sont mémorisées dans `finder.db`.
 
 ## Tests

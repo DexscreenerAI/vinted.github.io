@@ -97,12 +97,13 @@ def is_good(deal: Deal, rule: Rule, cfg: Config) -> bool:
     return deal.ratio >= min_ratio and deal.net_profit >= min_profit
 
 
-def find_deals(listing: Listing, cfg: Config, only_good: bool = True) -> List[Deal]:
+def find_deals(listing: Listing, cfg: Config, only_good: bool = True,
+               hand_delivery: Optional[bool] = None) -> List[Deal]:
     """Toutes les règles qui correspondent à l'annonce, meilleure affaire en premier."""
     deals = []
     for rule in cfg.rules:
         if rule.matches(listing.title, cfg.exclude):
-            deal = evaluate(listing, rule, cfg)
+            deal = evaluate(listing, rule, cfg, hand_delivery)
             if not only_good or is_good(deal, rule, cfg):
                 deals.append(deal)
     return sorted(deals, key=lambda d: d.ratio, reverse=True)
