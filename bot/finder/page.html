@@ -1062,7 +1062,7 @@ function aiBlock(a) {
   return `<b class="v">🤖 ${VERDICTS[a.verdict] || esc(a.verdict)} <small>(confiance ${esc(a.confiance)})</small></b>
     ${esc(a.resume)}
     <br><small>Modèle : ${a.correspond_au_modele ? 'conforme' : '<b>douteux</b>'} · Authenticité : ${esc(a.authenticite)} · État : ${esc(a.etat)}${a.etat_note ? ' (' + esc(({neuf: 'neuf', tres_bon: 'très bon', bon: 'bon', usage: 'usagé', mauvais: 'mauvais', inconnu: 'non visible'})[a.etat_note] || a.etat_note) + ')' : ''}
-    · Revente estimée par l'IA : ${euro(a.revente_estimee)}${a.photo_analysee ? '' : ' · <b>sans photo</b>'}</small>
+    · Revente estimée par l'IA : ${euro(a.revente_estimee)}${a.photo_analysee ? '' : ' · <b>sans photo</b>'}${a.avis_reutilise ? ' · avis repris de la même annonce déjà analysée (gratuit)' : ''}</small>
     ${list('Signaux d\'alerte', a.signaux_alerte)}${list('À demander au vendeur', a.questions_vendeur)}`;
 }
 document.addEventListener('click', async e => {

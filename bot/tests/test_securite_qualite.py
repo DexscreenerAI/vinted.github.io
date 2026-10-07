@@ -233,6 +233,32 @@ class AvisIaAutoTest(unittest.TestCase):
                 ai.start_worker(seen, CFG, lambda d: None)
             self.assertEqual(seen.ai_pending_keys(), [listing.key])
 
+    def test_annonce_republiee_pas_reanalysee(self):
+        import os
+        import time
+        from unittest import mock
+        from finder import ai
+        from finder.core import register
+        seen, calls = Seen(":memory:"), []
+        first = Listing("Veste Carhartt Detroit vintage", 20, "https://www.leboncoin.fr/ad/vetements/1111111111")
+        again = Listing("Veste Carhartt Detroit vintage", 20, "https://www.leboncoin.fr/ad/vetements/2222222222")
+        for l in (first, again):
+            seen.add(l.key, l.title, 20)
+        seen.save_deal(best_deal(first, CFG)[0], True)
+        seen.set_ai(first.key, dict(self.BASE, verdict="acheter", etat_note="tres_bon"))
+        with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "x", "AI_AUTO": "1"}), \
+                mock.patch.object(ai, "analyze", lambda d, e="tres_bon": calls.append(d) or {}), \
+                mock.patch.object(ai, "_started", __import__("threading").Event()), \
+                mock.patch.object(ai, "_queue", __import__("queue").Queue()):
+            ai.start_worker(seen, CFG, lambda d: None)
+            register(*best_deal(again, CFG), seen)
+            for _ in range(50):
+                if not seen.get_deal(again.key)["ai_pending"]:
+                    break
+                time.sleep(0.05)
+        self.assertEqual(calls, [])  # aucune analyse payée
+        self.assertTrue(json.loads(seen.get_deal(again.key)["ai"])["avis_reutilise"])
+
     def test_verdict_passer(self):
         bonnes, _ = self.run_case(dict(self.BASE, verdict="passer", etat_note="tres_bon"))
         self.assertEqual(bonnes, [])

@@ -72,6 +72,14 @@ def ai_check(key: str, force: bool = False):
         return {"error": "Affaire introuvable"}, 404
     if deal.get("ai") and not force:
         return {"ok": True, "ai": json.loads(deal["ai"]), "cached": True}, 200
+    twin = SEEN.ai_twin(deal) if not force else None
+    if twin:  # même annonce republiée ou sur un autre site : avis déjà payé
+        twin = dict(twin, avis_reutilise=True)
+        if CFG:
+            SEEN.apply_ai(key, twin, CFG)
+        else:
+            SEEN.set_ai(key, twin)
+        return {"ok": True, "ai": twin, "cached": True}, 200
     if not ai.configured():
         return {"error": "Ajoutez votre clé API Claude dans Réglages → Claude (IA)."}, 400
     try:

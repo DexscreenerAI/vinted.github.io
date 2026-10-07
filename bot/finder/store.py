@@ -160,6 +160,17 @@ class Seen:
             return [r[0] for r in self.db.execute(
                 "SELECT key FROM deals WHERE ai_pending = 1 AND status = 'nouveau' ORDER BY found_at")]
 
+    def ai_twin(self, deal: dict) -> Optional[dict]:
+        """Avis déjà payé pour la même annonce republiée (nouveau numéro) ou postée sur un autre site :
+        même titre et même prix, ou même photo. Évite de repayer une analyse identique."""
+        with self.lock:
+            r = self.db.execute(
+                "SELECT ai FROM deals WHERE ai IS NOT NULL AND key != ? AND ("
+                " (lower(trim(title)) = lower(trim(?)) AND price = ?) OR (image != '' AND image = ?))"
+                " ORDER BY found_at DESC LIMIT 1",
+                (deal["key"], deal.get("title") or "", deal.get("price"), deal.get("image") or "")).fetchone()
+        return json.loads(r[0]) if r else None
+
     def apply_ai(self, key: str, result: dict, cfg) -> bool:
         """Applique le verdict de l'IA : revente revue à la baisse si elle l'estime moins, affaire retirée des
         bonnes affaires si « à éviter », mauvais modèle ou état insuffisant. Renvoie True si elle (re)devient bonne."""

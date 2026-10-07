@@ -181,6 +181,14 @@ def start_worker(seen, cfg, on_good) -> None:
                 if deal:
                     seen.set_ai_pending(key, False)
                 continue
+            twin = seen.ai_twin(deal)
+            if twin:  # même annonce déjà analysée sous un autre numéro : avis réutilisé, rien à payer
+                if seen.apply_ai(key, dict(twin, avis_reutilise=True), cfg):
+                    try:
+                        on_good(seen.get_deal(key))
+                    except Exception:
+                        pass
+                continue
             try:
                 result = analyze(deal, getattr(cfg, "etat_minimum", "tres_bon"))
             except Exception as e:  # clé refusée, crédit épuisé, réseau… : l'affaire reste visible sans avis
