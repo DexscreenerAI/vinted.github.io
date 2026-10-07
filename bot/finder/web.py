@@ -196,7 +196,9 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
                 self._send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
             elif url.path == "/api/deals":
                 view = parse_qs(url.query).get("view", ["bonnes"])[0]
-                self._json({"stats": seen.stats(), "deals": seen.deals(view), "status": seen.status})
+                from .core import SOURCES
+                status = dict(seen.status, configured=[name for name, ok, _ in SOURCES if ok()])
+                self._json({"stats": seen.stats(), "deals": seen.deals(view), "status": status})
             elif url.path == "/api/sales":
                 self._json(self._sales_payload())
             elif url.path == "/api/settings":

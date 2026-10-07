@@ -92,7 +92,8 @@ class Seen:
                 " SUM(good = 1 AND status = 'nouveau') AS bonnes,"
                 " SUM(good = 1 AND status = 'nouveau' AND date(found_at) = date('now', 'localtime')) AS aujourdhui,"
                 " SUM(status = 'achete') AS achetes,"
-                " COALESCE(SUM(CASE WHEN status = 'achete' THEN net_profit END), 0) AS profit_achetes"
+                " COALESCE(SUM(CASE WHEN status = 'achete' THEN net_profit END), 0) AS profit_achetes,"
+                " COUNT(*) AS correspondances, SUM(status = 'nouveau') AS a_voir_toutes"
                 " FROM deals"
             ).fetchone()
             seen = self.db.execute("SELECT COUNT(*) FROM seen").fetchone()[0]

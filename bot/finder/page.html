@@ -81,6 +81,12 @@
            border: 1px solid var(--line); background: none; color: var(--text); cursor: pointer; text-decoration: none; }
   .actions a.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 
+  .diag { text-align: left; max-width: 640px; margin: 14px auto 6px; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .diag li { display: flex; gap: 10px; align-items: flex-start; color: var(--text); }
+  .diag li small { display: block; color: var(--muted); margin-top: 3px; line-height: 1.45; }
+  .diag li.ok { color: var(--muted); }
+  .diag a { color: var(--accent); }
+  .empty .help { color: var(--muted); font-size: 13px; }
   .empty { text-align: center; color: var(--muted); padding: 50px 10px; border: 1px dashed var(--line); border-radius: 14px; }
 
   .hbtns { display: flex; gap: 6px; }
@@ -318,6 +324,7 @@ async function load() {
     const data = await r.json();
     if (!salesView) {
       deals = data.deals;
+    lastStats = data.stats; lastStatus = data.status || {};
       const keys = new Set(deals.map(d => d.key));
       if (known) deals.forEach(d => { if (!known.has(d.key)) arrived.add(d.key); });
       known = keys;
@@ -345,6 +352,27 @@ function ago(ts) {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
 
+// Page vide : expliquer pourquoi, étape par étape
+let lastStats = {}, lastStatus = {};
+function diagnostic() {
+  const st = lastStatus, s = lastStats, conf = st.configured || [];
+  const step = (ok, text, help) => `<li class="${ok ? 'ok' : 'ko'}"><span>${ok ? '✅' : '⏳'}</span><div>${text}${!ok && help ? `<small>${help}</small>` : ''}</div></li>`;
+  const srcErr = Object.entries(st.sources || {}).filter(([, v]) => v.error).map(([k, v]) => `${esc(k)} : ${esc(v.error)}`).join('<br>');
+  return `<b>Aucune bonne affaire pour l'instant — voici où en est le bot :</b>
+  <ol class="diag">
+    ${step(conf.length, conf.length ? `Source(s) active(s) : ${conf.map(esc).join(', ')}` : 'Aucune source branchée',
+      'Le bot ne cherche pas tout seul sur Leboncoin : il lit vos <b>alertes email</b> (Leboncoin, eBay, Interenchères…) ou interroge <b>eBay</b> avec vos clés. Ouvrez <a href="#" onclick="openSettingsDialog();return false">Réglages</a>.')}
+    ${conf.length ? step(!srcErr, srcErr ? 'Erreur de source' : `Dernière vérification : ${esc(st.last_check || 'en cours…')}`, srcErr) : ''}
+    ${step(s.annonces_lues > 0, `${s.annonces_lues || 0} annonce(s) reçue(s) et analysée(s)`,
+      'Rien reçu pour l\'instant. Sur Leboncoin, avec la même adresse email : faites une recherche (ex. « carhartt detroit »), triez par « Plus récentes », cliquez sur <b>Sauvegarder la recherche</b> et activez les <b>alertes par email</b>. Les alertes arrivent quand de nouvelles annonces sont publiées.')}
+    ${step(s.correspondances > 0, `${s.correspondances || 0} annonce(s) correspondent à un article surveillé`,
+      s.annonces_lues > 0 ? 'Les annonces reçues ne correspondent à aucun des 64 articles surveillés. Faites des alertes sur ces modèles précis (voir « Mes niches & prix »).' : '')}
+    ${s.correspondances > 0 ? step(false, `${s.a_voir_toutes || 0} en attente, mais aucune assez rentable (x2,2 et +10 € minimum)`,
+      'Normal : les vraies bonnes affaires sont rares. Regardez l\'onglet « Toutes » pour voir les annonces proches du seuil.') : ''}
+  </ol>
+  <p class="help">Astuce : « Tester une annonce à la main » (au-dessus) évalue n'importe quelle annonce tout de suite.</p>`;
+}
+
 function renderChips() {
   const counts = {};
   deals.forEach(d => { const c = d.category || 'Autre'; counts[c] = (counts[c] || 0) + 1; });
@@ -367,7 +395,7 @@ function render() {
 
   if (!list.length) {
     grid.innerHTML = '<div class="empty" style="grid-column:1/-1">' +
-      (view === 'bonnes' ? "Aucune bonne affaire pour l'instant. Le bot vérifie les alertes Leboncoin en continu." : 'Rien ici.') + '</div>';
+      (view === 'bonnes' && !q && !category ? diagnostic() : 'Rien ici.') + '</div>';
     return;
   }
   let lastCat = null;
