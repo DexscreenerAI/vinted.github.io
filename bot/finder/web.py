@@ -18,6 +18,19 @@ from .scoring import Config, find_deals, is_good, reload_if_changed
 from .store import Seen
 
 PAGE = Path(__file__).with_name("page.html")
+# Extension Chrome (dossier bot/extension, embarqué dans le .exe)
+EXT_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent)) / "extension"
+
+
+def extension_zip() -> bytes:
+    import io
+    import zipfile
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        for f in sorted(EXT_DIR.iterdir()):
+            if f.is_file():
+                z.write(f, f"chasseur-extension/{f.name}")
+    return buf.getvalue()
 MIN_SALES_FOR_REF = 3  # ventes nécessaires avant de proposer « Mettre à jour la cote »
 
 # Réglages modifiables depuis la page (enregistrés dans .env)
@@ -199,6 +212,14 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
                 from .core import SOURCES
                 status = dict(seen.status, configured=[name for name, ok, _ in SOURCES if ok()])
                 self._json({"stats": seen.stats(), "deals": seen.deals(view), "status": status})
+            elif url.path == "/extension.zip":
+                body = extension_zip()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/zip")
+                self.send_header("Content-Disposition", 'attachment; filename="chasseur-extension.zip"')
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
             elif url.path == "/api/rules":
                 from .links import rules_with_links
                 if config_path:

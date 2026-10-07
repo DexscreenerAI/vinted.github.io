@@ -109,6 +109,7 @@
   dialog .row2 { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 6px; }
   .bm { display: inline-block; padding: 6px 12px; border-radius: 8px; background: var(--accent); color: #fff !important;
         text-decoration: none; font-weight: 600; cursor: grab; }
+  h3.sub { font-size: 15px; margin: 10px 0 0; }
   .steps { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; margin: 4px 0; }
   #importList { max-height: 55vh; overflow: auto; border: 1px solid var(--line); border-radius: 10px; }
   .irow { display: flex; gap: 10px; align-items: center; padding: 8px 12px; border-top: 1px solid var(--line); font-size: 14px; }
@@ -198,7 +199,7 @@
     <div class="hbtns">
       <button class="btn" id="openConfig" hidden title="Ouvre config.yaml dans le Bloc-notes">Mes niches &amp; prix</button>
       <button class="btn" id="notifBtn" title="Notification Windows + son à chaque nouvelle bonne affaire">🔔 Activer les alertes</button>
-      <button class="btn" id="openScan" title="Analyser les annonces d'une page Leboncoin, Vinted ou eBay ouverte dans votre navigateur">Analyser une page</button>
+      <button class="btn" id="openScan" title="Analyser automatiquement les pages Leboncoin, Vinted ou eBay que vous ouvrez">Analyser les pages</button>
       <button class="btn primary" id="openAlerts" title="Liens prêts à l'emploi pour créer vos recherches sauvegardées">Créer mes alertes</button>
       <button class="btn" id="openSettings">Réglages</button>
     </div>
@@ -319,18 +320,27 @@
 </dialog>
 <dialog id="scanDlg" class="wide">
   <form method="dialog">
-    <h2>Analyser une page (annonces déjà en ligne)</h2>
-    <p class="help">Les alertes email n'envoient que les <b>nouvelles</b> annonces. Pour analyser tout ce qui est
-      <b>déjà en ligne</b> : installez ce bouton une fois, puis faites vos recherches normalement sur
-      <b>Leboncoin</b>, <b>Vinted</b> ou <b>eBay</b> et cliquez dessus : le bot évalue toutes les annonces de la page.</p>
+    <h2>Analyser les annonces déjà en ligne</h2>
+    <p class="help">Les alertes email n'envoient que les <b>nouvelles</b> annonces. Pour tout ce qui est déjà en ligne,
+      le bot analyse les pages Leboncoin, Vinted et eBay que vous ouvrez (il ne fait aucune requête vers ces sites).</p>
+    <h3 class="sub">⭐ Extension Chrome — analyse automatique (recommandé)</h3>
+    <p class="help">Chaque page de recherche ouverte est analysée <b>toute seule</b> : un badge « 🔥 x3,1 · +46 € » apparaît
+      sur les annonces rentables et un encadré résume la page. Installation une seule fois :</p>
     <ol class="help steps">
-      <li>Affichez la barre de favoris du navigateur (<b>Ctrl + Maj + B</b>).</li>
-      <li><b>Glissez</b> ce bouton dans la barre de favoris : <a id="bookmarklet" class="bm" href="#" onclick="alert('Glissez ce bouton dans la barre de favoris (ne cliquez pas dessus ici).');return false">🔎 Analyser la page</a></li>
-      <li>Sur Leboncoin / Vinted / eBay, lancez une recherche (ex. « game boy color »), triez par prix croissant ou plus récent,
-        puis cliquez sur <b>🔎 Analyser la page</b> dans vos favoris. Faites défiler la page avant pour charger plus d'annonces.</li>
+      <li><a class="bm" href="/extension.zip" download>Télécharger l'extension</a> puis faites un clic droit sur le fichier
+        → <b>Extraire tout…</b> (gardez le dossier, par exemple dans Documents).</li>
+      <li>Ouvrez <b>chrome://extensions</b> (copiez-collez dans la barre d'adresse), activez le <b>Mode développeur</b> (en haut à droite).</li>
+      <li>Cliquez sur <b>Charger l'extension non empaquetée</b> et choisissez le dossier <b>chasseur-extension</b>.</li>
+      <li>C'est tout : ouvrez une recherche sur Leboncoin, Vinted ou eBay (VPN coupé) et regardez les badges.
+        Le logiciel doit être lancé. Fonctionne aussi sur Edge (edge://extensions).</li>
     </ol>
-    <p class="help">Le bot ne fait aucune requête sur ces sites : il lit seulement la page que vous avez ouverte.
-      Gardez le bot lancé (cette page sur <span id="bmOrigin"></span>).</p>
+    <h3 class="sub">Ou : bouton dans les favoris (un clic par page)</h3>
+    <ol class="help steps">
+      <li>Affichez la barre de favoris (<b>Ctrl + Maj + B</b>) et <b>glissez</b>-y ce bouton :
+        <a id="bookmarklet" class="bm" href="#" onclick="alert('Glissez ce bouton dans la barre de favoris (ne cliquez pas dessus ici).');return false">🔎 Analyser la page</a></li>
+      <li>Sur une page de recherche, cliquez sur <b>🔎 Analyser la page</b> dans vos favoris.</li>
+    </ol>
+    <p class="help">Le logiciel doit rester lancé (<span id="bmOrigin"></span>).</p>
     <div class="row2"><button class="btn" value="cancel">Fermer</button></div>
   </form>
 </dialog>

@@ -34,6 +34,7 @@ jobs:
           pyinstaller --onefile --noconfirm --name ChasseurAffaires
           --add-data "finder/page.html;finder"
           --add-data "config.example.yaml;."
+          --add-data "extension;extension"
           lancer.py
 
       - uses: actions/upload-artifact@v4
