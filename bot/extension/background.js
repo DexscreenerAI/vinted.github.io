@@ -28,7 +28,25 @@ async function withPort(path, body) {
   return { ok: false, error: "Logiciel Chasseur d'affaires non lancé (ouvrez ChasseurAffaires.exe)" };
 }
 
+// « Recherche suivante » : parcourt la liste des articles surveillés (les ⭐ d'abord), un clic = une recherche.
+async function nextSearch(step, site) {
+  const res = await withPort("/api/rules");
+  if (!res.ok) return res;
+  const st = await chrome.storage.local.get({ idx: -1, topOnly: false });
+  const rules = Object.values(res).filter(r => r && r.name && (!st.topOnly || r.top));
+  if (!rules.length) return { ok: false, error: "Aucun article surveillé" };
+  const idx = ((st.idx + step) % rules.length + rules.length) % rules.length;
+  await chrome.storage.local.set({ idx });
+  const r = rules[idx];
+  const url = site === "vinted" ? r.vinted_url : site === "ebay" ? r.ebay_url : r.lbc_url;
+  return { ok: true, url, name: r.name, i: idx + 1, n: rules.length };
+}
+
 chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
+  if (msg && msg.type === "next") {
+    nextSearch(msg.step || 1, msg.site).then(reply);
+    return true;
+  }
   if (msg && msg.type === "import") {
     withPort("/api/import", { source: msg.source, listings: msg.listings }).then(reply);
     return true;

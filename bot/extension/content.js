@@ -80,24 +80,47 @@
     if (!panel) {
       panel = document.createElement("div");
       Object.assign(panel.style, {
-        position: "fixed", right: "16px", bottom: "16px", zIndex: 2147483647, maxWidth: "320px",
+        position: "fixed", right: "16px", bottom: "16px", zIndex: 2147483647, width: "300px",
         padding: "10px 14px", borderRadius: "12px", font: "13px/1.4 system-ui, sans-serif",
-        background: "#fff", color: "#1d1d1b", boxShadow: "0 6px 20px rgba(0,0,0,.2)", cursor: "pointer",
+        background: "#fff", color: "#1d1d1b", boxShadow: "0 6px 20px rgba(0,0,0,.2)",
       });
-      panel.title = "Cliquer pour masquer";
-      panel.addEventListener("click", () => { panel.style.display = "none"; });
+      panel.innerHTML = `<div style="display:flex;align-items:center;gap:6px"><b style="flex:1">Chasseur d'affaires</b>
+          <span data-act="close" title="Masquer" style="cursor:pointer;padding:0 4px;color:#6b6b66">✕</span></div>
+        <div data-zone="info"></div>
+        <div data-zone="search" style="margin-top:6px;color:#6b6b66;font-size:12px"></div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button data-act="prev" title="Recherche précédente" style="${BTN}">◀</button>
+          <button data-act="next" style="${BTN};flex:1;background:#0a7f6f;border-color:#0a7f6f;color:#fff;font-weight:600">Recherche suivante ▶</button>
+        </div>`;
+      panel.addEventListener("click", e => {
+        const act = e.target.closest("[data-act]")?.dataset.act;
+        if (act === "close") panel.style.display = "none";
+        if (act === "next" || act === "prev") go(act === "next" ? 1 : -1);
+      });
       document.body.appendChild(panel);
+      chrome.storage.local.get({ current: "" }, st => { panel.querySelector("[data-zone=search]").textContent = st.current; });
     }
-    let html = "<b>Chasseur d'affaires</b><br>";
+    let html = "";
     if (stats.error) html += `⚠️ ${stats.error}`;
     else if (!stats.detected) html += stats.links
-      ? `${stats.links} annonce(s) vue(s) mais aucun prix lu. Cliquez sur l'icône de l'extension → « Copier le diagnostic ».`
+      ? `${stats.links} annonce(s) vue(s) mais aucun prix lu. Icône de l'extension → « Copier le diagnostic ».`
       : "Aucune annonce détectée pour l'instant (faites défiler la page).";
     else html += `${stats.read} annonce(s) analysée(s) · ${stats.matched} surveillée(s) · <b>${stats.good} bonne(s) affaire(s)</b>`
       + (stats.best ? `<br>🔥 ${stats.best.title.slice(0, 40)} : x${stats.best.ratio.toFixed(1)}, +${Math.round(stats.best.net_profit)} €` : "")
-      + (stats.matched ? "" : "<br><small>Aucune ne correspond aux 64 articles surveillés : cherchez un modèle précis (ex. « game boy color »).</small>");
+      + (stats.matched ? "" : "<br><small>Aucune ne correspond aux articles surveillés.</small>");
     panel.style.border = "2px solid " + (stats.error ? "#b4540a" : "#0a7f6f");
-    panel.innerHTML = html;
+    panel.querySelector("[data-zone=info]").innerHTML = html;
+  }
+
+  const BTN = "font:inherit;padding:6px 10px;border-radius:8px;border:1px solid #d0d0ca;background:#f6f6f3;color:#1d1d1b;cursor:pointer";
+
+  // Un clic = l'utilisateur ouvre la recherche suivante de sa liste (même site que la page actuelle)
+  function go(step) {
+    chrome.runtime.sendMessage({ type: "next", step, site: source }, res => {
+      if (!res || !res.ok) { stats.error = (res && res.error) || "Logiciel non lancé"; render(); return; }
+      chrome.storage.local.set({ current: `Recherche ${res.i}/${res.n} : ${res.name}` });
+      location.href = res.url;
+    });
   }
 
   function scan(done) {

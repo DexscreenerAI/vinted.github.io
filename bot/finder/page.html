@@ -870,6 +870,7 @@ function renderAlerts() {
       <div class="grow">${esc(r.name)}<small>« ${esc(r.query)} »${r.max_buy != null ? ' · max ' + euro(r.max_buy) : ''} · revente ≈ ${euro(r.ref_price)}${r.lot ? ' par pièce' : ''}</small></div>
       <button type="button" class="copy" data-copy="${esc(r.query)}" title="Copier la recherche">Copier</button>
       <a class="lbc" href="${esc(r.lbc_url)}" target="_blank" rel="noreferrer">Leboncoin</a>
+      <a href="${esc(r.vinted_url)}" target="_blank" rel="noreferrer">Vinted</a>
       <a href="${esc(r.ebay_url)}" target="_blank" rel="noreferrer">eBay</a></div>`;
   }
   alertsList.innerHTML = html || '<div class="arow">Aucun article.</div>';

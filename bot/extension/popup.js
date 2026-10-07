@@ -40,3 +40,21 @@ $("diag").onclick = async () => {
   await navigator.clipboard.writeText(r.text);
   $("msg").textContent = "Diagnostic copié : collez-le dans la conversation avec Claude.";
 };
+
+chrome.storage.local.get({ current: "", topOnly: false, site: "leboncoin" }, st => {
+  $("cur").textContent = st.current || "—";
+  $("top").checked = st.topOnly;
+  $("site").value = st.site;
+});
+$("top").onchange = () => chrome.storage.local.set({ topOnly: $("top").checked, idx: -1 });
+$("site").onchange = () => chrome.storage.local.set({ site: $("site").value });
+$("next").onclick = () => {
+  chrome.runtime.sendMessage({ type: "next", step: 1, site: $("site").value }, async res => {
+    if (!res || !res.ok) { $("msg").textContent = (res && res.error) || "Logiciel non lancé"; return; }
+    await chrome.storage.local.set({ current: `Recherche ${res.i}/${res.n} : ${res.name}` });
+    const t = await tab();
+    const onSite = t && /leboncoin\.fr|vinted\.fr|ebay\.(fr|de)/.test(t.url || "");
+    if (onSite) chrome.tabs.update(t.id, { url: res.url }); else chrome.tabs.create({ url: res.url });
+    window.close();
+  });
+};
