@@ -97,11 +97,6 @@ def launch() -> int:
         load_env(".env")
         cfg = load_config("config.yaml")
         seen = Seen("finder.db")
-        from .core import rescore
-        n, gone = rescore(cfg, seen)  # affaires en attente réévaluées avec les règles actuelles
-        if gone:
-            print(f"{gone} affaire(s) retirée(s) : elles ne correspondent plus aux règles.")
-
         server = None
         for port in range(8000, 8020):
             try:
@@ -112,7 +107,18 @@ def launch() -> int:
         if server is None:
             raise RuntimeError("aucun port libre entre 8000 et 8019")
 
-        threading.Thread(target=loop, args=(cfg, seen, 120, "config.yaml"), daemon=True).start()
+        def background():
+            # affaires en attente réévaluées avec les règles actuelles, après l'ouverture de la page
+            from .core import rescore
+            try:
+                _n, gone = rescore(cfg, seen)
+                if gone:
+                    print(f"{gone} affaire(s) retirée(s) : elles ne correspondent plus aux règles.")
+            except Exception as e:
+                print(f"Réévaluation des affaires impossible : {e}")
+            loop(cfg, seen, 120, "config.yaml")
+
+        threading.Thread(target=background, daemon=True).start()
         from . import ai
         from .core import notify_good
         ai.start_worker(seen, cfg, notify_good)  # avis IA automatique sur les bonnes affaires

@@ -1,5 +1,6 @@
 import re
 import unicodedata
+from functools import lru_cache
 from typing import Optional
 
 _PRICE_RE = re.compile(r"(\d{1,3}(?:[   .]\d{3})*|\d+)(?:[,.](\d{1,2}))?\s?€")
@@ -17,6 +18,7 @@ _ALIASES = {
 }
 
 
+@lru_cache(maxsize=100_000)  # appelé des centaines de fois par annonce (une fois par mot-clé de chaque règle)
 def normalize(text: str) -> str:
     """Minuscules, sans accents ni ponctuation : « Ray-Ban », « ray ban » et « RAYBAN » se comparent pareil."""
     text = unicodedata.normalize("NFKD", text)
@@ -58,10 +60,15 @@ def contains(haystack_norm: str, word) -> bool:
     """Mot-clé présent en tant que mot (ou expression) entier. Une liste = au moins un des mots."""
     if isinstance(word, (list, tuple)):
         return any(contains(haystack_norm, w) for w in word)
-    w = normalize(str(word))
-    if not w:
-        return False
-    return re.search(rf"(?<![a-z0-9]){re.escape(w)}(?![a-z0-9])", haystack_norm) is not None
+    pattern = _pattern(str(word))
+    return pattern is not None and pattern.search(haystack_norm) is not None
+
+
+@lru_cache(maxsize=100_000)
+def _pattern(word: str):
+    """Expression compilée une seule fois par mot-clé (le mot entier, après normalisation)."""
+    w = normalize(word)
+    return re.compile(rf"(?<![a-z0-9]){re.escape(w)}(?![a-z0-9])") if w else None
 
 
 def find_pos(haystack_norm: str, word) -> int:
@@ -69,6 +76,6 @@ def find_pos(haystack_norm: str, word) -> int:
     if isinstance(word, (list, tuple)):
         found = [p for p in (find_pos(haystack_norm, w) for w in word) if p >= 0]
         return min(found) if found else -1
-    w = normalize(str(word))
-    m = re.search(rf"(?<![a-z0-9]){re.escape(w)}(?![a-z0-9])", haystack_norm) if w else None
+    pattern = _pattern(str(word))
+    m = pattern.search(haystack_norm) if pattern else None
     return m.start() if m else -1

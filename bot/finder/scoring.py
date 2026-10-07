@@ -81,11 +81,12 @@ class Rule:
 
     def matches(self, title: str, global_none: List[str]) -> bool:
         t = normalize(title)
-        if any(contains(t, w) for w in self.none + global_none):
-            return False
+        # mots obligatoires d'abord : la plupart des règles s'arrêtent là (rapide même avec des centaines de règles)
         if not all(contains(t, w) for w in self.all):
             return False
         if self.any and not any(contains(t, w) for w in self.any):
+            return False
+        if any(contains(t, w) for w in self.none + global_none):
             return False
         flat = [x for w in self.all for x in (w if isinstance(w, list) else [w])] + list(self.any)
         nu = self.none_unless or {}
