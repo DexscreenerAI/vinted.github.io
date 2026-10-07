@@ -79,5 +79,17 @@ class StoreTest(unittest.TestCase):
         self.assertFalse(seen.set_status("1234567890", "nimporte"))
 
 
+class EnvTest(unittest.TestCase):
+    def test_save_env_keeps_other_lines(self):
+        import tempfile
+        from finder.web import save_env
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / ".env"
+            path.write_text("# commentaire\nWEB_PASSWORD=x\nIMAP_USER=old@a.fr\n", encoding="utf-8")
+            save_env(str(path), {"IMAP_USER": "new@a.fr", "IMAP_HOST": "imap.a.fr"})
+            self.assertEqual(path.read_text(encoding="utf-8"),
+                             "# commentaire\nWEB_PASSWORD=x\nIMAP_USER=new@a.fr\nIMAP_HOST=imap.a.fr\n")
+
+
 if __name__ == "__main__":
     unittest.main()
