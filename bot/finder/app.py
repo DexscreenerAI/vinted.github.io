@@ -24,12 +24,48 @@ def _bundled(name: str) -> Path:
     return root / name
 
 
+def _already_running():
+    """URL du logiciel s'il tourne déjà (double-clic en trop), sinon None."""
+    import json
+    import urllib.request
+    for port in range(8000, 8020):
+        try:
+            with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/ping", timeout=0.3) as r:
+                if json.loads(r.read()).get("app") == "chasseur":
+                    return f"http://localhost:{port}"
+        except Exception:
+            continue
+    return None
+
+
+def _disable_quickedit() -> None:
+    """Windows : un clic dans la fenêtre noire (mode « Édition rapide ») gèle le programme. On le désactive."""
+    if not sys.platform.startswith("win"):
+        return
+    try:
+        import ctypes
+        kernel32 = ctypes.windll.kernel32
+        handle = kernel32.GetStdHandle(-10)  # entrée console
+        mode = ctypes.c_uint32()
+        if kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+            kernel32.SetConsoleMode(handle, (mode.value & ~0x0040) | 0x0080)
+    except Exception:
+        pass
+
+
 def launch() -> int:
     for stream in (sys.stdout, sys.stderr):
         try:
             stream.reconfigure(encoding="utf-8", errors="replace")
         except (AttributeError, ValueError):
             pass
+
+    _disable_quickedit()
+    running = _already_running()
+    if running:
+        print(f"Le logiciel est déjà lancé : ouverture de {running}")
+        webbrowser.open(running)
+        return 0
 
     try:
         base = _base_dir()

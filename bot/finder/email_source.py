@@ -16,6 +16,7 @@ import email
 import imaplib
 import os
 import re
+import ssl
 import unicodedata
 from email.message import Message
 from email.utils import parseaddr
@@ -387,7 +388,10 @@ def html_part(msg: Message) -> str:
     for part in msg.walk() if msg.is_multipart() else [msg]:
         if part.get_content_type() == "text/html":
             payload = part.get_payload(decode=True) or b""
-            return payload.decode(part.get_content_charset() or "utf-8", errors="replace")
+            try:
+                return payload.decode(part.get_content_charset() or "utf-8", errors="replace")
+            except LookupError:  # jeu de caractères inconnu (« unknown-8bit »…)
+                return payload.decode("utf-8", errors="replace")
     return ""
 
 
@@ -466,7 +470,7 @@ def _login(imap, host: str, user: str, password: str) -> None:
 
 def test_login(host: str, user: str, password: str) -> int:
     """Vérifie l'accès IMAP ; renvoie le nombre d'emails d'alerte (tous sites) trouvés dans la boîte."""
-    with imaplib.IMAP4_SSL(host, timeout=20) as imap:
+    with imaplib.IMAP4_SSL(host, ssl_context=ssl.create_default_context(), timeout=20) as imap:
         _login(imap, host, user, password)
         imap.select(os.environ.get("IMAP_FOLDER", "INBOX"), readonly=True)
         _, data = imap.search(None, _senders_query())
@@ -503,7 +507,7 @@ def fetch_alerts(mark_seen: bool = False, done=None, record=None) -> Iterator[Tu
         criteria += ["SINCE", f"{since.day}-{since.strftime('%b')}-{since.year}"]
     criteria.append(_senders_query())
 
-    with imaplib.IMAP4_SSL(host, timeout=30) as imap:
+    with imaplib.IMAP4_SSL(host, ssl_context=ssl.create_default_context(), timeout=30) as imap:
         _login(imap, host, user, password)
         imap.select(folder, readonly=not mark_seen)
         _, data = imap.search(None, *criteria)
@@ -519,7 +523,11 @@ def fetch_alerts(mark_seen: bool = False, done=None, record=None) -> Iterator[Tu
                 continue  # expéditeur inconnu : on n'y touche pas
             _, msg_data = imap.fetch(num, "(BODY.PEEK[])")
             msg = email.message_from_bytes(msg_data[0][1])
-            site, listings = parse_message(msg)
+            try:
+                site, listings = parse_message(msg)
+            except Exception as e:  # un email bizarre ne doit pas bloquer tous les suivants
+                print(f"[email illisible] {e}")
+                site, listings = known, []
             if site is None:
                 continue
             if record is not None:

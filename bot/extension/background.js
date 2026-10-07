@@ -6,7 +6,11 @@ async function call(p, path, body) {
   const r = await fetch(`http://127.0.0.1:${p}${path}`, body === undefined ? {} : {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
   });
-  if (!r.ok) throw new Error("HTTP " + r.status);
+  if (!r.ok) {
+    let msg = "HTTP " + r.status;
+    try { msg = (await r.json()).error || msg; } catch (e) {}
+    const err = new Error(msg); err.answered = true; throw err;
+  }
   return r.json();
 }
 
@@ -22,7 +26,10 @@ async function withPort(path, body) {
       } else res = await call(p, path, body);
       port = p;
       return { ok: true, port: p, ...res };
-    } catch (e) { /* port suivant */ }
+    } catch (e) {
+      if (e.answered && path !== "/api/ping") { port = p; return { ok: false, port: p, error: e.message }; }
+      /* pas de réponse : port suivant */
+    }
   }
   port = null;
   return { ok: false, error: "Logiciel Chasseur d'affaires non lancé (ouvrez ChasseurAffaires.exe)" };

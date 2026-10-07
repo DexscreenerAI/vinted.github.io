@@ -1,0 +1,110 @@
+import http.client
+import json
+import threading
+import unittest
+from pathlib import Path
+
+import yaml
+
+from finder.core import best_deal, import_listings
+from finder.models import Listing
+from finder.scoring import Config
+from finder.store import Seen
+from finder.web import make_server
+
+ROOT = Path(__file__).resolve().parent.parent
+CFG = Config.from_dict(yaml.safe_load((ROOT / "config.example.yaml").read_text(encoding="utf-8")))
+
+
+class AccessoiresTest(unittest.TestCase):
+    """Un accessoire ne doit jamais recevoir la cote de l'objet (ex. « Étui Contax T2 » coté comme un T2)."""
+
+    def rule(self, title, price=30):
+        best = best_deal(Listing(title, price), CFG)
+        return best[0].rule_name if best else None
+
+    def test_accessoires_ecartes(self):
+        for t in ["Étui cuir Contax T2", "Flash pour Contax T2", "Dos dateur Contax T2 data back",
+                  "Objectif Canon FD 50mm pour AE-1", "Écusson patch Carhartt Detroit",
+                  "Coque de remplacement Game Boy Advance SP", "Pellicule Kodak pour Olympus mju II",
+                  "Manette GameCube officielle pour console", "Doudoune North Face Nuptse fille 12 ans",
+                  "Game Boy Color HS ne s'allume pas", "Levi's 501 selvedge made in Turkey"]:
+            self.assertIsNone(self.rule(t), t)
+
+    def test_objets_reconnus(self):
+        self.assertEqual(self.rule("Contax T2 titane + étui", 200), "Contax T2 / T3")
+        self.assertEqual(self.rule("Canon AE-1 program + objectif 50mm", 50), "Canon AE-1 / AE-1 Program")
+        self.assertEqual(self.rule("Veste Carhartt Detroit vintage", 25), "Carhartt Detroit jacket")
+        self.assertEqual(self.rule("Carhart detroit jacket marron", 25), "Carhartt Detroit jacket")  # faute de frappe
+
+    def test_jeu_pas_console(self):
+        self.assertEqual(self.rule("Pokémon version Or Game Boy Color", 12), "Pokémon Or/Argent/Cristal (GBC)")
+
+
+class ImportSecuriteTest(unittest.TestCase):
+    def test_liens_javascript_refuses(self):
+        seen = Seen(":memory:")
+        res = import_listings([{"title": "Veste Carhartt Detroit", "price": 20, "url": "javascript:alert(1)"},
+                               {"title": "Veste Carhartt Detroit", "price": 20, "url": "https://evil.com/ad/1"},
+                               {"title": "Veste Carhartt Detroit", "price": 20,
+                                "url": "https://www.leboncoin.fr/ad/vetements/123456789", "image": "javascript:x"}],
+                              "leboncoin", CFG, seen)
+        self.assertEqual(res["matched"], 1)
+        self.assertEqual(res["deals"][0]["image"], "")
+
+
+class CsrfTest(unittest.TestCase):
+    """Un autre site ouvert dans le navigateur ne doit pas pouvoir piloter le logiciel local."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.server = make_server(CFG, Seen(":memory:"), 0, env_path="/nonexistent/.env", host="127.0.0.1")
+        cls.port = cls.server.server_address[1]
+        threading.Thread(target=cls.server.serve_forever, daemon=True).start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.shutdown()
+
+    def post(self, headers, body=b'{"key": "x", "status": "ignore"}', path="/api/status"):
+        c = http.client.HTTPConnection("127.0.0.1", self.port, timeout=5)
+        c.request("POST", path, body=body, headers=headers)
+        return c.getresponse().status
+
+    def test_texte_brut_refuse(self):
+        self.assertEqual(self.post({"Content-Type": "text/plain"}), 403)
+
+    def test_autre_site_refuse(self):
+        self.assertEqual(self.post({"Content-Type": "application/json", "Origin": "https://evil.com"}), 403)
+
+    def test_dns_rebinding_refuse(self):
+        self.assertEqual(self.post({"Content-Type": "application/json", "Host": f"evil.com:{self.port}"}), 403)
+
+    def test_page_et_extension_acceptees(self):
+        ok = {"Content-Type": "application/json"}
+        self.assertNotEqual(self.post(dict(ok, Origin=f"http://127.0.0.1:{self.port}")), 403)
+        self.assertNotEqual(self.post(dict(ok, Origin="chrome-extension://abcdef")), 403)
+
+
+class SyntaxeJsTest(unittest.TestCase):
+    """Le JavaScript de la page et de l'extension doit au moins être syntaxiquement valide (si node est installé)."""
+
+    def test_syntaxe(self):
+        import shutil
+        import subprocess
+        import tempfile
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node absent")
+        page = (ROOT / "finder" / "page.html").read_text(encoding="utf-8")
+        scripts = [page[page.index("<script>") + 8:page.rindex("</script>")]]
+        scripts += [f.read_text(encoding="utf-8") for f in (ROOT / "extension").glob("*.js")]
+        for code in scripts:
+            with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as f:
+                f.write(code)
+            r = subprocess.run([node, "--check", f.name], capture_output=True, text=True)
+            self.assertEqual(r.returncode, 0, r.stderr[:500])
+
+
+if __name__ == "__main__":
+    unittest.main()

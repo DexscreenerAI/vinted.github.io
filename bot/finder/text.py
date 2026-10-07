@@ -12,6 +12,8 @@ _ALIASES = {
     "doc martens": "dr martens", "doc marten": "dr martens", "dr marten s": "dr martens",
     "rayban": "ray ban", "gameboy": "game boy", "g shock": "gshock", "levis s": "levis",
     "the north face": "north face", "tnf": "north face", "arc teryx": "arcteryx",
+    "carhart": "carhartt", "carharrt": "carhartt", "docs martens": "dr martens", "dr martin": "dr martens",
+    "dr martins": "dr martens", "ciree": "cire", "arcterix": "arcteryx", "torsades": "torsade",
 }
 
 
@@ -60,3 +62,13 @@ def contains(haystack_norm: str, word) -> bool:
     if not w:
         return False
     return re.search(rf"(?<![a-z0-9]){re.escape(w)}(?![a-z0-9])", haystack_norm) is not None
+
+
+def find_pos(haystack_norm: str, word) -> int:
+    """Position du mot-clé (ou du premier trouvé d'une liste) dans le texte normalisé, -1 si absent."""
+    if isinstance(word, (list, tuple)):
+        found = [p for p in (find_pos(haystack_norm, w) for w in word) if p >= 0]
+        return min(found) if found else -1
+    w = normalize(str(word))
+    m = re.search(rf"(?<![a-z0-9]){re.escape(w)}(?![a-z0-9])", haystack_norm) if w else None
+    return m.start() if m else -1

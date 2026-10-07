@@ -22,6 +22,11 @@ class Listing:
 
         if self.source == "leboncoin":
             return ad_id(self.url) or f"{self.title.lower()}|{self.price}"
+        if self.source == "ebay":  # même annonce eBay, quelle que soit la source (API, email, extension, .fr/.de)
+            import re
+            m = re.search(r"/itm/(?:[^/?#]+/)?(\d{9,15})", self.url or "")
+            if m:
+                return f"ebay:{m.group(1)}"
         return f"{self.source}:{self.url or self.title.lower() + '|' + str(self.price)}"
 
 

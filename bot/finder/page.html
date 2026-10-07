@@ -409,6 +409,8 @@ function endsIn(iso) {
   if (min <= 0) return 'enchère terminée';
   return 'fin dans ' + (min < 60 ? min + ' min' : Math.floor(min / 60) + ' h ' + String(min % 60).padStart(2, '0'));
 }
+// Liens et images : uniquement http(s) (bloque les liens « javascript: » qu'une annonce piégée pourrait contenir)
+const safeUrl = u => /^https?:\/\//i.test(String(u || '')) ? String(u) : '';
 const euro = n => (n ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' €';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let view = 'bonnes', deals = [], category = '', known = null, arrived = new Set();
@@ -526,12 +528,12 @@ function render() {
     const realProfit = sold ? profitOf({ buy_price: d.buy_cost, sale_price: d.sale_price, fees: d.sale_fees, pieces: d.sale_pieces }) : 0;
     return head + `<article class="deal ${d.good ? '' : 'weak'} ${arrived.has(d.key) ? 'arrived' : ''}">
       <div class="photo ${d.image ? '' : 'none'}">
-        ${d.image ? `<img src="${esc(d.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}
+        ${d.image ? `<img src="${esc(safeUrl(d.image))}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}
         <span class="ratio">x${d.ratio.toFixed(1)}</span>
         ${fresh && d.status === 'nouveau' ? '<span class="new">Nouveau</span>' : ''}
       </div>
       <div class="body">
-        <a class="title" href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.title)}</a>
+        <a class="title" href="${esc(safeUrl(d.url) || '#')}" target="_blank" rel="noopener">${esc(d.title)}</a>
         <div class="meta"><span class="tag src">${esc(SOURCES[d.source] || d.source || 'Leboncoin')}</span> <span class="tag">${esc(d.category || 'Autre')}</span> ${esc(d.rule)}${d.ends_at ? ' · <b class="ends">' + endsIn(d.ends_at) + '</b>' : ''}${d.location ? ' · ' + esc(d.location) : ''} · ${ago(d.found_at)}</div>
         <div class="nums">${sold ? `
           <div><small>Coût d'achat</small><b>${euro(d.buy_cost)}</b></div>
@@ -546,7 +548,7 @@ function render() {
         <div class="ai ${d.ai ? 'v-' + d.ai.verdict : ''}" data-ai="${k}">${aiBlock(d.ai)}</div>
       </div>
       <div class="actions">
-        ${d.url ? `<a class="primary" href="${esc(d.url)}" target="_blank" rel="noopener">Voir l'annonce</a>` : ''}
+        ${safeUrl(d.url) ? `<a class="primary" href="${esc(safeUrl(d.url))}" target="_blank" rel="noopener">Voir l'annonce</a>` : ''}
         ${btns}
       </div>
     </article>`;
@@ -822,7 +824,7 @@ function beep() {
 }
 function toast(d) {
   const a = document.createElement('a');
-  a.className = 'toast'; a.href = d.url || '#'; a.target = '_blank'; a.rel = 'noopener';
+  a.className = 'toast'; a.href = safeUrl(d.url) || '#'; a.target = '_blank'; a.rel = 'noopener';
   a.innerHTML = `🔥 <b>x${d.ratio.toFixed(1)} · +${euro(d.net_profit)}</b><br>${esc(d.title)}`;
   toasts.prepend(a);
   setTimeout(() => a.remove(), 20000);
@@ -834,7 +836,7 @@ function announce(d) {
     const n = new Notification(`🔥 x${d.ratio.toFixed(1)} · bénéfice ≈ ${euro(d.net_profit)}`, {
       body: `${d.title}\n${euro(d.price)} sur ${SOURCES[d.source] || 'Leboncoin'} · ${d.category || ''}`,
       icon: d.image || undefined, tag: d.key });
-    n.onclick = () => { window.focus(); if (d.url) window.open(d.url, '_blank'); n.close(); };
+    n.onclick = () => { window.focus(); if (safeUrl(d.url)) window.open(safeUrl(d.url), '_blank'); n.close(); };
   }
 }
 async function checkNew() {
@@ -944,7 +946,7 @@ function scanPage() {
     const all = (a.getAttribute('title') || '') + '\n' + text;
     // Prix : d'abord l'élément marqué « prix » par le site, sinon le texte de la carte.
     // Les milliers doivent faire 3 chiffres (« 1 200 € ») : « Taille 42 30 € » donne 30 €, pas 4230 €.
-    const priceEl = (box || a).querySelector('[data-test-id='price'], [data-qa-id='aditem_price'], [data-testid$='--price-text'], [data-testid*='price'], .s-item__price');
+    const priceEl = (box || a).querySelector("[data-test-id='price'], [data-qa-id='aditem_price'], [data-testid$='--price-text'], [data-testid*='price'], .s-item__price");
     const PRICE_RE = /(\d{1,3}(?:[ \u00a0\u202f.]\d{3})+|\d+)(?:,(\d{1,2}))?\s?(?:€|EUR\b)/;
     const m = (priceEl && (priceEl.innerText || priceEl.textContent || '').match(PRICE_RE)) || all.match(PRICE_RE);
     if (!m) continue;
@@ -973,6 +975,8 @@ async function handleImport() {
   let payload;
   try { payload = JSON.parse(decodeURIComponent(location.hash.slice(8))); } catch (e) { return; }
   history.replaceState(null, '', location.pathname);
+  const n = Array.isArray(payload.listings) ? payload.listings.length : 0;
+  if (!confirm(`Analyser ${n} annonce(s) envoyée(s) depuis ${SOURCES[payload.source] || 'une page'} ?`)) return;
   importTitle.textContent = 'Analyse en cours…'; importSummary.textContent = ''; importList.innerHTML = '';
   importDlg.showModal();
   const res = await post('/api/import', payload);
@@ -982,8 +986,8 @@ async function handleImport() {
   importSummary.textContent = `${res.received} annonce(s) lue(s) · ${res.matched} correspondent à un article surveillé · ${res.good} assez rentable(s) (x2,2 et +10 € minimum).`
     + (res.matched ? '' : ' Cherchez un modèle précis de la liste (voir « Créer mes alertes »).');
   importList.innerHTML = res.deals.map(d => `<div class="irow ${d.good ? '' : 'weak'}">
-      ${d.image ? `<img src="${esc(d.image)}" alt="" referrerpolicy="no-referrer">` : '<img alt="">'}
-      <div class="grow"><a href="${esc(d.url)}" target="_blank" rel="noreferrer">${esc(d.title)}</a>
+      ${safeUrl(d.image) ? `<img src="${esc(safeUrl(d.image))}" alt="" referrerpolicy="no-referrer">` : '<img alt="">'}
+      <div class="grow"><a href="${esc(safeUrl(d.url) || '#')}" target="_blank" rel="noreferrer">${esc(d.title)}</a>
         <small>${esc(d.rule)} · ${euro(d.price)} → revente ≈ ${euro(d.est_resale)}</small></div>
       <div class="r">x${d.ratio.toFixed(1)}<small>${d.net_profit >= 0 ? '+' : ''}${euro(d.net_profit)}</small></div></div>`).join('')
     || '<div class="irow">Aucune annonce de cette page ne correspond aux articles surveillés.</div>';

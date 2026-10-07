@@ -1,10 +1,11 @@
 // Fenêtre de l'icône : état de la connexion au logiciel et de la page ouverte.
+const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 let botPort = null;
 const $ = id => document.getElementById(id);
 
 function pageText(s) {
   if (!s) return "ouvrez une recherche Leboncoin, Vinted ou eBay";
-  if (s.error) return `<span class="ko">${s.error}</span>`;
+  if (s.error) return `<span class="ko">${esc(s.error)}</span>`;
   if (!s.detected) return s.links ? `<span class="ko">${s.links} annonce(s) vue(s), aucun prix lu</span> → copiez le diagnostic`
     : "aucune annonce détectée (faites défiler)";
   return `${s.read} analysée(s), ${s.matched} surveillée(s), <span class="ok">${s.good} bonne(s) affaire(s)</span>`;

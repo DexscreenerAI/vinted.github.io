@@ -80,7 +80,7 @@ class EbayTest(unittest.TestCase):
         self.assertEqual(first.title, "Veste Carhartt Detroit J97 marron taille L")
         # redirection rover + lien direct avec paramètres de suivi : même annonce, adresse propre
         self.assertEqual(first.url, "https://www.ebay.fr/itm/296512345678")
-        self.assertEqual(first.key, "ebay:https://www.ebay.fr/itm/296512345678")
+        self.assertEqual(first.key, "ebay:296512345678")  # clé = numéro eBay (dédoublonnage entre sources)
         self.assertEqual(first.image, "https://i.ebayimg.com/images/g/abc/s-l225.jpg")
         self.assertEqual(first.location, "France")
 
@@ -173,7 +173,7 @@ class FakeIMAP:
         self.flagged = []
         self.searches = []
 
-    def __call__(self, host, timeout=None):
+    def __call__(self, host, timeout=None, ssl_context=None):
         return self
 
     def __enter__(self):

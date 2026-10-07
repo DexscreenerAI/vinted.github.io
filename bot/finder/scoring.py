@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 
 from .models import Deal, Listing
-from .text import contains, lot_size, normalize
+from .text import contains, find_pos, lot_size, normalize
 
 
 @dataclass
@@ -15,6 +15,26 @@ class Costs:
     packaging: float = 0.50         # emballage par colis revendu
     resale_discount: float = 0.85   # prix demandés Vinted > prix réellement vendus
     tax_rate: float = 0.134         # URSSAF 12,3 % + formation 0,1 % + versement libératoire 1 %
+
+
+# Accessoires : en tête de titre (« Étui Contax T2 », « Flash Canon pour AE-1 ») ou avant « pour <modèle> »,
+# l'annonce vend un accessoire, pas l'objet de la règle — dont la cote ne s'applique donc pas.
+ACCESSORIES = ["patch", "ecusson", "coque", "chargeur", "cable", "housse", "etui", "sacoche", "pochette",
+               "objectif", "flash", "dos dateur", "data back", "winder", "power winder", "moteur", "telecommande",
+               "batterie", "manette", "boite vide", "boite seule", "notice", "mode d emploi", "bracelet", "dragonne",
+               "courroie", "sangle", "bouchon", "pare soleil", "filtre", "pellicule", "pellicules", "sticker",
+               "autocollant", "porte cles", "lacets", "semelles", "ecran", "adaptateur", "support", "accessoire",
+               "accessoires", "piece", "pieces"]
+
+
+def is_accessory(title_norm: str, rule_words) -> bool:
+    words = [w for w in ACCESSORIES if normalize(w) not in {normalize(str(x)) for x in rule_words}]
+    head = " ".join(title_norm.split()[:2])
+    if any(contains(head, w) for w in words):
+        return True
+    pos_model = find_pos(title_norm, rule_words) if rule_words else -1
+    pos_pour = find_pos(title_norm, ["pour", "compatible", "fits"])
+    return 0 <= pos_pour < pos_model
 
 
 @dataclass
@@ -40,7 +60,10 @@ class Rule:
             return False
         if not all(contains(t, w) for w in self.all):
             return False
-        return not self.any or any(contains(t, w) for w in self.any)
+        if self.any and not any(contains(t, w) for w in self.any):
+            return False
+        flat = [x for w in self.all for x in (w if isinstance(w, list) else [w])] + list(self.any)
+        return not is_accessory(t, flat)
 
 
 @dataclass
@@ -102,7 +125,7 @@ def evaluate(listing: Listing, rule: Rule, cfg: Config, hand_delivery: Optional[
         buy_cost = price if hand else price + c.buy_fee_fixed + c.buy_fee_rate * price + c.buy_shipping
     est_resale = rule.ref_price * c.resale_discount * sold
     net_profit = est_resale * (1 - c.tax_rate) - c.packaging * sold - buy_cost
-    ratio = est_resale / buy_cost if buy_cost > 0 else float("inf")
+    ratio = est_resale / buy_cost if buy_cost > 0 else 0.0  # prix 0 € : pas de ratio (évite Infinity en JSON)
 
     if rule.max_buy is not None and price > rule.max_buy:
         notes.append(f"au-dessus du prix max ({rule.max_buy:.0f} €)")

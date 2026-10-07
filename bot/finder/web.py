@@ -75,6 +75,9 @@ def ai_check(key: str, force: bool = False):
         return {"error": "Ajoutez votre clé API Claude dans Réglages → Claude (IA)."}, 400
     try:
         import anthropic
+    except ImportError:
+        return {"error": "Module IA absent de cette version du logiciel."}, 500
+    try:
         result = ai.analyze(deal)
     except anthropic.AuthenticationError:
         return {"error": "Clé API Claude refusée : vérifiez-la dans Réglages."}, 400
@@ -108,7 +111,30 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
             pass
 
         def _local(self) -> bool:
+            # derrière un proxy ou un tunnel local, tout le monde arrive de 127.0.0.1 : on ne s'y fie pas
+            if self.headers.get("X-Forwarded-For") or self.headers.get("Forwarded"):
+                return False
             return self.client_address[0] in ("127.0.0.1", "::1")
+
+        def _trusted(self, post: bool) -> bool:
+            """Bloque les requêtes envoyées par un autre site web ouvert dans le navigateur (CSRF, DNS rebinding).
+
+            - en local (.exe), l'adresse demandée doit être 127.0.0.1 ou localhost ;
+            - un POST doit être en JSON (le navigateur demande alors l'autorisation, que l'on ne donne pas)
+              et venir de cette page ou de l'extension.
+            """
+            host_hdr = (self.headers.get("Host") or "").lower()
+            if host in ("127.0.0.1", "localhost", "::1"):
+                name = host_hdr.rsplit(":", 1)[0].strip("[]")
+                if name not in ("127.0.0.1", "localhost", "::1"):
+                    return False
+            if not post:
+                return True
+            if not (self.headers.get("Content-Type") or "").lower().startswith("application/json"):
+                return False
+            origin = (self.headers.get("Origin") or "").lower()
+            return (not origin or origin.startswith("chrome-extension://") or origin.startswith("moz-extension://")
+                    or origin == f"http://{host_hdr}")
 
         def _given_password(self) -> str:
             header = self.headers.get("Authorization", "")
@@ -237,6 +263,26 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
             self._json({"ok": True, "rule": rule, "old": old, "ref_price": value})
 
         def do_GET(self):
+            self._safe(post=False)
+
+        def do_POST(self):
+            self._safe(post=True)
+
+        def _safe(self, post: bool):
+            if not self._trusted(post):
+                self._json({"error": "Requête refusée (origine non autorisée)."}, 403)
+                return
+            try:
+                (self._post if post else self._get)()
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+            except Exception as e:  # jamais de réponse vide : la page et l'extension affichent l'erreur
+                try:
+                    self._json({"error": f"Erreur du logiciel : {e or e.__class__.__name__}"}, 500)
+                except Exception:
+                    pass
+
+        def _get(self):
             if not self._guard():
                 return
             url = urlparse(self.path)
@@ -275,11 +321,13 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
             else:
                 self._send(404, b"introuvable", "text/plain")
 
-        def do_POST(self):
+        def _post(self):
             if not self._guard():
                 return
             data = self._body()
             if self.path == "/api/status":
+                if not self._admin_guard():
+                    return
                 ok = seen.set_status(str(data.get("key", "")), str(data.get("status", "")))
                 self._json({"ok": ok}, 200 if ok else 400)
             elif self.path == "/api/ai-check":
@@ -363,7 +411,12 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
             elif self.path == "/api/test-email":
                 host = str(data.get("IMAP_HOST") or os.environ.get("IMAP_HOST", "")).strip()
                 user = str(data.get("IMAP_USER") or os.environ.get("IMAP_USER", "")).strip()
-                pwd = str(data.get("IMAP_PASSWORD") or os.environ.get("IMAP_PASSWORD", "")).strip()
+                pwd = str(data.get("IMAP_PASSWORD") or "").strip()
+                if not pwd and host == os.environ.get("IMAP_HOST", "").strip():
+                    pwd = os.environ.get("IMAP_PASSWORD", "")  # mot de passe enregistré : seulement vers le serveur enregistré
+                if not pwd:
+                    self._json({"ok": False, "error": "Saisissez le mot de passe d'application."})
+                    return
                 try:
                     n = test_login(host, user, pwd)
                     self._json({"ok": True, "count": n})
@@ -378,7 +431,13 @@ def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
             else:
                 self._send(404, b"introuvable", "text/plain")
 
-    return ThreadingHTTPServer((host, port), Handler)
+    return _Server((host, port), Handler)
+
+
+class _Server(ThreadingHTTPServer):
+    # Sous Windows, SO_REUSEADDR permet à un 2e programme d'écouter sur le même port : on le désactive
+    allow_reuse_address = not sys.platform.startswith("win")
+    daemon_threads = True
 
 
 def serve(cfg: Config, seen: Seen, port: int, env_path: str = ".env", config_path: Optional[str] = None,

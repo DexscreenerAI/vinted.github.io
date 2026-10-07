@@ -6,6 +6,7 @@
   const pattern = source === "leboncoin" ? /leboncoin\.fr\/(ad\/|vi\/|[a-z_]+\/\d{8,})/
     : source === "vinted" ? /\/items\/\d+/ : /\/itm\/\d+/;
   const isSearch = () => /\/recherche|\/c\/|\/catalog|\/sch\/|\/b\//.test(location.pathname + location.search);
+  const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const sent = new Map();   // url -> élément carte
   const results = {};       // url -> évaluation renvoyée par le logiciel
   const stats = { links: 0, detected: 0, read: 0, matched: 0, good: 0, error: "", best: null };
@@ -106,15 +107,16 @@
       chrome.storage.local.get({ current: "" }, st => { panel.querySelector("[data-zone=search]").textContent = st.current; });
     }
     let html = "";
-    if (stats.error) html += `⚠️ ${stats.error}`;
+    if (stats.error) html += `⚠️ ${esc(stats.error)}`;
     else if (!stats.detected) html += stats.links
       ? `${stats.links} annonce(s) vue(s) mais aucun prix lu. Icône de l'extension → « Copier le diagnostic ».`
       : "Aucune annonce détectée pour l'instant (faites défiler la page).";
     else html += `${stats.read} annonce(s) analysée(s) · ${stats.matched} surveillée(s) · <b>${stats.good} bonne(s) affaire(s)</b>`
-      + (stats.best ? `<br>🔥 ${stats.best.title.slice(0, 40)} : x${stats.best.ratio.toFixed(1)}, +${Math.round(stats.best.net_profit)} €` : "")
+      + (stats.best ? `<br>🔥 ${esc(stats.best.title.slice(0, 40))} : x${stats.best.ratio.toFixed(1)}, +${Math.round(stats.best.net_profit)} €` : "")
       + (stats.matched ? "" : "<br><small>Aucune ne correspond aux articles surveillés.</small>");
     panel.style.border = "2px solid " + (stats.error ? "#b4540a" : "#0a7f6f");
-    panel.querySelector("[data-zone=info]").innerHTML = html;
+    const zone = panel.querySelector("[data-zone=info]");
+    if (zone.innerHTML !== html) zone.innerHTML = html;
   }
 
   const BTN = "font:inherit;padding:6px 10px;border-radius:8px;border:1px solid #d0d0ca;background:#f6f6f3;color:#1d1d1b;cursor:pointer";
@@ -137,8 +139,10 @@
         for (const l of listings) sent.delete(l.url); // on réessaiera
         stats.detected -= listings.length;
         stats.error = (res && res.error) || "Logiciel Chasseur d'affaires non lancé";
+        retryDelay = Math.min(retryDelay * 2, 60000);
       } else {
         stats.error = "";
+        retryDelay = 1200;
         stats.read += res.received; stats.matched += res.matched; stats.good += res.good;
         for (const d of res.deals) { results[d.url] = d; badge(d.url, d); }
         stats.best = Object.values(results).filter(d => d.good).sort((a, b) => b.net_profit - a.net_profit)[0] || null;
@@ -168,8 +172,10 @@
   });
 
   scan();
+  let retryDelay = 1200;
   new MutationObserver(muts => {
-    if (muts.every(m => [...m.addedNodes].every(n => n.className === "chasseur-badge" || n === panel))) return;
-    clearTimeout(timer); timer = setTimeout(() => scan(), 1200);
+    const ours = n => n === panel || (panel && panel.contains(n)) || (n.classList && n.classList.contains("chasseur-badge"));
+    if (muts.every(m => ours(m.target) || [...m.addedNodes].every(ours))) return;
+    clearTimeout(timer); timer = setTimeout(() => scan(), stats.error ? retryDelay : 1200);
   }).observe(document.body, { childList: true, subtree: true });
 })();

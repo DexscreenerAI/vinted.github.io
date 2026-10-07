@@ -11,6 +11,7 @@ from . import ebay_source, email_source
 from .models import Listing
 from .notify import send
 from .scoring import Config, find_deals, is_good, reload_if_changed
+from .text import contains, normalize
 from .store import Seen
 
 
@@ -49,6 +50,25 @@ VINTED_FEE_RATE = 0.05
 VINTED_SHIPPING = 3.00
 
 
+_SITE_DOMAINS = {"leboncoin": ("leboncoin.fr",), "vinted": ("vinted.fr", "vinted.net"),
+                 "ebay": ("ebay.fr", "ebay.de", "ebay.it", "ebay.es", "ebay.com", "ebayimg.com")}
+_IMG_DOMAINS = ("leboncoin.fr", "vinted.net", "vinted.fr", "ebayimg.com", "ebay.com")
+
+
+def _safe_url(url: str, domains) -> str:
+    """Adresse https:// d'un domaine attendu, sinon "" (bloque les liens javascript:… injectés)."""
+    from urllib.parse import urlsplit
+    url = str(url or "").strip()[:500]
+    try:
+        parts = urlsplit(url)
+    except ValueError:
+        return ""
+    host = (parts.hostname or "").lower()
+    if parts.scheme != "https" or not any(host == d or host.endswith("." + d) for d in domains):
+        return ""
+    return url
+
+
 def import_listings(items: list, source: str, cfg: Config, seen: Seen) -> dict:
     """Annonces envoyées par le bouton « Analyser cette page » (page ouverte par l'utilisateur).
 
@@ -64,11 +84,16 @@ def import_listings(items: list, source: str, cfg: Config, seen: Seen) -> dict:
         title = str(it.get("title") or "").strip()[:200]
         if not title or price <= 0:
             continue
-        listing = Listing(title=title, price=price, url=str(it.get("url") or "")[:500],
-                          image=str(it.get("image") or "")[:500], location=str(it.get("location") or "")[:100],
-                          source=source)
+        url = _safe_url(it.get("url"), _SITE_DOMAINS.get(source, ()))
+        if not url:
+            continue
+        listing = Listing(title=title, price=price, url=url, image=_safe_url(it.get("image"), _IMG_DOMAINS),
+                          location=str(it.get("location") or "")[:100], source=source)
         if source == "vinted":
             listing.buy_cost = round(price + VINTED_FEE_FIXED + VINTED_FEE_RATE * price + VINTED_SHIPPING, 2)
+        elif source == "ebay":  # frais de protection acheteurs eBay + port moyen (inconnu sur la page de résultats)
+            from .ebay_source import buyer_protection_fee
+            listing.buy_cost = round(price + buyer_protection_fee(price) + cfg.costs.buy_shipping, 2)
         best = best_deal(listing, cfg)
         if best is None:
             continue
@@ -93,6 +118,8 @@ def process(listings, cfg: Config, seen: Seen) -> int:
     """Évalue et enregistre les annonces jamais vues ; renvoie le nombre de bonnes affaires."""
     found = 0
     for listing in listings:
+        if not listing.price or listing.price <= 0:
+            continue
         if not seen.add(listing.key, listing.title, listing.price):
             continue
         best = best_deal(listing, cfg)
@@ -101,8 +128,11 @@ def process(listings, cfg: Config, seen: Seen) -> int:
         deal, good = best
         seen.save_deal(deal, good)
         if good:
-            send(deal)
             found += 1
+            try:
+                send(deal)
+            except Exception as e:  # une notification ratée ne doit pas faire perdre les annonces suivantes
+                print(f"[notification] {e}", file=sys.stderr)
     return found
 
 
@@ -134,7 +164,15 @@ def best_deal(listing: Listing, cfg: Config):
     scored = [(d, is_good(d, rules[d.rule_name], cfg)) for d in find_deals(listing, cfg, only_good=False)]
     if not scored:
         return None
-    return max(scored, key=lambda x: (x[1], x[0].ratio))
+    # La règle la plus précise (le plus de mots-clés trouvés) puis la plus prudente : un jeu Game Boy
+    # ne doit pas être coté comme une console, ni un jeu N64 comme une Nintendo 64.
+    t = normalize(listing.title)
+
+    def specificity(rule):
+        words = [x for w in rule.all for x in (w if isinstance(w, list) else [w])] + list(rule.any)
+        return sum(1 for w in words if contains(t, w))
+
+    return max(scored, key=lambda x: (x[1], specificity(rules[x[0].rule_name]), -x[0].est_resale))
 
 
 def loop(cfg: Config, seen: Seen, every: Optional[int], config_path: Optional[str] = None) -> int:
