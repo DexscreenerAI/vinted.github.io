@@ -45,6 +45,9 @@
   .cathead { grid-column: 1 / -1; margin: 10px 0 0; font-size: 15px; display: flex; gap: 8px; align-items: baseline; }
   .cathead span { color: var(--muted); font-weight: normal; font-size: 13px; }
   .ai:empty { display: none; }
+  label.inline { flex-direction: row; align-items: center; gap: 6px; color: var(--text); }
+  label.inline input { width: auto; }
+  .aipend { font-size: 13px; color: var(--muted); }
   .ai { border-radius: 10px; padding: 8px 10px; font-size: 13px; background: var(--bg); border-left: 4px solid var(--muted); }
   .ai.v-acheter { border-left-color: var(--accent); }
   .ai.v-passer { border-left-color: #c0392b; }
@@ -419,8 +422,11 @@
     <details>
       <summary class="help">Claude (IA) — avis sur les photos (facultatif, payant à l'usage)</summary>
       <p class="help">Clé API à créer sur <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>
-        (ajoutez quelques euros de crédit). Chaque avis coûte environ 2 à 5 centimes et n'est lancé que quand vous cliquez sur « 🤖 Avis IA ».</p>
+        (ajoutez quelques euros de crédit). Claude Haiku regarde la photo et l'annonce de chaque bonne affaire : bon modèle ?
+        état très bon ou neuf ? contrefaçon ? vraie valeur ? Environ 0,05 centime par avis.</p>
       <label>Clé API Claude<input name="ANTHROPIC_API_KEY" type="password" autocomplete="off" placeholder="sk-ant-..."></label>
+      <label class="inline"><input type="checkbox" id="aiAuto" checked> Analyser automatiquement chaque bonne affaire avant de l'afficher</label>
+      <label>Nombre maximum d'avis par jour<input name="AI_DAILY_LIMIT" type="number" min="0" step="10" placeholder="300"></label>
     </details>
     <details>
       <summary class="help">Telegram (facultatif)</summary>
@@ -586,6 +592,7 @@ function render() {
         </div>${sold ? `<div class="meta">Estimation de départ : revente ${euro(d.est_resale)}, bénéfice ${euro(d.net_profit)}</div>` : ''}
         ${d.notes.map(n => `<div class="note">⚠ ${esc(n)}</div>`).join('')}
         <a class="vinted" href="https://www.vinted.fr/catalog?search_text=${encodeURIComponent(d.title)}" target="_blank" rel="noopener">Vérifier les prix sur Vinted →</a>
+        ${d.ai_pending ? '<div class="aipend">🤖 Claude analyse la photo et l\'annonce…</div>' : ''}
         <div class="ai ${d.ai ? 'v-' + d.ai.verdict : ''}" data-ai="${k}">${aiBlock(d.ai)}</div>
       </div>
       <div class="actions">
@@ -664,6 +671,8 @@ async function openSettingsDialog() {
   for (const k of ['IMAP_USER', 'IMAP_HOST', 'EBAY_CLIENT_ID', 'TELEGRAM_CHAT_ID']) sf[k].value = data[k] || '';
   sf.IMAP_PASSWORD.value = ''; sf.TELEGRAM_BOT_TOKEN.value = ''; sf.EBAY_CLIENT_SECRET.value = '';
   sf.ANTHROPIC_API_KEY.value = '';
+  sf.AI_DAILY_LIMIT.value = data.AI_DAILY_LIMIT || '';
+  aiAuto.checked = data.AI_AUTO !== '0';
   sf.ANTHROPIC_API_KEY.placeholder = data.ANTHROPIC_API_KEY_set ? 'déjà enregistrée' : 'sk-ant-...';
   sf.EBAY_CLIENT_SECRET.placeholder = data.EBAY_CLIENT_SECRET_set ? 'déjà enregistré' : '';
   sf.IMAP_PASSWORD.placeholder = data.IMAP_PASSWORD_set ? 'déjà enregistré (laisser vide pour garder)' : '';
@@ -671,7 +680,8 @@ async function openSettingsDialog() {
   testResult.textContent = '';
   settings.showModal();
 }
-const formValues = () => Object.fromEntries(['IMAP_USER', 'IMAP_PASSWORD', 'IMAP_HOST', 'EBAY_CLIENT_ID', 'EBAY_CLIENT_SECRET', 'ANTHROPIC_API_KEY', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID'].map(k => [k, sf[k].value.trim()]));
+const formValues = () => Object.assign(Object.fromEntries(['IMAP_USER', 'IMAP_PASSWORD', 'IMAP_HOST', 'EBAY_CLIENT_ID', 'EBAY_CLIENT_SECRET', 'ANTHROPIC_API_KEY', 'AI_DAILY_LIMIT', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID'].map(k => [k, sf[k].value.trim()])),
+  { AI_AUTO: aiAuto.checked ? '1' : '0' });
 const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }).then(r => r.json());
 
 testEmail.addEventListener('click', async () => {
@@ -826,6 +836,11 @@ saleForm.addEventListener('submit', async e => {
 
 function renderStatus(st) {
   renderOnboard();
+  if (st && st.ai_note && !st.error && !st.config_error) {
+    banner.innerHTML = `<div class="banner warn"><span class="grow">🤖 ${esc(st.ai_note)}</span>
+      <button class="btn" onclick="openSettingsDialog()">Réglages</button></div>`;
+    return;
+  }
   if (st && st.error && /^Aucune source/.test(st.error) && !st.config_error) { banner.innerHTML = ''; return; }
   if (st && (st.error || st.config_error)) {
     banner.innerHTML = `<div class="banner warn"><span class="grow">⚠ ${esc(st.config_error || st.error)}</span>
@@ -1046,7 +1061,7 @@ function aiBlock(a) {
   const list = (title, items) => items && items.length ? `<small>${title}</small><ul>${items.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
   return `<b class="v">🤖 ${VERDICTS[a.verdict] || esc(a.verdict)} <small>(confiance ${esc(a.confiance)})</small></b>
     ${esc(a.resume)}
-    <br><small>Modèle : ${a.correspond_au_modele ? 'conforme' : '<b>douteux</b>'} · Authenticité : ${esc(a.authenticite)} · État : ${esc(a.etat)}
+    <br><small>Modèle : ${a.correspond_au_modele ? 'conforme' : '<b>douteux</b>'} · Authenticité : ${esc(a.authenticite)} · État : ${esc(a.etat)}${a.etat_note ? ' (' + esc(({neuf: 'neuf', tres_bon: 'très bon', bon: 'bon', usage: 'usagé', mauvais: 'mauvais', inconnu: 'non visible'})[a.etat_note] || a.etat_note) + ')' : ''}
     · Revente estimée par l'IA : ${euro(a.revente_estimee)}${a.photo_analysee ? '' : ' · <b>sans photo</b>'}</small>
     ${list('Signaux d\'alerte', a.signaux_alerte)}${list('À demander au vendeur', a.questions_vendeur)}`;
 }

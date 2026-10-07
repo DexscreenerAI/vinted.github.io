@@ -99,12 +99,7 @@ def import_listings(items: list, source: str, cfg: Config, seen: Seen) -> dict:
             continue
         deal, good = best
         if seen.add(listing.key, listing.title, listing.price):
-            seen.save_deal(deal, good)
-            if good:
-                try:
-                    send(deal)
-                except Exception as e:  # une notification ratée ne doit pas bloquer l'analyse
-                    print(f"[notification] {e}", file=sys.stderr)
+            register(deal, good, seen)
         results.append({"title": title, "price": price, "url": listing.url, "image": listing.image,
                         "rule": deal.rule_name, "category": deal.category, "ratio": deal.ratio,
                         "net_profit": deal.net_profit, "buy_cost": deal.buy_cost, "est_resale": deal.est_resale,
@@ -112,6 +107,30 @@ def import_listings(items: list, source: str, cfg: Config, seen: Seen) -> dict:
     results.sort(key=lambda r: (r["good"], r["ratio"]), reverse=True)
     return {"received": len(items), "matched": len(results), "good": sum(r["good"] for r in results),
             "source": source, "deals": results}
+
+
+def notify_good(deal_row_or_deal) -> None:
+    """Notification (Telegram ou console) d'une bonne affaire ; une erreur ne doit rien bloquer."""
+    try:
+        if isinstance(deal_row_or_deal, dict):  # affaire validée par l'IA (ligne de la base)
+            d = deal_row_or_deal
+            print(f"[bonne affaire] {d['title']} : {d['price']} € → x{d['ratio']}, +{d['net_profit']} € ({d['url']})")
+            return
+        send(deal_row_or_deal)
+    except Exception as e:
+        print(f"[notification] {e}", file=sys.stderr)
+
+
+def register(deal, good: bool, seen: Seen) -> None:
+    """Enregistre une nouvelle affaire. Si l'avis IA automatique est actif, une bonne affaire attend le
+    verdict de Claude avant d'apparaître dans « Bonnes affaires » et d'être notifiée."""
+    from . import ai
+    seen.save_deal(deal, good)
+    if good and ai.auto_enabled():
+        seen.set_ai_pending(deal.listing.key, True)
+        ai.enqueue(deal.listing.key)
+    elif good:
+        notify_good(deal)
 
 
 def process(listings, cfg: Config, seen: Seen) -> int:
@@ -126,13 +145,9 @@ def process(listings, cfg: Config, seen: Seen) -> int:
         if best is None:
             continue
         deal, good = best
-        seen.save_deal(deal, good)
+        register(deal, good, seen)
         if good:
             found += 1
-            try:
-                send(deal)
-            except Exception as e:  # une notification ratée ne doit pas faire perdre les annonces suivantes
-                print(f"[notification] {e}", file=sys.stderr)
     return found
 
 
@@ -174,6 +189,9 @@ def rescore(cfg: Config, seen: Seen) -> tuple:
             removed += 1
         else:
             seen.update_score(d["key"], *best)
+            if d.get("ai"):  # l'avis IA déjà donné reste valable : on le réapplique
+                import json
+                seen.apply_ai(d["key"], json.loads(d["ai"]), cfg)
             updated += 1
     return updated, removed
 

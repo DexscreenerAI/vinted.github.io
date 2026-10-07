@@ -86,6 +86,9 @@ def main(argv=None) -> int:
     if args.cmd == "web":
         from .web import serve
         threading.Thread(target=loop, args=(cfg, seen, args.loop, args.config), daemon=True).start()
+        from . import ai
+        from .core import notify_good
+        ai.start_worker(seen, cfg, notify_good)  # avis IA automatique sur les bonnes affaires
         serve(cfg, seen, args.port, env_path=".env", config_path=args.config)
         return 0
     return loop(cfg, seen, args.loop)

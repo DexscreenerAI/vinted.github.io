@@ -37,7 +37,8 @@ class Seen:
         )
         cols = {r[1] for r in self.db.execute("PRAGMA table_info(deals)")}
         for col, decl in (("category", "TEXT DEFAULT 'Autre'"), ("source", "TEXT DEFAULT 'leboncoin'"),
-                          ("ends_at", "TEXT DEFAULT ''"), ("bought_at", "TEXT"), ("ai", "TEXT")):
+                          ("ends_at", "TEXT DEFAULT ''"), ("bought_at", "TEXT"), ("ai", "TEXT"),
+                          ("ai_pending", "INTEGER DEFAULT 0")):
             if col not in cols:  # base créée par une version précédente
                 self.db.execute(f"ALTER TABLE deals ADD COLUMN {col} {decl}")
         self.db.commit()
@@ -145,6 +146,43 @@ class Seen:
         with self.lock:
             r = self.db.execute("SELECT * FROM deals WHERE key = ?", (key,)).fetchone()
         return dict(r) if r else None
+
+    def set_ai_pending(self, key: str, pending: bool) -> None:
+        """En attente de l'avis IA : l'affaire reste hors de « Bonnes affaires » (et sans notification) jusqu'au
+        verdict. pending=False sans verdict (IA indisponible) : on revient au jugement des règles."""
+        with self.lock:
+            if pending:
+                self.db.execute("UPDATE deals SET ai_pending = 1, good = 0 WHERE key = ?", (key,))
+            else:
+                self.db.execute("UPDATE deals SET ai_pending = 0, good = 1 WHERE key = ? AND ai_pending = 1", (key,))
+            self.db.commit()
+
+    def apply_ai(self, key: str, result: dict, cfg) -> bool:
+        """Applique le verdict de l'IA : revente revue à la baisse si elle l'estime moins, affaire retirée des
+        bonnes affaires si « à éviter », mauvais modèle ou état insuffisant. Renvoie True si elle (re)devient bonne."""
+        from .scoring import CONDITION_RANK
+        d = self.get_deal(key)
+        if not d:
+            return False
+        self.set_ai(key, result)
+        est = d["est_resale"] or 0
+        ai_est = result.get("revente_estimee") or 0
+        if ai_est > 0:
+            est = min(est, ai_est)
+        cost = d["buy_cost"] or 0
+        pieces = d["pieces"] or 1
+        profit = round(est * (1 - cfg.costs.tax_rate) - cfg.costs.packaging * pieces - cost, 2)
+        ratio = round(est / cost, 2) if cost > 0 else 0.0
+        need = CONDITION_RANK.get(getattr(cfg, "etat_minimum", "tres_bon"), 3) if cfg.etat_minimum != "tous" else 0
+        got = CONDITION_RANK.get(result.get("etat_note") or "inconnu")
+        etat_ok = got is None or need is None or got >= need  # état inconnu : « à vérifier », pas exclu
+        good = (result.get("verdict") != "passer" and result.get("correspond_au_modele", True) and etat_ok
+                and ratio >= cfg.min_ratio and profit >= cfg.min_profit)
+        with self.lock:
+            self.db.execute("UPDATE deals SET est_resale = ?, net_profit = ?, ratio = ?, good = ?, ai_pending = 0"
+                            " WHERE key = ?", (round(est, 2), profit, ratio, int(good), key))
+            self.db.commit()
+        return good
 
     def set_ai(self, key: str, result: dict) -> None:
         """Mémorise l'avis de Claude sur une affaire (évite de repayer une analyse)."""

@@ -1,5 +1,6 @@
 """Règles de recherche (config.yaml) et calcul du multiplicateur / bénéfice net."""
 
+import re
 from dataclasses import dataclass, field
 from typing import List, Optional
 
@@ -15,6 +16,27 @@ class Costs:
     packaging: float = 0.50         # emballage par colis revendu
     resale_discount: float = 0.85   # prix demandés Vinted > prix réellement vendus
     tax_rate: float = 0.134         # URSSAF 12,3 % + formation 0,1 % + versement libératoire 1 %
+
+
+# Défauts annoncés dans le titre (ignorés s'ils sont niés : « sans tache », « aucun défaut »)
+DEFECTS = ["abime", "abimee", "abimes", "tache", "taches", "tachee", "troue", "trou", "trous", "dechire", "dechiree",
+           "raye", "rayee", "rayures", "rayure", "fissure", "fissuree", "casse", "cassee", "etat moyen", "etat correct",
+           "mauvais etat", "etat d usage", "a restaurer", "defaut", "defauts", "jauni", "jaunie", "decolore", "bouloche",
+           "usure", "tres use", "use", "manque", "incomplet", "incomplete", "pour pieces"]
+_NEGATIONS = ("sans", "aucun", "aucune", "pas de", "zero", "0", "ni", "pas d", "jamais")
+CONDITION_RANK = {"neuf": 4, "tres_bon": 3, "bon": 2, "usage": 1, "mauvais": 0, "inconnu": None}
+
+
+def has_defect(title_norm: str) -> bool:
+    for w in DEFECTS:
+        pos = find_pos(title_norm, w)
+        while pos >= 0:
+            before = title_norm[max(0, pos - 12):pos]
+            if not any(re.search(rf"(?<![a-z]){n} $", before) for n in _NEGATIONS):
+                return True
+            nxt = re.search(rf"(?<![a-z0-9]){re.escape(normalize(w))}(?![a-z0-9])", title_norm[pos + 1:])
+            pos = pos + 1 + nxt.start() if nxt else -1
+    return False
 
 
 # Accessoires : en tête de titre (« Étui Contax T2 », « Flash Canon pour AE-1 ») ou avant « pour <modèle> »,
@@ -84,6 +106,7 @@ class Config:
     min_profit: float = 15.0
     exclude: List[str] = field(default_factory=list)
     hand_delivery: bool = False     # True = on suppose une remise en main propre (pas de frais d'achat)
+    etat_minimum: str = "tres_bon"  # neuf | tres_bon | bon | tous
 
     @classmethod
     def from_dict(cls, data: dict) -> "Config":
@@ -96,6 +119,7 @@ class Config:
             min_profit=data.get("min_profit", 15.0),
             exclude=data.get("exclude", []),
             hand_delivery=data.get("hand_delivery", False),
+            etat_minimum=str(data.get("etat_minimum", "tres_bon")),
         )
 
 
@@ -158,6 +182,8 @@ def is_good(deal: Deal, rule: Rule, cfg: Config) -> bool:
 
 def find_deals(listing: Listing, cfg: Config, only_good: bool = True,
                hand_delivery: Optional[bool] = None) -> List[Deal]:
+    if cfg.etat_minimum in ("neuf", "tres_bon") and has_defect(normalize(listing.title)):
+        return []  # l'utilisateur n'achète que du très bon état
     """Toutes les règles qui correspondent à l'annonce, meilleure affaire en premier."""
     deals = []
     for rule in cfg.rules:

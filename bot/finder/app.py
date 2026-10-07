@@ -113,6 +113,9 @@ def launch() -> int:
             raise RuntimeError("aucun port libre entre 8000 et 8019")
 
         threading.Thread(target=loop, args=(cfg, seen, 120, "config.yaml"), daemon=True).start()
+        from . import ai
+        from .core import notify_good
+        ai.start_worker(seen, cfg, notify_good)  # avis IA automatique sur les bonnes affaires
         url = f"http://localhost:{server.server_address[1]}"
         print("=" * 60)
         print("  Chasseur d'affaires Leboncoin -> Vinted")

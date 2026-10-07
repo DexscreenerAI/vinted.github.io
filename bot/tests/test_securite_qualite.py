@@ -117,13 +117,16 @@ class MiseAJourReglesTest(unittest.TestCase):
         from finder.sales import set_ref_price, upgrade_config
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "config.yaml"
-            old = (ROOT / "config.example.yaml").read_text(encoding="utf-8").replace("config_version: 3", "config_version: 2")
+            import re
+            bundled_version = yaml.safe_load((ROOT / "config.example.yaml").read_text(encoding="utf-8"))["config_version"]
+            old = re.sub(r"config_version: \d+", "config_version: 2", (ROOT / "config.example.yaml").read_text(encoding="utf-8"))
             p.write_text(old.replace("min_profit: 10", "min_profit: 15"), encoding="utf-8")
             set_ref_price(str(p), "Olympus mju II", 205)
             self.assertTrue(upgrade_config(str(p), str(ROOT / "config.example.yaml")))
             new = yaml.safe_load(p.read_text(encoding="utf-8"))
             rules = {r["name"]: r for r in new["rules"]}
-            self.assertEqual((new["config_version"], new["min_profit"], rules["Olympus mju II"]["ref_price"]), (3, 15, 205))
+            self.assertEqual((new["config_version"], new["min_profit"], rules["Olympus mju II"]["ref_price"]),
+                             (bundled_version, 15, 205))
             self.assertTrue((Path(d) / "config.ancien-2.yaml").exists())
             self.assertFalse(upgrade_config(str(p), str(ROOT / "config.example.yaml")))  # déjà à jour
 
@@ -137,6 +140,57 @@ class MiseAJourReglesTest(unittest.TestCase):
             seen.save_deal(*best_deal(l, old))
         self.assertEqual(rescore(CFG, seen), (1, 1))
         self.assertEqual([d["title"] for d in seen.deals("toutes")], ["Game Boy Color violette"])
+
+
+class AvisIaAutoTest(unittest.TestCase):
+    """Une bonne affaire attend le verdict de Claude ; « à éviter » ou état insuffisant = retirée des bonnes affaires."""
+
+    def run_case(self, verdict):
+        import os
+        import time
+        from unittest import mock
+        from finder import ai
+        from finder.core import register
+        seen, notified = Seen(":memory:"), []
+        listing = Listing("Veste Carhartt Detroit vintage", 20, "https://www.leboncoin.fr/ad/vetements/1234567890")
+        deal, good = best_deal(listing, CFG)
+        self.assertTrue(good)
+        with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "x", "AI_AUTO": "1"}), \
+                mock.patch.object(ai, "analyze", lambda d, e="tres_bon": dict(verdict)), \
+                mock.patch.object(ai, "_started", __import__("threading").Event()), \
+                mock.patch.object(ai, "_queue", __import__("queue").Queue()):
+            ai.start_worker(seen, CFG, notified.append)
+            seen.add(listing.key, listing.title, 20)
+            register(deal, good, seen)
+            self.assertEqual(seen.deals("bonnes"), [])  # en attente du verdict
+            for _ in range(50):
+                d = seen.get_deal(listing.key)
+                if d and not d["ai_pending"]:
+                    break
+                time.sleep(0.05)
+        return seen.deals("bonnes"), notified
+
+    BASE = {"confiance": "moyenne", "resume": "", "correspond_au_modele": True, "authenticite": "", "etat": "",
+            "revente_estimee": 80, "signaux_alerte": [], "questions_vendeur": []}
+
+    def test_verdict_acheter(self):
+        bonnes, notified = self.run_case(dict(self.BASE, verdict="acheter", etat_note="tres_bon"))
+        self.assertEqual(len(bonnes), 1)
+        self.assertEqual(len(notified), 1)
+
+    def test_etat_insuffisant(self):
+        bonnes, notified = self.run_case(dict(self.BASE, verdict="acheter", etat_note="usage"))
+        self.assertEqual((bonnes, notified), ([], []))
+
+    def test_verdict_passer(self):
+        bonnes, _ = self.run_case(dict(self.BASE, verdict="passer", etat_note="tres_bon"))
+        self.assertEqual(bonnes, [])
+
+
+class EtatTitreTest(unittest.TestCase):
+    def test_defauts_ecartes(self):
+        self.assertIsNone(best_deal(Listing("Veste Carhartt Detroit tachée", 20), CFG))
+        self.assertIsNotNone(best_deal(Listing("Veste Carhartt Detroit sans tache", 20), CFG))
 
 
 class SyntaxeJsTest(unittest.TestCase):

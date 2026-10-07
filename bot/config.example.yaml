@@ -11,11 +11,12 @@
 #   pour les fautes de frappe courantes (annonces moins vues, donc moins chères). Chaque requête coûte du quota.
 # Règle d'or : jamais une marque seule, toujours un modèle précis (une marque seule se vend 20-30 €).
 
-config_version: 3     # mis à jour automatiquement par le logiciel (vos prix et réglages sont conservés)
+config_version: 5     # mis à jour automatiquement par le logiciel (vos prix et réglages sont conservés)
 
 min_ratio: 2.2        # multiplicateur minimum, frais d'achat et port INCLUS (≈ x2,5 sur le prix affiché)
 min_profit: 10        # bénéfice net minimum en euros (après cotisations, impôt, emballage)
 hand_delivery: false  # false = on compte les frais d'achat sécurisé + port Leboncoin (prudent)
+etat_minimum: tres_bon  # neuf | tres_bon | bon | tous : annonces signalant un défaut écartées, et vérifié par l'IA
 
 costs:
   buy_fee_fixed: 0.70
@@ -389,6 +390,271 @@ rules:
     none: [reproduction, gx, vmax, ex, celebration, 2016, evolution]
     ref_price: 150
     max_buy: 60
+
+  # ============ Pokémon : cartes scellées et objets (recherche d'octobre 2026, prix prudents) ============
+  - name: ETB Évolutions Prismatiques scellé
+    category: Cartes Pokémon
+    all: [pokemon, [evolutions prismatiques, prismatic evolutions, ev8.5, ev08.5], [etb, coffret dresseur, dresseur d elite]]
+    any: [scelle, neuf, sous blister, jamais ouvert]
+    none: [vide, ouvert, sans cartes, boite seule, boite vide, proxy, fake]
+    ref_price: 95
+    max_buy: 38
+  - name: ETB Pokémon 151 scellé
+    category: Cartes Pokémon
+    all: [pokemon, [151, ev3.5], [etb, coffret dresseur, dresseur d elite]]
+    any: [scelle, neuf, sous blister, jamais ouvert]
+    none: [vide, ouvert, sans cartes, boite seule, boite vide, proxy, fake]
+    ref_price: 90
+    max_buy: 36
+  - name: ETB ancien scellé (Soleil et Lune / Épée et Bouclier)
+    category: Cartes Pokémon
+    all: [pokemon, [etb, coffret dresseur, dresseur d elite], [soleil et lune, epee et bouclier, evolution celeste, destinees radieuses, eclipse cosmique, tempete celeste, origine perdue, zenith supreme, styles de combat, astres radieux, voltage eclatant, poing de fusion, harmonie des esprits, duo de choc]]
+    any: [scelle, neuf, sous blister, jamais ouvert]
+    none: [vide, ouvert, sans cartes, boite seule, boite vide, proxy, fake]
+    ref_price: 90
+    max_buy: 36
+  - name: Coffret Dresseur d'Élite Pokémon scellé
+    category: Cartes Pokémon
+    all: [pokemon, [etb, coffret dresseur, dresseur d elite]]
+    any: [scelle, neuf, sous blister]
+    none: [vide, ouvert, sans cartes, boite seule, boite vide, proxy]
+    ref_price: 45
+    max_buy: 16
+  - name: Display 36 boosters Pokémon scellée
+    category: Cartes Pokémon
+    all: [pokemon, [display, booster box, boite de 36, 36 boosters]]
+    any: [scelle, neuf, sous blister, jamais ouvert]
+    none: [vide, display vide, ouvert, entame, incomplet, presentoir seul, proxy, fake]
+    ref_price: 140
+    max_buy: 59
+  - name: Bundle 6 boosters 151 / Évolutions Prismatiques
+    category: Cartes Pokémon
+    all: [pokemon, [bundle, lot de 6 boosters, 6 boosters], [151, evolutions prismatiques, prismatic]]
+    any: [scelle, neuf, sous blister]
+    none: [ouvert, vide, pese, proxy, fake]
+    ref_price: 45
+    max_buy: 16
+  - name: Coffret Ultra / Super Premium Pokémon scellé
+    category: Cartes Pokémon
+    all: [pokemon, [ultra premium, super premium, upc, collection premium dracaufeu]]
+    any: [scelle, neuf, sous blister]
+    none: [vide, ouvert, sans cartes, boite seule, proxy]
+    ref_price: 120
+    max_buy: 50
+  - name: ETB Pokémon GO scellé
+    category: Cartes Pokémon
+    all: [pokemon go, [etb, coffret dresseur, dresseur d elite]]
+    any: [scelle, neuf, sous blister]
+    none: [vide, ouvert, boite seule, jeu mobile, compte]
+    ref_price: 50
+    max_buy: 18
+  - name: Carte holo 1ère édition WOTC
+    category: Cartes Pokémon
+    all: [pokemon, [edition 1, 1ere edition, premiere edition, 1st edition], [holo, holographique]]
+    any: [wizards, wotc, jungle, fossile, set de base, team rocket, 1999, 2000]
+    none: [proxy, fake, replica, reproduction, custom, celebrations, 25 ans, chinoise]
+    ref_price: 40
+    max_buy: 13
+  - name: Booster WOTC scellé (1999-2002)        # beaucoup de boosters réemballés : vérifier avant d'acheter
+    category: Cartes Pokémon
+    all: [pokemon, booster, [wizards, wotc, set de base, jungle, fossile, team rocket, neo genesis]]
+    any: [scelle, jamais ouvert, sous blister]
+    none: [vide, ouvert, pese, reseal, proxy, fake, emballage seul, celebrations]
+    ref_price: 180
+    max_buy: 77
+  - name: Pocket Pikachu Nintendo 1998
+    category: Pokémon (objets)
+    all: [[pocket pikachu, pikachu podometre, podometre pikachu]]
+    any: [nintendo, 1998, fonctionne, tamagotchi]
+    none: [hs, en panne, ne fonctionne pas, pour pieces, coque seule]
+    ref_price: 35
+    max_buy: 11
+  - name: Peluche Pikachu jumbo 1999 Hasbro/Tomy
+    category: Pokémon (objets)
+    all: [pikachu, peluche, [1999, hasbro, tomy]]
+    any: [geante, grande, jumbo, 40 cm, 45 cm]
+    none: [contrefacon, imitation, sans marque, recente, pokemon center]
+    ref_price: 55
+    max_buy: 20
+  - name: Lot figurines Pokémon Tomy 1998-2000
+    category: Pokémon (objets)
+    all: [pokemon, [figurines, figurine], [tomy, 1998, 1999, 2000, cgtsj]]
+    any: [lot, vintage]
+    none: [jazwares, kidrobot, mcdonald, happy meal, kinder, gashapon recent, impression 3d]
+    lot: true
+    ref_price: 5
+    default_pieces: 15
+    sellable_rate: 0.8
+    max_buy: 22
+  - name: Pokémon HeartGold / SoulSilver DS     # beaucoup de faux : étiquette brillante, pas de code NTR au dos
+    category: Pokémon (objets)
+    all: [pokemon, [heartgold, soulsilver, heart gold, soul silver]]
+    any: [ds, nintendo, cartouche, complet]
+    none: [boite seule, boite vide, notice seule, fake, copie, repro, r4, pokewalker seul]
+    ref_price: 55
+    max_buy: 20
+  - name: Pokémon Platine DS
+    category: Pokémon (objets)
+    all: [pokemon, [platine, platinum], [ds, nintendo]]
+    none: [boite seule, boite vide, notice seule, fake, copie, repro, r4, carte]
+    ref_price: 40
+    max_buy: 13
+  - name: Pokémon Noir 2 / Blanc 2 DS
+    category: Pokémon (objets)
+    all: [pokemon, [noire 2, noir 2, blanche 2, blanc 2]]
+    any: [ds, nintendo, cartouche]
+    none: [boite seule, boite vide, notice seule, fake, copie, repro, r4, carte]
+    ref_price: 50
+    max_buy: 18
+  - name: Pokémon Colosseum / XD GameCube
+    category: Pokémon (objets)
+    all: [pokemon, [colosseum, souffle des tenebres]]
+    any: [gamecube, game cube, ngc]
+    none: [boite seule, boite vide, notice seule, copie, repro]
+    ref_price: 55
+    max_buy: 20
+  - name: Pokémon Stadium 2 N64
+    category: Pokémon (objets)
+    all: [pokemon stadium 2]
+    any: [n64, nintendo 64, cartouche]
+    none: [boite seule, notice seule, transfer pak seul, copie, repro]
+    ref_price: 30
+    max_buy: 9
+  - name: Pokémon Trading Card Game Game Boy
+    category: Pokémon (objets)
+    all: [pokemon, [trading card game, jeu de cartes a collectionner], game boy]
+    none: [boite seule, notice seule, copie, repro, carte pokemon]
+    ref_price: 28
+    max_buy: 8
+  - name: Console N64 édition Pikachu
+    category: Pokémon (objets)
+    all: [[nintendo 64, n64], pikachu]
+    any: [console, edition]
+    none: [coque seule, en panne, hs, pour pieces, jeu seul, manette seule]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 100
+    max_buy: 41
+  - name: Game Boy Color édition Pokémon          # coques de remplacement fréquentes
+    category: Pokémon (objets)
+    all: [game boy color, [edition pokemon, pokemon edition, pikachu]]
+    none: [reshell, coque refaite, coque neuve, ips, custom, hs, pour pieces, jeu seul]
+    none_unless: {words: [jeu, jeux, cartouche, cartouches], unless: [console, pack, coffret, avec]}
+    ref_price: 80
+    max_buy: 31
+
+  # ============ Figurines de collection ============
+  - name: Lot figurines Warhammer
+    category: Figurines
+    all: [[warhammer, games workshop, space marine, age of sigmar], [lot, figurines]]
+    none: [impression 3d, 3d print, imprime, resine, proxy, compatible, custom, livre, roman, jeu video, carte]
+    lot: true
+    ref_price: 3
+    default_pieces: 20
+    sellable_rate: 0.7
+    max_buy: 14
+  - name: Boîte Warhammer scellée (Combat Patrol / starter)
+    category: Figurines
+    all: [warhammer, [combat patrol, patrouille, boite de base, starter, boite de demarrage, spearhead, fer de lance]]
+    any: [scelle, neuf, sous blister, jamais ouvert, grappes]
+    none: [monte, peint, ouvert, incomplet, proxy, impression 3d]
+    ref_price: 70
+    max_buy: 27
+  - name: Lot figurines Star Wars Kenner vintage
+    category: Figurines
+    all: [star wars, [kenner, meccano, trilogo, clipper]]
+    any: [1977, 1978, 1979, 1980, 1981, 1982, 1983, 1984, 1985, vintage, ancienne, lot]
+    none: [hasbro, 1995, 1996, 1997, 1998, black series, vintage collection, reedition, lego, replica, arme seule]
+    lot: true
+    ref_price: 10
+    default_pieces: 10
+    sellable_rate: 0.8
+    max_buy: 31
+  - name: Lot Maîtres de l'Univers Mattel années 80
+    category: Figurines
+    all: [[maitres de l univers, masters of the universe, musclor, he man, skeletor], [mattel, vintage, 1982, 1983, 1984, 1985, 1986, annees 80]]
+    none: [origins, masterverse, classics, 200x, 2002, revelation, funko, reedition, mega construx]
+    lot: true
+    ref_price: 12
+    default_pieces: 6
+    sellable_rate: 0.8
+    max_buy: 28
+  - name: Transformers G1 vintage
+    category: Figurines
+    all: [transformers, [g1, generation 1, 1984, 1985, 1986, hasbro vintage, takara vintage]]
+    none: [reissue, reedition, 40th, studio series, legacy, ko, contrefacon, film, dvd, cyberverse]
+    lot: true
+    ref_price: 15
+    default_pieces: 5
+    sellable_rate: 0.8
+    max_buy: 29
+  - name: Chevaliers du Zodiaque Bandai 1987 avec armure
+    category: Figurines
+    all: [[chevaliers du zodiaque, chevalier du zodiaque, saint seiya], bandai, [1987, 1988, 1989, vintage, armure]]
+    none: [myth cloth, 2003, reedition, incomplet, manque, sans armure, dvd, manga]
+    ref_price: 35
+    max_buy: 11
+  - name: Lot Polly Pocket Bluebird vintage
+    category: Figurines
+    all: [polly pocket, [bluebird, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, vintage, ancienne]]
+    none: [mattel, poupee mannequin, 2000, 2005, 2010, recente, reedition, tiny compact]
+    lot: true
+    ref_price: 12
+    default_pieces: 5
+    sellable_rate: 0.8
+    max_buy: 22
+  - name: Mighty Max Bluebird
+    category: Figurines
+    all: [mighty max]
+    any: [bluebird, 1992, 1993, 1994, vintage, lot, coffret]
+    none: [dvd, dessin anime, cassette, vhs]
+    lot: true
+    ref_price: 25
+    default_pieces: 3
+    sellable_rate: 0.8
+    max_buy: 22
+  - name: Bateau pirate Playmobil vintage 1978
+    category: Figurines
+    all: [playmobil, [bateau pirate, navire pirate, 3550]]
+    any: [1978, vintage, geobra, ancien, annees 80]
+    none: [70411, 5135, 6678, 70960, 71530, reedition, piece detachee, voile seule]
+    ref_price: 80
+    max_buy: 31
+  - name: Fort western Playmobil vintage
+    category: Figurines
+    all: [playmobil, [fort western, fort union, fort randall, 3419, 3773]]
+    any: [vintage, geobra, ancien, annees 80]
+    none: [5245, 70946, reedition, piece detachee]
+    ref_price: 60
+    max_buy: 22
+  - name: Gunpla Master/Real/Perfect Grade non monté
+    category: Figurines
+    all: [gundam, [master grade, real grade, perfect grade, gunpla]]
+    any: [scelle, neuf, non monte, jamais monte, sous blister, grappes]
+    none: [monte, construit, assemble, peint, custom, sans boite, copie, daban, ko, entry grade]
+    ref_price: 35
+    max_buy: 11
+  - name: Ichiban Kuji lot A / Last One          # contrefaçons chinoises très nombreuses
+    category: Figurines
+    all: [ichiban kuji, [lot a, prix a, last one, masterlise]]
+    any: [dragon ball, one piece, naruto, jujutsu, demon slayer]
+    none: [fake, copie, chine, replica, sans boite, contrefacon, pvc chinois]
+    ref_price: 45
+    max_buy: 16
+  - name: S.H.Figuarts Dragon Ball / One Piece    # faux très courants
+    category: Figurines
+    all: [[sh figuarts, s.h.figuarts, shfiguarts], [dragon ball, one piece, naruto]]
+    none: [fake, copie, replica, chine, ko, sans boite, contrefacon, custom, demoniacal]
+    ref_price: 40
+    max_buy: 13
+  - name: Lot Sylvanian Families
+    category: Figurines
+    all: [sylvanian, [lot, figurines, famille]]
+    none: [compatible, imitation, maison seule vide, meubles seuls]
+    lot: true
+    ref_price: 4
+    default_pieces: 10
+    sellable_rate: 0.8
+    max_buy: 10
 
   # ============ Lego ============
   - name: Lot minifigurines Lego

@@ -36,7 +36,7 @@ MIN_SALES_FOR_REF = 3  # ventes nécessaires avant de proposer « Mettre à jour
 
 # Réglages modifiables depuis la page (enregistrés dans .env)
 SETTINGS = ("IMAP_HOST", "IMAP_USER", "IMAP_PASSWORD", "EBAY_CLIENT_ID", "EBAY_CLIENT_SECRET",
-            "ANTHROPIC_API_KEY", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID")
+            "ANTHROPIC_API_KEY", "AI_AUTO", "AI_DAILY_LIMIT", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID")
 SECRETS = ("IMAP_PASSWORD", "EBAY_CLIENT_SECRET", "ANTHROPIC_API_KEY", "TELEGRAM_BOT_TOKEN")
 
 
@@ -79,7 +79,10 @@ def ai_check(key: str, force: bool = False):
     except ImportError:
         return {"error": "Module IA absent de cette version du logiciel."}, 500
     try:
-        result = ai.analyze(deal)
+        result = ai.analyze(deal, getattr(CFG, "etat_minimum", "tres_bon") if CFG else "tres_bon")
+        SEEN.set_ai(key, result)
+        if CFG:
+            SEEN.apply_ai(key, result, CFG)
     except anthropic.AuthenticationError:
         return {"error": "Clé API Claude refusée : vérifiez-la dans Réglages."}, 400
     except anthropic.PermissionDeniedError:
@@ -98,6 +101,7 @@ def ai_check(key: str, force: bool = False):
 
 
 SEEN = None  # base du bot, fixée par make_server (utilisée par ai_check)
+CFG = None
 
 # ---- Tournée : liste de recherches que l'utilisateur ouvre une par une (bouton « Suivante » de l'extension) ----
 TOUR = {"active": False, "steps": [], "i": -1, "since": "", "done": 0}
@@ -141,8 +145,8 @@ def tour_state() -> dict:
 
 def make_server(cfg: Config, seen: Seen, port: int, env_path: str = ".env",
                 config_path: Optional[str] = None, host: str = "0.0.0.0") -> ThreadingHTTPServer:
-    global SEEN
-    SEEN = seen
+    global SEEN, CFG
+    SEEN, CFG = seen, cfg
     password = os.environ.get("WEB_PASSWORD", "")          # protège toute la page (facultatif)
     admin_password = os.environ.get("ADMIN_PASSWORD", "")  # protège seulement les réglages si la page est publique
 
