@@ -78,6 +78,7 @@
   .deal.weak .ratio { background: var(--bad); }
   .new { position: absolute; top: 10px; right: 10px; background: var(--card); color: var(--text); font-size: 12px; padding: 3px 8px; border-radius: 999px; }
   .body { padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  a.cta { display: inline-block; text-decoration: none; }
   .title { font-weight: 600; text-decoration: none; color: inherit; }
   .title:hover { text-decoration: underline; }
   .meta { color: var(--muted); font-size: 13px; }
@@ -364,6 +365,8 @@
     <h3 class="sub">⭐ Extension Chrome — analyse automatique (recommandé)</h3>
     <p class="help">Chaque page de recherche ouverte est analysée <b>toute seule</b> (badge « 🔥 25 € → x2,8 · +43 € » sur les
       annonces rentables) et l'encadré propose « Recherche suivante ▶ » pour la tournée. Installation une seule fois :</p>
+    <p><a class="cta" href="/extension.zip" download>⬇ Télécharger l'extension (chasseur-extension.zip)</a></p>
+    <p class="help">Puis clic droit sur le fichier téléchargé → <b>Extraire tout</b> : vous obtenez le dossier <b>chasseur-extension</b>.</p>
     <ol class="help steps">
       <li><button type="button" class="btn" id="copyExt">Copier « chrome://extensions »</button> puis collez-le dans la barre d'adresse de Chrome
         (ou Edge : edge://extensions).</li>
@@ -371,7 +374,7 @@
       <li>Cliquez sur <b>Charger l'extension non empaquetée</b> et choisissez le dossier :
         <b id="extDir">chasseur-extension (à côté de ChasseurAffaires.exe)</b>
         <button type="button" class="btn" id="copyDir" hidden>Copier le chemin</button>
-        <span id="extZip"> — ou <a href="/extension.zip" download>téléchargez-le ici</a> et extrayez-le.</span></li>
+        <span id="extZip"></span> — ou le dossier extrait du zip téléchargé ci-dessus</li>
       <li>Épinglez l'extension (icône 🧩 de Chrome → épingle). Après une mise à jour du logiciel, cliquez sur ↻ dans chrome://extensions.</li>
     </ol>
     <p class="help" id="extState"></p>
@@ -514,7 +517,9 @@ function diagnostic() {
     ${step(s.annonces_lues > 0, `${s.annonces_lues || 0} annonce(s) reçue(s) et analysée(s)`,
       s.emails_recus > 0 ? '' : 'Les annonces apparaîtront dès le premier email d\'alerte.')}
     ${step(s.correspondances > 0, `${s.correspondances || 0} annonce(s) correspondent à un article surveillé`,
-      s.annonces_lues > 0 ? 'Les annonces reçues ne correspondent à aucun des 64 articles surveillés. Faites des alertes sur ces modèles précis (voir « Mes niches & prix »).' : '')}
+      s.annonces_lues > 0 ? 'Les annonces reçues ne correspondent à aucun des articles surveillés. Faites des alertes sur ces modèles précis (voir « Mes niches & prix »).' : '')}
+    ${s.ia_en_cours > 0 ? step(false, `${s.ia_en_cours} bonne(s) affaire(s) en cours d'analyse par Claude`, 'Elles sont déjà affichées ; Claude retire celles qui ne valent pas le coup.') : ''}
+    ${s.ia_ecartees > 0 ? step(true, `${s.ia_ecartees} affaire(s) écartée(s) par Claude (photo, état ou prix de revente)`, 'Visibles dans l\'onglet « Toutes » avec l\'avis de Claude.') : ''}
     ${s.correspondances > 0 ? step(false, `${s.a_voir_toutes || 0} en attente, mais aucune assez rentable (x2,2 et +10 € minimum)`,
       'Normal : les vraies bonnes affaires sont rares. Regardez l\'onglet « Toutes » pour voir les annonces proches du seuil.') : ''}
   </ol>

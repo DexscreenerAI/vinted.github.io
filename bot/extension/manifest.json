@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Chasseur d'affaires",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Analyse automatiquement les annonces Leboncoin, Vinted et eBay que vous consultez et affiche leur rentabilité à la revente (avec le logiciel Chasseur d'affaires lancé).",
   "host_permissions": [
     "http://localhost/*",

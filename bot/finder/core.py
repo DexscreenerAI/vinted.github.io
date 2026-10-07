@@ -1,3 +1,4 @@
+import json
 """Boucle principale : lecture des alertes, évaluation, enregistrement."""
 
 import os
@@ -98,12 +99,25 @@ def import_listings(items: list, source: str, cfg: Config, seen: Seen) -> dict:
         if best is None:
             continue
         deal, good = best
-        if seen.add(listing.key, listing.title, listing.price):
+        known = seen.get_deal(listing.key)
+        if known is None:  # nouvelle (ou déjà vue quand aucune règle ne lui correspondait encore)
+            seen.add(listing.key, listing.title, listing.price)
             register(deal, good, seen)
+        elif known["status"] == "nouveau" and not known.get("ai_pending"):
+            # déjà connue : prix (baisse, prix mal lu) et règles du moment, puis l'avis de Claude s'il existe
+            seen.update_score(listing.key, deal, good)
+            if known.get("ai"):
+                seen.apply_ai(listing.key, json.loads(known["ai"]), cfg)
+        stored = seen.get_deal(listing.key) or {}
+        ai_result = json.loads(stored["ai"]) if stored.get("ai") else {}
+        shown = (stored.get("est_resale"), stored.get("ratio"), stored.get("net_profit")) if stored else ()
+        est, ratio, profit = shown if all(v is not None for v in shown) and shown else (deal.est_resale, deal.ratio, deal.net_profit)
         results.append({"title": title, "price": price, "url": listing.url, "image": listing.image,
-                        "rule": deal.rule_name, "category": deal.category, "ratio": deal.ratio,
-                        "net_profit": deal.net_profit, "buy_cost": deal.buy_cost, "est_resale": deal.est_resale,
-                        "good": good})
+                        "rule": deal.rule_name, "category": deal.category, "ratio": ratio,
+                        "net_profit": profit, "buy_cost": deal.buy_cost, "est_resale": est,
+                        "good": bool(stored.get("good", good)) if stored.get("status", "nouveau") == "nouveau" else False,
+                        "status": stored.get("status", "nouveau"), "ai_pending": bool(stored.get("ai_pending")),
+                        "ai_verdict": ai_result.get("verdict", "")})
     results.sort(key=lambda r: (r["good"], r["ratio"]), reverse=True)
     return {"received": len(items), "matched": len(results), "good": sum(r["good"] for r in results),
             "source": source, "deals": results}

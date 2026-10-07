@@ -112,7 +112,9 @@ class Seen:
                 " SUM(good = 1 AND status = 'nouveau' AND date(found_at) = date('now', 'localtime')) AS aujourdhui,"
                 " SUM(status = 'achete') AS achetes,"
                 " COALESCE(SUM(CASE WHEN status = 'achete' THEN net_profit END), 0) AS profit_achetes,"
-                " COUNT(*) AS correspondances, SUM(status = 'nouveau') AS a_voir_toutes"
+                " COUNT(*) AS correspondances, SUM(status = 'nouveau') AS a_voir_toutes,"
+                " SUM(ai_pending = 1 AND status = 'nouveau') AS ia_en_cours,"
+                " SUM(ai IS NOT NULL AND good = 0 AND status = 'nouveau') AS ia_ecartees"
                 " FROM deals"
             ).fetchone()
             seen = self.db.execute("SELECT COUNT(*) FROM seen").fetchone()[0]
@@ -131,9 +133,9 @@ class Seen:
         """Nouvelle évaluation d'une affaire (règles modifiées), sans toucher à son statut ni à l'avis IA."""
         with self.lock:
             self.db.execute(
-                "UPDATE deals SET rule = ?, category = ?, pieces = ?, buy_cost = ?, est_resale = ?, net_profit = ?,"
-                " ratio = ?, good = ?, notes = ? WHERE key = ?",
-                (deal.rule_name, deal.category, deal.pieces, deal.buy_cost, deal.est_resale, deal.net_profit,
+                "UPDATE deals SET price = ?, rule = ?, category = ?, pieces = ?, buy_cost = ?, est_resale = ?,"
+                " net_profit = ?, ratio = ?, good = ?, notes = ? WHERE key = ?",
+                (deal.listing.price, deal.rule_name, deal.category, deal.pieces, deal.buy_cost, deal.est_resale, deal.net_profit,
                  deal.ratio, int(good), json.dumps(deal.notes, ensure_ascii=False), key))
             self.db.commit()
 

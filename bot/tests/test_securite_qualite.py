@@ -60,6 +60,18 @@ class ImportSecuriteTest(unittest.TestCase):
         self.assertEqual(res["deals"][0]["image"], "")
 
 
+class ImportDejaVueTest(unittest.TestCase):
+    def test_annonce_connue_mise_a_jour(self):
+        """Annonce déjà vue avec un prix mal lu (ou une ancienne règle) : la page doit refléter la nouvelle lecture."""
+        seen = Seen(":memory:")
+        item = {"title": "Olympus Mju II", "url": "https://www.leboncoin.fr/ad/photo_audio_video/3262222489", "image": ""}
+        import_listings([dict(item, price=4301)], "leboncoin", CFG, seen)
+        self.assertEqual(seen.deals("bonnes"), [])
+        res = import_listings([dict(item, price=43.01)], "leboncoin", CFG, seen)
+        self.assertTrue(res["deals"][0]["good"])
+        self.assertEqual([d["price"] for d in seen.deals("bonnes")], [43.01])
+
+
 class CsrfTest(unittest.TestCase):
     """Un autre site ouvert dans le navigateur ne doit pas pouvoir piloter le logiciel local."""
 

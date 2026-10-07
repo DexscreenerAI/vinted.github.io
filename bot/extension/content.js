@@ -70,7 +70,9 @@
     const b = document.createElement("div");
     b.className = "chasseur-badge";
     const lu = `${Math.round(d.price)} €`;  // prix lu sur la page : permet de repérer une erreur de lecture
-    b.textContent = d.good ? `🔥 ${lu} → x${d.ratio.toFixed(1)} · +${Math.round(d.net_profit)} €` : `${lu} → x${d.ratio.toFixed(1)}`;
+    b.textContent = (d.good ? `🔥 ${lu} → x${d.ratio.toFixed(1)} · +${Math.round(d.net_profit)} €` : `${lu} → x${d.ratio.toFixed(1)}`)
+      + (d.ai_pending ? " · 🤖 analyse…" : d.ai_verdict === "passer" ? " · 🤖 écartée par Claude"
+        : d.ai_verdict === "acheter" ? " · 🤖 validée" : d.ai_verdict === "a_verifier" ? " · 🤖 à vérifier" : "");
     b.title = `Prix lu : ${d.price} € · ${d.rule} — revente ≈ ${Math.round(d.est_resale)} €, coût ${Math.round(d.buy_cost)} €, bénéfice net ≈ ${Math.round(d.net_profit)} €`;
     Object.assign(b.style, {
       position: "absolute", top: "6px", left: "6px", zIndex: 5, padding: "3px 8px", borderRadius: "999px",
